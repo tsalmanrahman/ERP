@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/InteAcc.Common.Application/InteAcc.Common.Application.csproj" />
+    <Project Path="src/InteAcc.Common.Domain/InteAcc.Common.Domain.csproj" />
+    <Project Path="src/InteAcc.Common.Infrastructure/InteAcc.Common.Infrastructure.csproj" />
+    <Project Path="src/InteAcc.Web.Api/InteAcc.Web.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InteAcc.UnitTests/InteAcc.UnitTests.csproj" />
+  </Folder>
+</Solution>
