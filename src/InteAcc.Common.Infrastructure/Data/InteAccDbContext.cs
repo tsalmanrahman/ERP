@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using InteAcc.Common.Application.Abstractions.Common;
 using InteAcc.Common.Application.Abstractions.Data;
@@ -14,6 +15,8 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
 {
     private readonly IDateTimeProvider? _dateTimeProvider;
     private readonly ICurrentUserContext? _currentUserContext;
+
+    public int? CurrentCompanyId => _currentUserContext?.CompanyId;
 
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<User> Users => Set<User>();
@@ -37,13 +40,13 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        ApplyAuditInformation();
+        ApplyAuditAndTenantInformation();
         return base.SaveChangesAsync(cancellationToken);
     }
 
     public override int SaveChanges()
     {
-        ApplyAuditInformation();
+        ApplyAuditAndTenantInformation();
         return base.SaveChanges();
     }
 
@@ -51,12 +54,60 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(InteAccDbContext).Assembly);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            ApplyGlobalFilters(modelBuilder, entityType.ClrType);
+        }
     }
 
-    private void ApplyAuditInformation()
+    private void ApplyGlobalFilters(ModelBuilder modelBuilder, Type clrType)
+    {
+        var parameter = Expression.Parameter(clrType, "e");
+        Expression? filter = null;
+
+        if (typeof(ISoftDeletable).IsAssignableFrom(clrType))
+        {
+            var isDeletedProp = Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted));
+            var notDeleted = Expression.Not(isDeletedProp);
+            filter = notDeleted;
+        }
+
+        if (typeof(IMultiTenant).IsAssignableFrom(clrType))
+        {
+            var companyIdProp = Expression.Property(parameter, nameof(IMultiTenant.CompanyId));
+            var contextExpr = Expression.Constant(this);
+            var currentCompanyIdProp = Expression.Property(contextExpr, nameof(CurrentCompanyId));
+
+            // currentCompanyId == null || e.CompanyId == currentCompanyId.Value
+            var isCompanyNull = Expression.Equal(currentCompanyIdProp, Expression.Constant(null, typeof(int?)));
+            var companyValue = Expression.Property(currentCompanyIdProp, "Value");
+            var isSameCompany = Expression.Equal(companyIdProp, companyValue);
+            var tenantCondition = Expression.OrElse(isCompanyNull, isSameCompany);
+
+            filter = filter == null ? tenantCondition : Expression.AndAlso(filter, tenantCondition);
+        }
+
+        if (filter != null)
+        {
+            var lambda = Expression.Lambda(filter, parameter);
+            modelBuilder.Entity(clrType).HasQueryFilter(lambda);
+        }
+    }
+
+    private void ApplyAuditAndTenantInformation()
     {
         var now = _dateTimeProvider?.UtcNow ?? DateTime.UtcNow;
         var currentUser = _currentUserContext?.UserName ?? "System";
+        var currentCompany = _currentUserContext?.CompanyId;
+
+        foreach (var entry in ChangeTracker.Entries<IMultiTenant>())
+        {
+            if (entry.State == EntityState.Added && entry.Entity.CompanyId == 0 && currentCompany.HasValue)
+            {
+                entry.Entity.CompanyId = currentCompany.Value;
+            }
+        }
 
         foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
         {
