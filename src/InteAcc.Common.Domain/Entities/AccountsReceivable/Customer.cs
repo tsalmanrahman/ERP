@@ -2,7 +2,7 @@ using InteAcc.Common.Domain.Common;
 
 namespace InteAcc.Common.Domain.Entities.AccountsReceivable;
 
-public class Customer : Entity<int>, IAuditableEntity, ISoftDeletable
+public class Customer : Entity<int>, IMultiTenant, IAuditableEntity, ISoftDeletable
 {
     public int CompanyId { get; set; }
     public string CustomerCode { get; set; } = string.Empty;

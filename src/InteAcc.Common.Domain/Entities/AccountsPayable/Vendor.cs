@@ -2,7 +2,7 @@ using InteAcc.Common.Domain.Common;
 
 namespace InteAcc.Common.Domain.Entities.AccountsPayable;
 
-public class Vendor : Entity<int>, IAuditableEntity, ISoftDeletable
+public class Vendor : Entity<int>, IMultiTenant, IAuditableEntity, ISoftDeletable
 {
     public int CompanyId { get; set; }
     public string VendorCode { get; set; } = string.Empty;

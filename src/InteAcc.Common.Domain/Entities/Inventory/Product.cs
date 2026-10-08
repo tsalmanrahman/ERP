@@ -2,7 +2,7 @@ using InteAcc.Common.Domain.Common;
 
 namespace InteAcc.Common.Domain.Entities.Inventory;
 
-public class Product : Entity<int>, IAuditableEntity, ISoftDeletable
+public class Product : Entity<int>, IMultiTenant, IAuditableEntity, ISoftDeletable
 {
     public int CompanyId { get; set; }
     public string ProductCode { get; set; } = string.Empty;

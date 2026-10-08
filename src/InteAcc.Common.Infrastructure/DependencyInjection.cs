@@ -5,6 +5,7 @@ using InteAcc.Common.Application.Abstractions.Common;
 using InteAcc.Common.Application.Abstractions.Data;
 using InteAcc.Common.Application.Abstractions.Finance;
 using InteAcc.Common.Application.Abstractions.Identity;
+using InteAcc.Common.Application.Abstractions.Inventory;
 using InteAcc.Common.Application.Abstractions.SystemAdmin;
 using InteAcc.Common.Infrastructure.Data;
 using InteAcc.Common.Infrastructure.Services;
@@ -36,6 +37,12 @@ public static class DependencyInjection
         services.AddScoped<IJournalVoucherService, JournalVoucherService>();
         services.AddScoped<IFinancialReportingService, FinancialReportingService>();
         services.AddScoped<IBankingService, BankingService>();
+
+        // Supply Chain & Inventory Control
+        services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IGoodsReceiptService, GoodsReceiptService>();
+        services.AddScoped<IStockMovementService, StockMovementService>();
+        services.AddScoped<IInventoryReportingService, InventoryReportingService>();
 
         services.AddDbContext<InteAccDbContext>(options =>
         {

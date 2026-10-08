@@ -11,7 +11,7 @@ public enum AccountCategory
     Expense = 5
 }
 
-public class AccountGroup : Entity<int>, IAuditableEntity, ISoftDeletable
+public class AccountGroup : Entity<int>, IMultiTenant, IAuditableEntity, ISoftDeletable
 {
     public int CompanyId { get; set; }
     public string GroupCode { get; set; } = string.Empty;
@@ -32,7 +32,7 @@ public class AccountGroup : Entity<int>, IAuditableEntity, ISoftDeletable
     public AccountGroup() { }
 }
 
-public class Account : Entity<int>, IAuditableEntity, ISoftDeletable
+public class Account : Entity<int>, IMultiTenant, IAuditableEntity, ISoftDeletable
 {
     public int CompanyId { get; set; }
     public string AccountCode { get; set; } = string.Empty;
