@@ -8,6 +8,7 @@ using InteAcc.Common.Domain.Entities.GeneralLedger;
 using InteAcc.Common.Domain.Entities.AccountsReceivable;
 using InteAcc.Common.Domain.Entities.AccountsPayable;
 using InteAcc.Common.Domain.Entities.Inventory;
+using InteAcc.Common.Domain.Entities.Procurement;
 
 namespace InteAcc.Common.Infrastructure.Data;
 
@@ -26,6 +27,7 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
     public DbSet<JournalVoucherLine> JournalVoucherLines => Set<JournalVoucherLine>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Vendor> Vendors => Set<Vendor>();
+    public DbSet<VendorGroup> VendorGroups => Set<VendorGroup>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<UnitOfMeasure> UnitsOfMeasure => Set<UnitOfMeasure>();
     public DbSet<ProductClass> ProductClasses => Set<ProductClass>();
@@ -38,6 +40,12 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
     public DbSet<StockAdjustmentLine> StockAdjustmentLines => Set<StockAdjustmentLine>();
     public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
     public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
+    public DbSet<PurchaseBill> PurchaseBills => Set<PurchaseBill>();
+    public DbSet<PurchaseBillLine> PurchaseBillLines => Set<PurchaseBillLine>();
+    public DbSet<VendorPayment> VendorPayments => Set<VendorPayment>();
+    public DbSet<VendorPaymentAllocation> VendorPaymentAllocations => Set<VendorPaymentAllocation>();
 
     public InteAccDbContext(
         DbContextOptions<InteAccDbContext> options,
