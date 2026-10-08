@@ -7,6 +7,7 @@ using InteAcc.Common.Application.Abstractions.Finance;
 using InteAcc.Common.Application.Abstractions.Identity;
 using InteAcc.Common.Application.Abstractions.Inventory;
 using InteAcc.Common.Application.Abstractions.ProcureToPay;
+using InteAcc.Common.Application.Abstractions.OrderToCash;
 using InteAcc.Common.Application.Abstractions.SystemAdmin;
 using InteAcc.Common.Infrastructure.Data;
 using InteAcc.Common.Infrastructure.Services;
@@ -51,6 +52,14 @@ public static class DependencyInjection
         services.AddScoped<IPurchaseBillService, PurchaseBillService>();
         services.AddScoped<IVendorPaymentService, VendorPaymentService>();
         services.AddScoped<IAccountsPayableReportingService, AccountsPayableReportingService>();
+
+        // Order-to-Cash & Accounts Receivable
+        services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<ISalesOrderService, SalesOrderService>();
+        services.AddScoped<IDeliveryChallanService, DeliveryChallanService>();
+        services.AddScoped<IInvoiceService, InvoiceService>();
+        services.AddScoped<ICustomerReceiptService, CustomerReceiptService>();
+        services.AddScoped<IAccountsReceivableReportingService, AccountsReceivableReportingService>();
 
         services.AddDbContext<InteAccDbContext>(options =>
         {

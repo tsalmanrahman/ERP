@@ -9,6 +9,7 @@ using InteAcc.Common.Domain.Entities.AccountsReceivable;
 using InteAcc.Common.Domain.Entities.AccountsPayable;
 using InteAcc.Common.Domain.Entities.Inventory;
 using InteAcc.Common.Domain.Entities.Procurement;
+using InteAcc.Common.Domain.Entities.Sales;
 
 namespace InteAcc.Common.Infrastructure.Data;
 
@@ -46,6 +47,16 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
     public DbSet<PurchaseBillLine> PurchaseBillLines => Set<PurchaseBillLine>();
     public DbSet<VendorPayment> VendorPayments => Set<VendorPayment>();
     public DbSet<VendorPaymentAllocation> VendorPaymentAllocations => Set<VendorPaymentAllocation>();
+    public DbSet<CustomerGroup> CustomerGroups => Set<CustomerGroup>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
+    public DbSet<CustomerReceipt> CustomerReceipts => Set<CustomerReceipt>();
+    public DbSet<CustomerReceiptAllocation> CustomerReceiptAllocations => Set<CustomerReceiptAllocation>();
+    public DbSet<SalesCenter> SalesCenters => Set<SalesCenter>();
+    public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
+    public DbSet<SalesOrderLine> SalesOrderLines => Set<SalesOrderLine>();
+    public DbSet<DeliveryChallan> DeliveryChallans => Set<DeliveryChallan>();
+    public DbSet<DeliveryChallanLine> DeliveryChallanLines => Set<DeliveryChallanLine>();
 
     public InteAccDbContext(
         DbContextOptions<InteAccDbContext> options,
