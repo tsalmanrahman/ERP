@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using InteAcc.Common.Application.Abstractions.Common;
 using InteAcc.Common.Application.Abstractions.Data;
+using InteAcc.Common.Application.Abstractions.Finance;
 using InteAcc.Common.Application.Abstractions.Identity;
 using InteAcc.Common.Application.Abstractions.SystemAdmin;
 using InteAcc.Common.Infrastructure.Data;
@@ -25,10 +26,16 @@ public static class DependencyInjection
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddScoped<IDatabaseHealthService, DatabaseHealthService>();
 
+        // Identity & Security
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICompanyService, CompanyService>();
+
+        // General Ledger & Banking
+        services.AddScoped<IJournalVoucherService, JournalVoucherService>();
+        services.AddScoped<IFinancialReportingService, FinancialReportingService>();
+        services.AddScoped<IBankingService, BankingService>();
 
         services.AddDbContext<InteAccDbContext>(options =>
         {
