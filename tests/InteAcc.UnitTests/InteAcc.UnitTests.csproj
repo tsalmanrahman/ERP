@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\InteAcc.Common.Domain\InteAcc.Common.Domain.csproj" />
     <ProjectReference Include="..\..\src\InteAcc.Common.Application\InteAcc.Common.Application.csproj" />
+    <ProjectReference Include="..\..\src\InteAcc.Common.Infrastructure\InteAcc.Common.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
