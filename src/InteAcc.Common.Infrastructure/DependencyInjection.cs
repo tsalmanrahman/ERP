@@ -8,6 +8,7 @@ using InteAcc.Common.Application.Abstractions.Identity;
 using InteAcc.Common.Application.Abstractions.Inventory;
 using InteAcc.Common.Application.Abstractions.ProcureToPay;
 using InteAcc.Common.Application.Abstractions.OrderToCash;
+using InteAcc.Common.Application.Abstractions.Payroll;
 using InteAcc.Common.Application.Abstractions.SystemAdmin;
 using InteAcc.Common.Infrastructure.Data;
 using InteAcc.Common.Infrastructure.Services;
@@ -60,6 +61,12 @@ public static class DependencyInjection
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<ICustomerReceiptService, CustomerReceiptService>();
         services.AddScoped<IAccountsReceivableReportingService, AccountsReceivableReportingService>();
+
+        // Human Resources & Payroll
+        services.AddScoped<IEmployeeService, EmployeeService>();
+        services.AddScoped<IAttendanceService, AttendanceService>();
+        services.AddScoped<IPayrollService, PayrollService>();
+        services.AddScoped<IPayrollReportingService, PayrollReportingService>();
 
         services.AddDbContext<InteAccDbContext>(options =>
         {

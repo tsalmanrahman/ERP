@@ -10,6 +10,7 @@ using InteAcc.Common.Domain.Entities.AccountsPayable;
 using InteAcc.Common.Domain.Entities.Inventory;
 using InteAcc.Common.Domain.Entities.Procurement;
 using InteAcc.Common.Domain.Entities.Sales;
+using InteAcc.Common.Domain.Entities.HumanResources;
 
 namespace InteAcc.Common.Infrastructure.Data;
 
@@ -57,6 +58,14 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
     public DbSet<SalesOrderLine> SalesOrderLines => Set<SalesOrderLine>();
     public DbSet<DeliveryChallan> DeliveryChallans => Set<DeliveryChallan>();
     public DbSet<DeliveryChallanLine> DeliveryChallanLines => Set<DeliveryChallanLine>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Designation> Designations => Set<Designation>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<AttendanceLog> AttendanceLogs => Set<AttendanceLog>();
+    public DbSet<DailyAttendance> DailyAttendance => Set<DailyAttendance>();
+    public DbSet<PayrollPeriod> PayrollPeriods => Set<PayrollPeriod>();
+    public DbSet<SalarySheet> SalarySheets => Set<SalarySheet>();
+    public DbSet<SalarySheetLine> SalarySheetLines => Set<SalarySheetLine>();
 
     public InteAccDbContext(
         DbContextOptions<InteAccDbContext> options,
