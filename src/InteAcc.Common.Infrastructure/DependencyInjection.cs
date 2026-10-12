@@ -9,6 +9,7 @@ using InteAcc.Common.Application.Abstractions.Inventory;
 using InteAcc.Common.Application.Abstractions.ProcureToPay;
 using InteAcc.Common.Application.Abstractions.OrderToCash;
 using InteAcc.Common.Application.Abstractions.Payroll;
+using InteAcc.Common.Application.Abstractions.Specialized;
 using InteAcc.Common.Application.Abstractions.SystemAdmin;
 using InteAcc.Common.Infrastructure.Data;
 using InteAcc.Common.Infrastructure.Services;
@@ -67,6 +68,11 @@ public static class DependencyInjection
         services.AddScoped<IAttendanceService, AttendanceService>();
         services.AddScoped<IPayrollService, PayrollService>();
         services.AddScoped<IPayrollReportingService, PayrollReportingService>();
+
+        // Specialized Modules (Fixed Assets, Real Estate, Manufacturing)
+        services.AddScoped<IFixedAssetService, FixedAssetService>();
+        services.AddScoped<IRealEstateService, RealEstateService>();
+        services.AddScoped<IManufacturingService, ManufacturingService>();
 
         services.AddDbContext<InteAccDbContext>(options =>
         {

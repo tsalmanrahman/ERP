@@ -11,6 +11,9 @@ using InteAcc.Common.Domain.Entities.Inventory;
 using InteAcc.Common.Domain.Entities.Procurement;
 using InteAcc.Common.Domain.Entities.Sales;
 using InteAcc.Common.Domain.Entities.HumanResources;
+using InteAcc.Common.Domain.Entities.FixedAssets;
+using InteAcc.Common.Domain.Entities.RealEstate;
+using InteAcc.Common.Domain.Entities.Manufacturing;
 
 namespace InteAcc.Common.Infrastructure.Data;
 
@@ -66,6 +69,22 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
     public DbSet<PayrollPeriod> PayrollPeriods => Set<PayrollPeriod>();
     public DbSet<SalarySheet> SalarySheets => Set<SalarySheet>();
     public DbSet<SalarySheetLine> SalarySheetLines => Set<SalarySheetLine>();
+
+    // Fixed Assets
+    public DbSet<AssetGroup> AssetGroups => Set<AssetGroup>();
+    public DbSet<Asset> Assets => Set<Asset>();
+    public DbSet<DepreciationEntry> DepreciationEntries => Set<DepreciationEntry>();
+
+    // Real Estate
+    public DbSet<Project> Projects => Set<Project>();
+    public DbSet<PropertyUnit> PropertyUnits => Set<PropertyUnit>();
+    public DbSet<PropertyBooking> PropertyBookings => Set<PropertyBooking>();
+    public DbSet<BookingInstallment> BookingInstallments => Set<BookingInstallment>();
+
+    // Manufacturing
+    public DbSet<BillOfMaterials> BillsOfMaterials => Set<BillOfMaterials>();
+    public DbSet<BomComponent> BomComponents => Set<BomComponent>();
+    public DbSet<ProductionOrder> ProductionOrders => Set<ProductionOrder>();
 
     public InteAccDbContext(
         DbContextOptions<InteAccDbContext> options,
