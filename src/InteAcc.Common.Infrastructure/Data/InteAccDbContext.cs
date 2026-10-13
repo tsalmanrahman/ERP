@@ -14,6 +14,7 @@ using InteAcc.Common.Domain.Entities.HumanResources;
 using InteAcc.Common.Domain.Entities.FixedAssets;
 using InteAcc.Common.Domain.Entities.RealEstate;
 using InteAcc.Common.Domain.Entities.Manufacturing;
+using InteAcc.Common.Domain.Entities.Migration;
 
 namespace InteAcc.Common.Infrastructure.Data;
 
@@ -86,6 +87,11 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
     public DbSet<BomComponent> BomComponents => Set<BomComponent>();
     public DbSet<ProductionOrder> ProductionOrders => Set<ProductionOrder>();
 
+    // Data Migration & Cutover
+    public DbSet<MigrationLog> MigrationLogs => Set<MigrationLog>();
+    public DbSet<CutoverAudit> CutoverAudits => Set<CutoverAudit>();
+    public DbSet<HistoricalLedgerArchive> HistoricalLedgerArchives => Set<HistoricalLedgerArchive>();
+
     public InteAccDbContext(
         DbContextOptions<InteAccDbContext> options,
         IDateTimeProvider? dateTimeProvider = null,
@@ -137,10 +143,10 @@ public class InteAccDbContext : DbContext, IApplicationDbContext
             var contextExpr = Expression.Constant(this);
             var currentCompanyIdProp = Expression.Property(contextExpr, nameof(CurrentCompanyId));
 
-            // currentCompanyId == null || e.CompanyId == currentCompanyId.Value
+            // currentCompanyId == null || e.CompanyId == currentCompanyId
             var isCompanyNull = Expression.Equal(currentCompanyIdProp, Expression.Constant(null, typeof(int?)));
-            var companyValue = Expression.Property(currentCompanyIdProp, "Value");
-            var isSameCompany = Expression.Equal(companyIdProp, companyValue);
+            var nullableCompanyId = Expression.Convert(companyIdProp, typeof(int?));
+            var isSameCompany = Expression.Equal(nullableCompanyId, currentCompanyIdProp);
             var tenantCondition = Expression.OrElse(isCompanyNull, isSameCompany);
 
             filter = filter == null ? tenantCondition : Expression.AndAlso(filter, tenantCondition);

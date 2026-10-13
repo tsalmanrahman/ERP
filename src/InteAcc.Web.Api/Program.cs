@@ -61,6 +61,9 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseCors("AllowAllDev");
 
 app.UseHttpsRedirection();

@@ -10,6 +10,7 @@ using InteAcc.Common.Application.Abstractions.ProcureToPay;
 using InteAcc.Common.Application.Abstractions.OrderToCash;
 using InteAcc.Common.Application.Abstractions.Payroll;
 using InteAcc.Common.Application.Abstractions.Specialized;
+using InteAcc.Common.Application.Abstractions.Migration;
 using InteAcc.Common.Application.Abstractions.SystemAdmin;
 using InteAcc.Common.Infrastructure.Data;
 using InteAcc.Common.Infrastructure.Services;
@@ -73,6 +74,11 @@ public static class DependencyInjection
         services.AddScoped<IFixedAssetService, FixedAssetService>();
         services.AddScoped<IRealEstateService, RealEstateService>();
         services.AddScoped<IManufacturingService, ManufacturingService>();
+
+        // Phase 10: Data Migration, Financial Parity Audit & Cutover
+        services.AddScoped<IDataMigrationService, DataMigrationService>();
+        services.AddScoped<IFinancialParityAuditService, FinancialParityAuditService>();
+        services.AddScoped<ICutoverService, CutoverService>();
 
         services.AddDbContext<InteAccDbContext>(options =>
         {
