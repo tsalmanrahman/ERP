@@ -1,5 +1,5 @@
 -- ==============================================================================
--- InteAcc ERP Migration - Phase 10: Data Migration, Financial Parity Audit & Cutover Readiness
+-- ERP Migration - Phase 10: Data Migration, Financial Parity Audit & Cutover Readiness
 -- Migration: 010_Data_Migration_And_Cutover_Readiness.sql
 -- ==============================================================================
 

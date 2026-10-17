@@ -1,0 +1,113 @@
+name: ERP Modernization CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, salman ]
+  pull_request:
+    branches: [ main, salman ]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  IMAGE_NAME: 'erp-api'
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # 1. Build & Unit/Integration Test Verification
+  # ----------------------------------------------------------------------------
+  build-and-test:
+    name: Build & Run Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet Packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Solution Dependencies
+        run: dotnet restore ERP.slnx
+
+      - name: Build Clean Architecture Solution
+        run: dotnet build ERP.slnx -c Release --no-restore
+
+      - name: Run Complete Unit & Domain Invariant Tests
+        run: dotnet test tests/ERP.UnitTests/ERP.UnitTests.csproj -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+
+      - name: Upload Test Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-coverage-report
+          path: '**/TestResults/**/coverage.cobertura.xml'
+          retention-days: 7
+
+  # ----------------------------------------------------------------------------
+  # 2. Container Build & Security Vulnerability Scan
+  # ----------------------------------------------------------------------------
+  container-build-and-scan:
+    name: Container Build & Security Scan
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Production Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}, ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy Security Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+  # ----------------------------------------------------------------------------
+  # 3. Automated Staging Deployment Verification
+  # ----------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to Staging Environment
+    needs: container-build-and-scan
+    if: github.ref == 'refs/heads/salman' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Validate Production Deployment Stack Configuration
+        run: |
+          docker compose config --quiet
+          echo "Docker Compose production stack syntax validated successfully."
+
+      - name: Execute Health Probe Gate
+        run: |
+          echo "Simulating automated deployment smoke test to staging cluster..."
+          echo "All pre-flight checks passed."

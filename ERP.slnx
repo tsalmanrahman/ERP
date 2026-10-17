@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ERP.Common.Application/ERP.Common.Application.csproj" />
+    <Project Path="src/ERP.Common.Domain/ERP.Common.Domain.csproj" />
+    <Project Path="src/ERP.Common.Infrastructure/ERP.Common.Infrastructure.csproj" />
+    <Project Path="src/ERP.Web.Api/ERP.Web.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ERP.UnitTests/ERP.UnitTests.csproj" />
+  </Folder>
+</Solution>

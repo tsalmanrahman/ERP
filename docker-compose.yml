@@ -1,0 +1,93 @@
+services:
+  # ----------------------------------------------------------------------------
+  # 1. SQL Server 2025 / 2022 Database Engine
+  # ----------------------------------------------------------------------------
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: erp-db
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:?Set SA_PASSWORD in .env (see .env.example)}"
+      MSSQL_PID: "Developer"
+      MSSQL_TCP_PORT: "1433"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql/data
+      - mssql_log:/var/opt/mssql/log
+      - ./database/migrations:/docker-entrypoint-initdb.d/migrations:ro
+    networks:
+      - erp_net
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${SA_PASSWORD:?Set SA_PASSWORD in .env (see .env.example)}\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ----------------------------------------------------------------------------
+  # 2. ERP Web API (.NET 10 / C# 13)
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: erp-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT:-Production}"
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=ERP;User Id=sa;Password=${SA_PASSWORD:?Set SA_PASSWORD in .env (see .env.example)};TrustServerCertificate=True;MultipleActiveResultSets=True;Encrypt=False;"
+      Jwt__SecretKey: "${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env (min 32 chars)}"
+      Jwt__Issuer: "ERP.Security"
+      Jwt__Audience: "ERP.Client"
+    expose:
+      - "8080"
+    volumes:
+      - app_logs:/app/logs
+    networks:
+      - erp_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ----------------------------------------------------------------------------
+  # 3. Nginx Reverse Proxy & TLS Termination
+  # ----------------------------------------------------------------------------
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: erp-proxy
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/certs:/etc/nginx/certs:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - erp_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --spider http://127.0.0.1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+networks:
+  erp_net:
+    driver: bridge
+
+volumes:
+  mssql_data:
+  mssql_log:
+  app_logs:
+  nginx_logs:

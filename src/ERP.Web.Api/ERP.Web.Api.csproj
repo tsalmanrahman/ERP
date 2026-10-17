@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <AssemblyName>ERP.Web.Api</AssemblyName>
+    <RootNamespace>ERP.Web.Api</RootNamespace>
+    <UserSecretsId>e45e40ad-c98f-4c27-8361-afc945cc3867</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.17.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ERP.Common.Infrastructure\ERP.Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\ERP.Common.Application\ERP.Common.Application.csproj" />
+    <ProjectReference Include="..\ERP.Common.Domain\ERP.Common.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

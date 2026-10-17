@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- Migration: 003_Add_Soft_Delete_Audit_Columns.sql
--- Project: InteAcc ERP Modernization
+-- Project: ERP Modernization
 -- Description: Adds DeletedAtUtc and DeletedBy columns to all tables implementing
 --              the ISoftDeletable interface across all domain schemas.
 -- ==============================================================================

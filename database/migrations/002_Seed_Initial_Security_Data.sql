@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- Migration: 002_Seed_Initial_Security_Data.sql
--- Project: InteAcc ERP Modernization
+-- Project: ERP Modernization
 -- Description: Seeds base companies, currencies, business units, fiscal calendar,
 --              roles, and initial SuperAdmin user account.
 -- ==============================================================================
@@ -24,8 +24,8 @@ IF NOT EXISTS (SELECT 1 FROM sa.Companies WHERE CompanyCode = 'COMP-01')
 BEGIN
     INSERT INTO sa.Companies (CompanyCode, CompanyName, AddressLine1, City, PostalCode, CountryCode, BaseCurrency, IsActive)
     VALUES 
-    ('COMP-01', N'InteAcc Technologies Ltd.', N'Gulshan Commercial Area', N'Dhaka', N'1212', 'BGD', 'BDT', 1),
-    ('COMP-02', N'InteAcc Global Distribution Inc.', N'Motijheel C/A', N'Dhaka', N'1000', 'BGD', 'USD', 1);
+    ('COMP-01', N'ERP Technologies Ltd.', N'Gulshan Commercial Area', N'Dhaka', N'1212', 'BGD', 'BDT', 1),
+    ('COMP-02', N'ERP Global Distribution Inc.', N'Motijheel C/A', N'Dhaka', N'1000', 'BGD', 'USD', 1);
 END;
 GO
 
@@ -90,7 +90,7 @@ BEGIN
     VALUES (
         'USR-001',
         'admin',
-        'admin@inteacc.com',
+        'admin@erp.local',
         'Uf6ZrW2fJhWVPDImTmfV5g==.+6x8u254AvRceiklBbzPdLJhb5qqoglyKvOb1EUckt0=',
         N'System Administrator',
         @CompId1,

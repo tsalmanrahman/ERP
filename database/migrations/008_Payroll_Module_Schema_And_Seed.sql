@@ -258,7 +258,7 @@ BEGIN
     )
     VALUES (
         @CompanyId, 'EMP-001', 'Arif', 'Rahman', @EngDeptId, @EngDesigId,
-        '1990-05-15', '2022-01-01', 'arif.rahman@inteacc.com', '+8801711000001',
+        '1990-05-15', '2022-01-01', 'arif.rahman@erp.local', '+8801711000001',
         120000.00, 60000.00, 30000.00, 15000.00, 15000.00, 0.00, 3000.00,
         5000.00, 'Prime Bank Ltd.', '110203001-EMP001', 1, 'System'
     );
@@ -274,7 +274,7 @@ BEGIN
     )
     VALUES (
         @CompanyId, 'EMP-002', 'Farzana', 'Akter', @HrDeptId, @HrDesigId,
-        '1993-08-20', '2022-06-01', 'farzana.akter@inteacc.com', '+8801711000002',
+        '1993-08-20', '2022-06-01', 'farzana.akter@erp.local', '+8801711000002',
         80000.00, 40000.00, 20000.00, 10000.00, 10000.00, 0.00, 2000.00,
         2500.00, 'Prime Bank Ltd.', '110203001-EMP002', 1, 'System'
     );
@@ -290,7 +290,7 @@ BEGIN
     )
     VALUES (
         @CompanyId, 'EMP-003', 'Tanvir', 'Hossain', @OpsDeptId, @OpsDesigId,
-        '1995-12-10', '2023-03-15', 'tanvir.hossain@inteacc.com', '+8801711000003',
+        '1995-12-10', '2023-03-15', 'tanvir.hossain@erp.local', '+8801711000003',
         45000.00, 25000.00, 12000.00, 5000.00, 3000.00, 0.00, 1500.00,
         0.00, 'Prime Bank Ltd.', '110203001-EMP003', 1, 'System'
     );

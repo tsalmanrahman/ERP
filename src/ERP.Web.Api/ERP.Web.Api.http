@@ -1,0 +1,23 @@
+@ERP.Web.Api_HostAddress = http://localhost:5174
+
+### Liveness (anonymous)
+GET {{ERP.Web.Api_HostAddress}}/api/diagnostics/ping
+Accept: application/json
+
+### Readiness (database connectivity)
+GET {{ERP.Web.Api_HostAddress}}/health/ready
+
+### Login - copy data.accessToken into @token below
+POST {{ERP.Web.Api_HostAddress}}/api/sa/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "<your-password>"
+}
+
+### Authenticated example: chart of accounts
+@token = <paste-access-token>
+GET {{ERP.Web.Api_HostAddress}}/api/gl/accounts
+Authorization: Bearer {{token}}
+Accept: application/json

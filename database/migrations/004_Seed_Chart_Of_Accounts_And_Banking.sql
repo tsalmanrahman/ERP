@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- Migration: 004_Seed_Chart_Of_Accounts_And_Banking.sql
--- Project: InteAcc ERP Modernization
+-- Project: ERP Modernization
 -- Description: Seeds the standard Enterprise Chart of Accounts (Assets, Liabilities,
 --              Equity, Revenue, Expenses) and Bank/Cash Masters for Company 1.
 -- ==============================================================================
@@ -98,8 +98,8 @@ BEGIN
 
         INSERT INTO bc.BankAccounts (CompanyId, BranchId, AccountNumber, AccountTitle, CurrencyCode, GlAccountId, CurrentBalance, IsActive)
         VALUES 
-        (@CompId, @BranchPrime, '110203001', N'InteAcc Prime Current Account', 'BDT', @AcctPrime, 0, 1),
-        (@CompId, @BranchCity, '220304002', N'InteAcc City Operations Account', 'BDT', @AcctCity, 0, 1);
+        (@CompId, @BranchPrime, '110203001', N'ERP Prime Current Account', 'BDT', @AcctPrime, 0, 1),
+        (@CompId, @BranchCity, '220304002', N'ERP City Operations Account', 'BDT', @AcctCity, 0, 1);
     END;
 
     -- 4. CASH BOOKS (bc.CashBooks)

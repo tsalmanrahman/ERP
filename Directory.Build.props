@@ -1,0 +1,16 @@
+<Project>
+
+  <!--
+    Shared build settings for every project in the solution.
+    Per-project files only declare what is specific to them (SDK, references, packages).
+    NuGet audit also covers transitive packages so vulnerable dependencies surface at restore time.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+  </PropertyGroup>
+
+</Project>

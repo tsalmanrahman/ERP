@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- Migration: 001_Initial_Modern_Schema.sql
--- Project: InteAcc ERP Modernization (.NET 10 Modular Monolith + MSSQL 2025)
+-- Project: ERP Modernization (.NET 10 Modular Monolith + MSSQL 2025)
 -- Description: Establishes modernized domain schemas (sa, gl, bc, ap, ar, inv, 
 --              sales, purch, hr, fa) with enterprise auditing columns, foreign 
 --              keys, and optimized indexing.
