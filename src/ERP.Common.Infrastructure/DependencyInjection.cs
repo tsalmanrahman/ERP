@@ -48,6 +48,7 @@ public static class DependencyInjection
 
         // Identity, Governance & Sequences
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<ITokenRevocationService, TokenRevocationService>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICompanyService, CompanyService>();

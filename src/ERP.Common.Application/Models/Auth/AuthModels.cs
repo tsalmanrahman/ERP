@@ -1,4 +1,4 @@
-﻿namespace ERP.Common.Application.Models.Auth;
+namespace ERP.Common.Application.Models.Auth;
 
 public record LoginRequest(string Username, string Password, int? CompanyId = null);
 
@@ -30,3 +30,14 @@ public record CompanyAccessDto(
 );
 
 public record SwitchCompanyRequest(int TargetCompanyId);
+
+public record UpdateProfileRequest(
+    string FullName,
+    string Email
+);
+
+public record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword,
+    string ConfirmNewPassword
+);

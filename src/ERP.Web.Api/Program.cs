@@ -69,6 +69,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SecretKey)),
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var tokenRevocationService = context.HttpContext.RequestServices.GetRequiredService<ERP.Common.Application.Abstractions.Identity.ITokenRevocationService>();
+                var authHeader = context.Request.Headers["Authorization"].ToString();
+                var token = authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) ? authHeader.Substring(7).Trim() : authHeader.Trim();
+                if (!string.IsNullOrEmpty(token) && tokenRevocationService.IsTokenRevoked(token))
+                {
+                    context.Fail("Token has been revoked.");
+                }
+                return Task.CompletedTask;
+            }
+        };
+
     });
 
 builder.Services.AddAuthorization();

@@ -266,4 +266,84 @@ public class AuthService : IAuthService
 
         return assignedCompanies;
     }
+
+    public async Task<Result<UserProfileDto>> UpdateProfileAsync(int userId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return Result.Failure<UserProfileDto>("Full Name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@'))
+        {
+            return Result.Failure<UserProfileDto>("A valid Email address is required.");
+        }
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive, cancellationToken);
+        if (user == null)
+        {
+            return Result.Failure<UserProfileDto>("User not found.");
+        }
+
+        // Email uniqueness check
+        var emailExists = await _dbContext.Users.AnyAsync(u => u.Email.ToLower() == request.Email.Trim().ToLower() && u.Id != userId, cancellationToken);
+        if (emailExists)
+        {
+            return Result.Failure<UserProfileDto>("The specified email address is already in use by another account.");
+        }
+
+        user.FullName = request.FullName.Trim();
+        user.Email = request.Email.Trim();
+        user.ModifiedAtUtc = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return await GetCurrentUserProfileAsync(user.Id, null, cancellationToken);
+    }
+
+    public async Task<Result<bool>> ChangePasswordAsync(int userId, ChangePasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+        {
+            return Result.Failure<bool>("Current password is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return Result.Failure<bool>("New password is required.");
+        }
+
+        if (request.NewPassword != request.ConfirmNewPassword)
+        {
+            return Result.Failure<bool>("New password and confirmation do not match.");
+        }
+
+        if (request.NewPassword.Length < 8)
+        {
+            return Result.Failure<bool>("New password must be at least 8 characters long.");
+        }
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive, cancellationToken);
+        if (user == null)
+        {
+            return Result.Failure<bool>("User not found.");
+        }
+
+        if (!_passwordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
+        {
+            return Result.Failure<bool>("The current password entered is incorrect.");
+        }
+
+        if (_passwordHasher.VerifyPassword(request.NewPassword, user.PasswordHash))
+        {
+            return Result.Failure<bool>("The new password cannot be identical to the current password.");
+        }
+
+        user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
+        user.ModifiedAtUtc = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result.Success(true);
+    }
 }

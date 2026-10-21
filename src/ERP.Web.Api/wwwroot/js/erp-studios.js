@@ -243,9 +243,9 @@ const MODULE_SUITES_REGISTRY = {
       {
         id: 1, title: 'Master Setup Suite', color: 'blue',
         cards: [
-          { title: 'Product Master Catalog', desc: 'Finished goods, raw materials, spares & assets', badge: '4 Products', icon: 'box', action: "navigateToList('products')" },
+          { title: 'Product', desc: 'Finished goods, raw materials, spares & assets', badge: '4 Products', icon: 'box', action: "navigateToList('products')" },
           { title: 'Warehouses & Depots', desc: 'Regional stock depots & plant holding locations', badge: '3 Depots', icon: 'warehouse', action: "navigateToList('warehouses')" },
-          { title: 'Units of Measure (UOM)', desc: 'Kg, Metric Ton, Meters, Boxes & conversion ratios', badge: '12 UOMs', icon: 'ruler', action: "showToast('UOM table active', 'info')" }
+          { title: 'Units of Measure (UOM)', desc: 'Kg, Metric Ton, Meters, Boxes & conversion ratios', badge: '12 UOMs', icon: 'ruler', action: "navigateToList('uoms')" }
         ]
       },
       {
@@ -658,13 +658,14 @@ const ALL_ERP_VIEWS = [
   'entry-employee', 'entry-contra',
   'entry-challan', 'entry-invoice', 'entry-pr', 'entry-stock-transfer', 'entry-bank',
   'entry-asset', 'entry-bom', 'payroll-batch', 'audit-trail',
-  'list-accounts', 'list-customers', 'list-vendors', 'list-products', 'list-warehouses',
-  'list-employees', 'list-banks', 'list-assets', 'list-boms', 'list-sales-orders', 'view-record'
+  'list-accounts', 'list-customers', 'list-vendors', 'list-products', 'list-warehouses', 'list-uoms', 'entry-uom',
+  'list-employees', 'list-banks', 'list-assets', 'list-boms', 'list-sales-orders', 'view-record', 'user-profile'
 ];
 
 const PARENT_VIEW_MAP = {
   // Dedicated Read-Only View -> Return to respective list page
   'view-record': 'list-products',
+  'user-profile': 'dashboard',
 
   // Master Data Entry Forms -> Return to their List Pages
   'entry-account': 'list-accounts',
@@ -672,6 +673,7 @@ const PARENT_VIEW_MAP = {
   'entry-vendor': 'list-vendors',
   'entry-product': 'list-products',
   'entry-warehouse': 'list-warehouses',
+  'entry-uom': 'list-uoms',
   'entry-employee': 'list-employees',
   'entry-bank': 'list-banks',
   'entry-asset': 'list-assets',
@@ -683,6 +685,7 @@ const PARENT_VIEW_MAP = {
   'list-vendors': 'module-accounts-payable',
   'list-products': 'module-inventory',
   'list-warehouses': 'module-inventory',
+  'list-uoms': 'module-inventory',
   'list-employees': 'module-hris',
   'list-banks': 'module-cash-book',
   'list-assets': 'module-fixed-assets',
@@ -802,6 +805,11 @@ function getParentModuleForStudio(viewOrStudioId) {
 function handleHashRouting() {
   if (isRouterNavigating) return;
   const rawHash = (window.location.hash || '').replace(/^#/, '');
+
+  if (!getAuthToken()) {
+    showLoginScreen();
+    return;
+  }
 
   if (!rawHash || rawHash === 'dashboard') {
     executeNavigateToStudio('dashboard', false);
@@ -930,6 +938,7 @@ function executeNavigateToStudio(studioId, updateHash = true) {
   if (studioId === 'entry-contra') initFullContraStudio();
   if (studioId === 'payroll-batch') computePayrollBatch();
   if (studioId === 'audit-trail') loadAuditTrailStudio();
+  if (studioId === 'user-profile') populateUserProfileStudio();
 
   // Update Fluent Breadcrumbs
   updateBreadcrumbs(studioId);
@@ -1210,7 +1219,7 @@ const GROUP_TO_MODULE_SLUG = {
 };
 
 const ENTITY_VIEW_METADATA = {
-  product: { group: 'Inventory Control', modSlug: 'inventory', listStudio: 'list-products', listLabel: 'Product Master Catalog' },
+  product: { group: 'Inventory Control', modSlug: 'inventory', listStudio: 'list-products', listLabel: 'Product' },
   customer: { group: 'Accounts Receivable', modSlug: 'accounts-receivable', listStudio: 'list-customers', listLabel: 'Customer Master Directory' },
   vendor: { group: 'Accounts Payable', modSlug: 'accounts-payable', listStudio: 'list-vendors', listLabel: 'Vendor & Supplier Directory' },
   account: { group: 'General Ledger', modSlug: 'general-ledger', listStudio: 'list-accounts', listLabel: 'Chart of Accounts Registry' },
@@ -1292,9 +1301,10 @@ function updateBreadcrumbs(studioId) {
     'cash-book': { group: 'Treasury & Banking', page: 'Cash & Bank Book Register Studio' },
     'entry-customer': { group: 'Accounts Receivable', page: 'Customer Master Account Registration' },
     'entry-vendor': { group: 'Accounts Payable', page: 'Vendor & Supplier Master Registration' },
-    'entry-product': { group: 'Inventory Control', page: 'Product Master Catalog Specification' },
+    'entry-product': { group: 'Inventory Control', page: 'Product Specification' },
     'entry-account': { group: 'General Ledger', page: 'GL Chart of Accounts Ledger Setup' },
     'entry-warehouse': { group: 'Inventory Control', page: 'Warehouse & Distribution Depot Registration' },
+    'entry-uom': { group: 'Inventory Control', page: 'Unit of Measure (UOM) Definition' },
     'entry-employee': { group: 'HRIS & Payroll', page: 'Employee Master HRIS Enrollment' },
     'entry-contra': { group: 'Treasury & Banking', page: 'Inter-Account Contra Transfer Studio' },
     'entry-challan': { group: 'Supply Chain & Distribution', page: 'Delivery Challan & Dispatch Studio' },
@@ -1309,8 +1319,9 @@ function updateBreadcrumbs(studioId) {
     'list-accounts': { group: 'General Ledger', page: 'Chart of Accounts Registry' },
     'list-customers': { group: 'Accounts Receivable', page: 'Customer Master Directory' },
     'list-vendors': { group: 'Accounts Payable', page: 'Vendor & Supplier Directory' },
-    'list-products': { group: 'Inventory Control', page: 'Product Master Catalog' },
+    'list-products': { group: 'Inventory Control', page: 'Product' },
     'list-warehouses': { group: 'Inventory Control', page: 'Warehouses & Depots Registry' },
+    'list-uoms': { group: 'Inventory Control', page: 'Units of Measure (UOM) Registry' },
     'list-employees': { group: 'HRIS & Payroll', page: 'Employee Master Directory' },
     'list-banks': { group: 'Treasury & Banking', page: 'Corporate Bank Accounts Registry' },
     'list-assets': { group: 'Fixed Assets', page: 'Fixed Asset Capital Registry' },
@@ -1472,14 +1483,44 @@ async function handleLoginFormSubmit(event) {
   }
 }
 
-function handleSignOut() {
+async function handleSignOut() {
+  const token = getAuthToken();
+  if (token) {
+    try {
+      await fetch('/api/sa/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (e) {
+      console.warn('Logout API notification failed:', e);
+    }
+  }
+
   localStorage.removeItem('erp_jwt_token');
   localStorage.removeItem('erp_refresh_token');
   localStorage.removeItem('erp_user_profile');
+  localStorage.removeItem('erp_active_company_id');
+  sessionStorage.clear();
   cachedJwtToken = null;
-  const dropdown = document.getElementById('user-profile-dropdown');
-  if (dropdown) dropdown.classList.add('hidden');
-  showLoginScreen('You have been signed out.');
+  ERP_STATE.currentUser = null;
+
+  if (typeof closeUserMenu === 'function') {
+    closeUserMenu();
+  } else {
+    const dropdown = document.getElementById('user-profile-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+  }
+
+  // Prevent browser back navigation from restoring cached authenticated pages
+  try {
+    window.history.replaceState(null, '', window.location.pathname);
+  } catch (histErr) {
+    console.warn('History state replacement error:', histErr);
+  }
+
+  showLoginScreen('You have been safely signed out.');
   if (typeof showToast === 'function') {
     showToast('Signed out successfully.', 'info');
   }
@@ -1934,6 +1975,21 @@ function resetEntryForm(entityType) {
     if (costEl) costEl.selectedIndex = 0;
     const budEl = document.getElementById('acc-budget-track');
     if (budEl) budEl.selectedIndex = 0;
+  } else if (entityType === 'uom') {
+    const codeEl = document.getElementById('uom-code');
+    if (codeEl) { codeEl.value = ''; codeEl.readOnly = false; }
+    const nameEl = document.getElementById('uom-name');
+    if (nameEl) nameEl.value = '';
+    const catEl = document.getElementById('uom-category');
+    if (catEl) catEl.selectedIndex = 0;
+    const precEl = document.getElementById('uom-precision');
+    if (precEl) precEl.selectedIndex = 0;
+    const baseEl = document.getElementById('uom-is-base');
+    if (baseEl) baseEl.selectedIndex = 0;
+    const factorEl = document.getElementById('uom-factor');
+    if (factorEl) factorEl.value = '1.0000';
+    const isoEl = document.getElementById('uom-iso');
+    if (isoEl) isoEl.value = '';
   } else if (entityType === 'warehouse') {
     const codeEl = document.getElementById('wh-code');
     if (codeEl) { codeEl.value = '[Auto-Generated on Save]'; codeEl.readOnly = true; }
@@ -5566,6 +5622,7 @@ function loadListData(entity) {
     case 'vendors': loadVendorListData(); break;
     case 'products': loadProductListData(); break;
     case 'warehouses': loadWarehouseListData(); break;
+    case 'uoms': loadUomListData(); break;
     case 'employees': loadEmployeeListData(); break;
     case 'banks': loadBankListData(); break;
     case 'assets': loadAssetListData(); break;
@@ -5660,32 +5717,29 @@ function renderAccountListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('account', '${item.accountCode}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
               onclick="editAccountRecord('${item.accountCode}', '${escape(item.accountName)}', '${item.groupName || ''}', '${normalBal}', ${item.isReconcilable ? 'true' : 'false'})" 
-              class="h-7 px-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-edit"
               title="Edit Record"
               aria-label="Edit"
             >
-              <i data-lucide="edit-2" class="w-3 h-3"></i>
-              <span>Edit</span>
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
               onclick="confirmSoftDelete('account', '${item.accountCode}', '${escape(item.accountName)}', ${item.id || 0})" 
-              class="h-7 px-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-delete"
               title="Delete Record"
               aria-label="Delete"
             >
-              <i data-lucide="trash-2" class="w-3 h-3"></i>
-              <span>Delete</span>
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         </td>
@@ -5817,12 +5871,11 @@ function renderCustomerListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('customer', '${code}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
@@ -5977,12 +6030,11 @@ function renderVendorListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('vendor', '${code}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
@@ -6130,32 +6182,29 @@ function renderProductListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('product', '${code}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
               onclick="editProductRecord('${code}', '${escape(name)}', ${cost}, ${price}, '${uom}')" 
-              class="h-7 px-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-edit"
               title="Edit Record"
               aria-label="Edit"
             >
-              <i data-lucide="edit-2" class="w-3 h-3"></i>
-              <span>Edit</span>
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
               onclick="confirmSoftDelete('product', '${code}', '${escape(name)}', ${item.id || 0})" 
-              class="h-7 px-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-delete"
               title="Delete Record"
               aria-label="Delete"
             >
-              <i data-lucide="trash-2" class="w-3 h-3"></i>
-              <span>Delete</span>
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         </td>
@@ -6285,32 +6334,29 @@ function renderWarehouseListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('warehouse', '${code}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
               onclick="editWarehouseRecord('${code}', '${escape(name)}', '${escape(loc)}')" 
-              class="h-7 px-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-edit"
               title="Edit Record"
               aria-label="Edit"
             >
-              <i data-lucide="edit-2" class="w-3 h-3"></i>
-              <span>Edit</span>
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
               onclick="confirmSoftDelete('warehouse', '${code}', '${escape(name)}', ${item.id || 0})" 
-              class="h-7 px-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-delete"
               title="Delete Record"
               aria-label="Delete"
             >
-              <i data-lucide="trash-2" class="w-3 h-3"></i>
-              <span>Delete</span>
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         </td>
@@ -6362,6 +6408,211 @@ function editWarehouseRecord(code, name, loc) {
   if (txt) txt.textContent = 'Save';
   markFormDirty('warehouse');
 }
+
+// --------------------------------------------------------------------------
+// 17.5B UNITS OF MEASURE (UOM) REGISTRY
+// --------------------------------------------------------------------------
+async function loadUomListData() {
+  const tbody = document.getElementById('tbody-list-uoms');
+  const emptyState = document.getElementById('empty-list-uoms');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-teal-400"></i><span>Loading units of measure...</span></td></tr>';
+  initLucide();
+
+  try {
+    const res = await apiFetch('/api/inv/products/uoms');
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.data && json.data.length > 0) {
+        ERP_STATE.unitsOfMeasure = json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('UOM API fetch notice:', err);
+  }
+
+  if (!ERP_STATE.unitsOfMeasure || ERP_STATE.unitsOfMeasure.length === 0) {
+    ERP_STATE.unitsOfMeasure = [
+      { id: 1, uomCode: 'MT', uomName: 'Metric Ton', category: 'Weight', isBase: true, precision: 3 },
+      { id: 2, uomCode: 'KG', uomName: 'Kilogram', category: 'Weight', isBase: false, precision: 2 },
+      { id: 3, uomCode: 'PCS', uomName: 'Pieces / Count', category: 'Discrete', isBase: true, precision: 0 },
+      { id: 4, uomCode: 'BOX', uomName: 'Master Outer Carton Box', category: 'Packaging', isBase: false, precision: 0 },
+      { id: 5, uomCode: 'MTR', uomName: 'Linear Meter', category: 'Length', isBase: true, precision: 2 },
+      { id: 6, uomCode: 'SQM', uomName: 'Square Meter', category: 'Area', isBase: true, precision: 2 },
+      { id: 7, uomCode: 'LTR', uomName: 'Liter', category: 'Volume', isBase: true, precision: 2 },
+      { id: 8, uomCode: 'BUNDLE', uomName: 'Steel Rebar Bundle', category: 'Packaging', isBase: false, precision: 0 },
+      { id: 9, uomCode: 'ROLL', uomName: 'Steel Coil / Sheet Roll', category: 'Packaging', isBase: false, precision: 0 },
+      { id: 10, uomCode: 'SET', uomName: 'Complete Hardware Set', category: 'Discrete', isBase: false, precision: 0 },
+      { id: 11, uomCode: 'BAG', uomName: 'Resin / Cement Bag (50kg)', category: 'Packaging', isBase: false, precision: 0 },
+      { id: 12, uomCode: 'FT', uomName: 'Linear Feet', category: 'Length', isBase: false, precision: 2 }
+    ];
+  }
+
+  renderUomListTable(ERP_STATE.unitsOfMeasure);
+}
+
+function renderUomListTable(list) {
+  const tbody = document.getElementById('tbody-list-uoms');
+  const emptyState = document.getElementById('empty-list-uoms');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    const pag = document.getElementById('pagination-list-uoms');
+    if (pag) pag.innerHTML = '';
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  if (emptyState) emptyState.classList.add('hidden');
+
+  const rowRenderer = (item) => {
+    const code = item.uomCode || '';
+    const name = item.uomName || '';
+    const category = item.category || (['MT','KG'].includes(code) ? 'Weight' : (['MTR','FT'].includes(code) ? 'Length' : 'Discrete'));
+    const isBase = item.isBase !== false;
+    const baseBadge = isBase
+      ? '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-500/15 text-teal-400 border border-teal-500/20">Base Unit</span>'
+      : '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-500/15 text-slate-400 border border-white/10">Derivative</span>';
+
+    return `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-mono font-bold text-teal-400">${code}</td>
+        <td class="py-3 px-4 text-slate-200 font-medium">${name}</td>
+        <td class="py-3 px-4 text-slate-300">${category}</td>
+        <td class="py-3 px-4">${baseBadge}</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Active</span></td>
+        <td class="py-3 px-4 text-right">
+          <div class="inline-flex items-center gap-1.5 justify-end">
+            <button 
+              type="button" 
+              onclick="editUomRecord('${code}', '${escape(name)}', '${category}')" 
+              class="erp-row-action-btn btn-edit"
+              title="Edit Record"
+              aria-label="Edit"
+            >
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button 
+              type="button" 
+              onclick="confirmSoftDelete('uom', '${code}', '${escape(name)}', ${item.id || 0})" 
+              class="erp-row-action-btn btn-delete"
+              title="Delete Record"
+              aria-label="Delete"
+            >
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  };
+
+  if (!window.ERP_PAGINATION['tbody-list-uoms']) {
+    new ErpAdaptiveTablePagination({
+      tableId: 'table-list-uoms',
+      tbodyId: 'tbody-list-uoms',
+      paginationId: 'pagination-list-uoms',
+      initialPageSize: 10,
+      renderRow: rowRenderer
+    });
+  } else {
+    window.ERP_PAGINATION['tbody-list-uoms'].renderRow = rowRenderer;
+    window.ERP_PAGINATION['tbody-list-uoms'].setData(list);
+  }
+
+  initLucide();
+}
+
+function filterUomListTable() {
+  const query = (document.getElementById('search-list-uoms')?.value || '').toLowerCase();
+  const filtered = (ERP_STATE.unitsOfMeasure || []).filter(u => 
+    (u.uomCode || '').toLowerCase().includes(query) ||
+    (u.uomName || '').toLowerCase().includes(query) ||
+    (u.category || '').toLowerCase().includes(query)
+  );
+  renderUomListTable(filtered);
+}
+
+function openNewUomForm() {
+  resetEntryForm('uom');
+  const txt = document.getElementById('txt-save-uom');
+  if (txt) txt.textContent = 'Save';
+  navigateToStudio('entry-uom');
+}
+
+function editUomRecord(code, name, category) {
+  navigateToStudio('entry-uom');
+  const codeEl = document.getElementById('uom-code');
+  if (codeEl) { codeEl.value = code; codeEl.readOnly = true; }
+  const nameEl = document.getElementById('uom-name');
+  if (nameEl) nameEl.value = unescape(name);
+  const catEl = document.getElementById('uom-category');
+  if (catEl && category) catEl.value = category;
+  const txt = document.getElementById('txt-save-uom');
+  if (txt) txt.textContent = 'Save';
+  markFormDirty('uom');
+}
+
+async function saveUomEntry() {
+  clearAllFieldErrors('uom');
+  const code = document.getElementById('uom-code')?.value.trim().toUpperCase();
+  const name = document.getElementById('uom-name')?.value.trim();
+
+  let hasError = false;
+  if (!code || code.length < 1) {
+    setFieldError('uom-code', 'Please provide a valid UOM Code / Symbol (e.g. MT, KG).');
+    hasError = true;
+  }
+  if (!name || name.length < 2) {
+    setFieldError('uom-name', 'Standard Unit Name is required.');
+    hasError = true;
+  }
+
+  if (hasError) {
+    showToast('Please correct highlighted validation errors.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-uom');
+  const txt = document.getElementById('txt-save-uom');
+  if (btn) btn.disabled = true;
+  if (txt) txt.textContent = 'Saving...';
+
+  try {
+    const payload = {
+      uomCode: code,
+      uomName: name
+    };
+
+    const res = await apiFetch('/api/inv/products/uoms', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      showToast(`Unit of Measure ${code} (${name}) saved successfully!`, 'success');
+      clearFormDirty();
+      await loadUomListData();
+      navigateToList('uoms');
+    } else {
+      let msg = 'Failed to save UOM.';
+      try {
+        const j = await res.json();
+        if (j.message) msg = j.message;
+      } catch (_) {}
+      showToast(msg, 'error');
+    }
+  } catch (err) {
+    console.warn('UOM save error:', err);
+    showToast('Network error while saving UOM.', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (txt) txt.textContent = 'Save';
+    initLucide();
+  }
+}
+
 
 // --------------------------------------------------------------------------
 // 17.6 EMPLOYEE MASTER DIRECTORY
@@ -6435,12 +6686,11 @@ function renderEmployeeListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('employee', '${code}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
@@ -6598,12 +6848,11 @@ function renderBankListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('bank', '${accNo}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
@@ -6753,12 +7002,11 @@ function renderAssetListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('asset', '${tag}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
@@ -6907,12 +7155,11 @@ function renderBomListTable(list) {
             <button 
               type="button" 
               onclick="viewRecord('bom', '${code}')" 
-              class="h-7 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1 font-semibold text-[11px] cursor-pointer"
+              class="erp-row-action-btn btn-view"
               title="View Record"
               aria-label="View"
             >
-              <i data-lucide="eye" class="w-3 h-3"></i>
-              <span>View</span>
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
             </button>
             <button 
               type="button" 
@@ -7343,7 +7590,7 @@ function renderViewRecord(entityType, item) {
 
   if (entityType === 'product') {
     code = item.productCode || item.code || 'PRD-101';
-    title = 'Product Master Catalog Specification';
+    title = 'Product Specification';
     sectionTitle = 'Product Specification & Inventory Controls';
     iconName = 'box';
     status = item.isActive !== false ? 'Active Catalog' : 'Inactive';
@@ -7712,6 +7959,9 @@ async function executePendingDelete() {
     } else if (del.entityType === 'account' && ERP_STATE.chartOfAccounts) {
       ERP_STATE.chartOfAccounts = ERP_STATE.chartOfAccounts.filter(a => a.accountCode !== del.code);
       renderAccountListTable(ERP_STATE.chartOfAccounts);
+    } else if (del.entityType === 'uom' && ERP_STATE.unitsOfMeasure) {
+      ERP_STATE.unitsOfMeasure = ERP_STATE.unitsOfMeasure.filter(u => u.uomCode !== del.code);
+      renderUomListTable(ERP_STATE.unitsOfMeasure);
     } else if (del.entityType === 'warehouse' && ERP_STATE.warehouses) {
       ERP_STATE.warehouses = ERP_STATE.warehouses.filter(w => w.warehouseCode !== del.code);
       renderWarehouseListTable(ERP_STATE.warehouses);
@@ -7769,3 +8019,175 @@ window.openSalesOrderInStudio = openSalesOrderInStudio;
 window.confirmSalesOrderRecord = confirmSalesOrderRecord;
 window.exportSalesOrdersCsv = exportSalesOrdersCsv;
 
+// UOM Registry functions
+window.loadUomListData = loadUomListData;
+window.renderUomListTable = renderUomListTable;
+window.filterUomListTable = filterUomListTable;
+window.openNewUomForm = openNewUomForm;
+window.editUomRecord = editUomRecord;
+window.saveUomEntry = saveUomEntry;
+
+
+
+// ==========================================================================
+// USER PROFILE & PASSWORD CHANGE CONTROLLER
+// ==========================================================================
+function populateUserProfileStudio() {
+  const userJson = localStorage.getItem('erp_user_profile');
+  if (!userJson) return;
+  try {
+    const user = JSON.parse(userJson);
+    const codeEl = document.getElementById('prof-user-code');
+    const nameEl = document.getElementById('prof-username');
+    const fullEl = document.getElementById('prof-fullname');
+    const emailEl = document.getElementById('prof-email');
+    const rolesEl = document.getElementById('prof-roles-badge');
+
+    if (codeEl) codeEl.value = user.userCode || 'USR-001';
+    if (nameEl) nameEl.value = user.username || '';
+    if (fullEl) fullEl.value = user.fullName || '';
+    if (emailEl) emailEl.value = user.email || '';
+
+    if (rolesEl) {
+      rolesEl.innerHTML = (user.roles || ['StandardUser']).map(r => 
+        `<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">${r}</span>`
+      ).join('');
+    }
+  } catch (e) {
+    console.warn('Failed to parse user profile for studio:', e);
+  }
+}
+
+async function handleProfileUpdateSubmit(e) {
+  e.preventDefault();
+  const fullName = document.getElementById('prof-fullname')?.value?.trim();
+  const email = document.getElementById('prof-email')?.value?.trim();
+
+  if (!fullName || !email) {
+    showToast('Full Name and Email are required.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-profile');
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await apiFetch('/api/sa/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify({ fullName, email })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      showToast(data.message || 'Failed to update profile.', 'danger');
+      return;
+    }
+
+    localStorage.setItem('erp_user_profile', JSON.stringify(data.data));
+    applyUserProfileToUI(data.data);
+    showToast('Profile updated successfully!', 'success');
+  } catch (err) {
+    console.error('Profile update error:', err);
+    showToast('An error occurred while updating profile.', 'danger');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function handleChangePasswordSubmit(e) {
+  e.preventDefault();
+  const currentPassword = document.getElementById('pwd-current')?.value;
+  const newPassword = document.getElementById('pwd-new')?.value;
+  const confirmNewPassword = document.getElementById('pwd-confirm')?.value;
+  const errAlert = document.getElementById('pwd-error-alert');
+
+  if (errAlert) errAlert.classList.add('hidden');
+
+  if (!currentPassword || !newPassword || !confirmNewPassword) {
+    if (errAlert) {
+      errAlert.textContent = 'All password fields are required.';
+      errAlert.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    if (errAlert) {
+      errAlert.textContent = 'New password and confirmation do not match.';
+      errAlert.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    if (errAlert) {
+      errAlert.textContent = 'New password must be at least 8 characters long.';
+      errAlert.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (newPassword === currentPassword) {
+    if (errAlert) {
+      errAlert.textContent = 'New password cannot be identical to your current password.';
+      errAlert.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const btn = document.getElementById('btn-update-password');
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await apiFetch('/api/sa/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword, confirmNewPassword })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      if (errAlert) {
+        errAlert.textContent = data.message || 'Failed to change password.';
+        errAlert.classList.remove('hidden');
+      }
+      return;
+    }
+
+    // Clear password fields
+    document.getElementById('pwd-current').value = '';
+    document.getElementById('pwd-new').value = '';
+    document.getElementById('pwd-confirm').value = '';
+
+    showToast('Password changed successfully!', 'success');
+  } catch (err) {
+    console.error('Password change error:', err);
+    if (errAlert) {
+      errAlert.textContent = 'Network or server error while changing password.';
+      errAlert.classList.remove('hidden');
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function togglePasswordVisibility(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  if (!input) return;
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+
+  if (btn) {
+    const span = btn.querySelector('span');
+    const icon = btn.querySelector('i');
+    if (span) span.textContent = isPassword ? 'Hide' : 'Show';
+    if (icon) icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+}
+
+window.populateUserProfileStudio = populateUserProfileStudio;
+window.handleProfileUpdateSubmit = handleProfileUpdateSubmit;
+window.handleChangePasswordSubmit = handleChangePasswordSubmit;
+window.togglePasswordVisibility = togglePasswordVisibility;

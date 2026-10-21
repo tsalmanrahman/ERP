@@ -186,8 +186,8 @@
   ></div>
 
   <!-- Monaco Modern Floating Dynamic Capsule Sidebar (Option D) -->
-  <aside class="floating-sidebar glass-panel p-3 justify-between overflow-y-auto">
-    <div class="flex flex-col h-full justify-between">
+  <aside class="floating-sidebar glass-panel p-3 overflow-y-auto">
+    <div class="flex flex-col h-full">
       <div>
         <!-- Brand Logo Header & Subsidiary Switcher (Option D Header) -->
         <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/5">
@@ -197,9 +197,8 @@
               <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0 border border-blue-500/30">
                 <i data-lucide="layers" class="w-3.5 h-3.5 text-white"></i>
               </div>
-              <div class="min-w-0">
+              <div class="min-w-0 flex items-center">
                 <h1 class="font-bold text-xs tracking-tight text-white truncate">ERP Suite</h1>
-                <span class="text-[9px] text-slate-400 font-medium block truncate">Enterprise Modern</span>
               </div>
             </a>
             
@@ -260,8 +259,7 @@
         <!-- Category Header: NAVIGATE (from Monaco reference) -->
         <div class="sidebar-hide-when-collapsed flex items-center justify-between px-2 pt-1 pb-1">
           <span class="text-[9px] font-mono font-bold tracking-wider text-slate-400 uppercase">NAVIGATE</span>
-          <span class="text-[9px] font-mono text-slate-500">Suite v2.4</span>
-        </div>
+          </div>
 
         <!-- Quick Launch: Home Overview -->
         <a href="#dashboard" onclick="navigateToStudio('dashboard')" data-studio="dashboard" data-tooltip="Home Overview" class="nav-item mb-2 active" id="sidebar-nav-home">
@@ -481,8 +479,8 @@
 
               <div id="accordion-content-inventory" class="accordion-content collapsed sidebar-hide-when-collapsed">
                 <div class="tree-connector-group space-y-0.5 my-1">
-                  <a href="#list-products" onclick="navigateToList('products')" data-list="products" class="tree-sub-item" title="Product Master Catalog">
-                    <span class="truncate">Product Master Catalog</span>
+                  <a href="#list-products" onclick="navigateToList('products')" data-list="products" class="tree-sub-item" title="Product">
+                    <span class="truncate">Product</span>
                   </a>
                   <a href="#entry-product" onclick="navigateToStudio('entry-product')" data-studio="entry-product" class="tree-sub-item" title="Product Entry">
                     <span class="truncate">Product Entry</span>
@@ -495,6 +493,12 @@
                   </a>
                   <a href="#entry-warehouse" onclick="navigateToStudio('entry-warehouse')" data-studio="entry-warehouse" class="tree-sub-item" title="Warehouse Entry">
                     <span class="truncate">Warehouse Entry</span>
+                  </a>
+                  <a href="#list-uoms" onclick="navigateToList('uoms')" data-list="uoms" class="tree-sub-item" title="Units of Measure (UOM)">
+                    <span class="truncate">Units of Measure (UOM)</span>
+                  </a>
+                  <a href="#entry-uom" onclick="navigateToStudio('entry-uom')" data-studio="entry-uom" class="tree-sub-item" title="UOM Entry">
+                    <span class="truncate">UOM Entry</span>
                   </a>
                   <a href="#entry-stock-transfer" onclick="navigateToStudio('entry-stock-transfer')" data-studio="entry-stock-transfer" class="tree-sub-item" title="Stock Transfer (IWT)">
                     <span class="truncate">Stock Transfers (IWT)</span>
@@ -672,33 +676,7 @@
           </div>
 
         </div>
-      </div>
-
-      <!-- Sidebar Bottom Status & Context Area -->
-      <div class="pt-3 border-t border-white/5">
-        <!-- Expanded Bottom View -->
-        <div class="sidebar-hide-when-collapsed flex items-center justify-between text-[11px] text-slate-400 px-1">
-          <span class="flex items-center gap-1.5 font-medium text-emerald-400">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>SQL Live</span>
-          </span>
-          <span class="font-mono text-[10px] text-slate-500" id="sidebar-subsidiary-badge">HSF • v2.4.0</span>
-        </div>
-
-        <!-- Collapsed Slim Rail Bottom View (Company Avatar / Code matching screenshot AD avatar) -->
-        <div class="sidebar-show-when-collapsed flex flex-col items-center gap-2">
-          <a 
-            href="javascript:void(0)" 
-            onclick="openCompanyModal()" 
-            class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-[10px] font-mono font-bold text-blue-400 transition cursor-pointer"
-            title="Active Subsidiary: HSF"
-            aria-label="Active Subsidiary"
-          >
-            HSF
-          </a>
-        </div>
-      </div>
-    </div>
+      </div></div>
   </aside>
 
   <!-- Main Application Area -->
@@ -806,6 +784,10 @@
                 <i data-lucide="code" class="w-3.5 h-3.5 text-blue-400"></i>
                 <span>API Reference</span>
               </a>
+              <button type="button" id="menu-btn-user-profile" onclick="navigateToStudio('user-profile')" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition cursor-pointer" title="View &amp; Edit Profile" aria-label="Profile">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
+                <span>Profile</span>
+              </button>
               <button type="button" onclick="showToast('Signed in as Enterprise Authorized User', 'info')" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition cursor-pointer" title="View Tenant Permissions" aria-label="Permissions">
                 <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
                 <span>Permissions</span>
@@ -3622,7 +3604,7 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Product Master Catalog</h2>
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Product</h2>
               </div>
             </div>
           </div>
@@ -3764,6 +3746,88 @@
             <p class="text-xs">No warehouse depot records found.</p>
           </div>
           <div id="pagination-list-warehouses" class="erp-pagination-bar"></div>
+        </div>
+      </section>
+
+      <!-- LIST PAGE: UNITS OF MEASURE (UOM) REGISTRY -->
+      <section id="studio-list-uoms" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="navigateBackFrom('list-uoms')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Return to Inventory Control"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0 border border-teal-500/20">
+              <i data-lucide="ruler" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Units of Measure (UOM) Registry</h2>
+                
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="search-list-uoms" 
+                oninput="filterUomListTable()" 
+                placeholder="Search UOM code or description..." 
+                class="h-9 pl-9 pr-3 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-400 focus:outline-none focus:border-teal-500/50 w-48 sm:w-60"
+              />
+            </div>
+            <button 
+              type="button" 
+              onclick="loadUomListData()" 
+              class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Refresh UOM List"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openNewUomForm()" 
+              class="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Add New Unit of Measure"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table id="table-list-uoms" class="w-full text-xs text-left border-collapse erp-table-compact">
+              <thead class="bg-white/[0.04] text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-white/10">
+                <tr>
+                  <th class="py-3 px-4">UOM Code</th>
+                  <th class="py-3 px-4">Standard Unit Name</th>
+                  <th class="py-3 px-4">Measurement Category</th>
+                  <th class="py-3 px-4">Base Unit</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-list-uoms" class="divide-y divide-white/5 text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-list-uoms" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+            <p class="text-xs">No units of measure found.</p>
+          </div>
+          <div id="pagination-list-uoms" class="erp-pagination-bar"></div>
         </div>
       </section>
 
@@ -4715,7 +4779,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
-                  Product Master Catalog Specification
+                  Product Specification
                 </h2>
                 
                 <span id="prod-dirty-badge" class="dirty-badge hidden">
@@ -5375,6 +5439,149 @@
             </div>
           </div>
 
+        </div>
+
+      </section>
+
+      <!-- =====================================================================
+           DEDICATED FULL-PAGE ENTRY: UNIT OF MEASURE (UOM) DEFINITION
+           ===================================================================== -->
+      <section id="studio-entry-uom" class="space-y-4 hidden">
+        
+        <!-- Header Action Banner -->
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button"
+              onclick="confirmDiscardChanges('uom')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+              title="Return to Previous Page"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+
+            <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0 border border-teal-500/20">
+              <i data-lucide="ruler" class="w-4 h-4"></i>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                  Unit of Measure (UOM) Definition
+                </h2>
+                
+                <span id="uom-dirty-badge" class="dirty-badge hidden">
+                  <i data-lucide="circle-dot" class="w-2.5 h-2.5"></i>
+                  <span>Unsaved Changes</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Studio Actions -->
+          <div class="flex items-center gap-2 shrink-0">
+            <button 
+              type="button" 
+              onclick="resetEntryForm('uom')" 
+              class="h-9 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+              title="Reset Form Fields"
+            >
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Reset</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="confirmDiscardChanges('uom')" 
+              class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+              title="Cancel Changes"
+            >
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              <span>Cancel</span>
+            </button>
+            <button 
+              type="button" 
+              id="btn-save-uom" 
+              onclick="saveUomEntry()" 
+              class="h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Save Unit of Measure"
+            >
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span id="txt-save-uom">Save</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2-Card Form Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Card 1: UOM Core Definition -->
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+              <i data-lucide="ruler" class="w-4 h-4 text-teal-400"></i>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Core Unit Definition</h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">UOM Symbol / Code *</label>
+                <input type="text" id="uom-code" placeholder="e.g. MT, KG, PCS, BOX" oninput="markFormDirty('uom')" class="mac-input w-full font-mono font-bold text-xs uppercase">
+                <span id="err-uom-code" class="field-error hidden"></span>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Standard Unit Name *</label>
+                <input type="text" id="uom-name" placeholder="e.g. Metric Ton, Kilogram, Pieces" oninput="markFormDirty('uom')" class="mac-input w-full font-bold text-xs">
+                <span id="err-uom-name" class="field-error hidden"></span>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Measurement Category</label>
+                <select id="uom-category" onchange="markFormDirty('uom')" class="mac-input w-full text-xs font-semibold">
+                  <option value="Weight">Weight / Mass (MT, KG, G, LBS)</option>
+                  <option value="Length">Length / Distance (M, FT, MM, INCH)</option>
+                  <option value="Area">Area / Surface (SQM, SQFT)</option>
+                  <option value="Volume">Volume / Liquid (LTR, CBM, GALLON)</option>
+                  <option value="Discrete">Discrete / Quantity (PCS, NOS, SET, BUNDLE)</option>
+                  <option value="Packaging">Packaging Unit (BOX, CARTON, ROLL)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Decimal Precision</label>
+                <select id="uom-precision" onchange="markFormDirty('uom')" class="mac-input w-full text-xs font-semibold">
+                  <option value="2">2 Decimals (Standard commercial)</option>
+                  <option value="3">3 Decimals (Metric weighbridge MT/KG)</option>
+                  <option value="4">4 Decimals (High precision chemical/BOM)</option>
+                  <option value="0">0 Decimals (Whole units / Discrete)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Regulatory & Conversion Settings -->
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+              <i data-lucide="scale" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Standardization & Base Conversion</h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Base Measurement Flag</label>
+                <select id="uom-is-base" onchange="markFormDirty('uom')" class="mac-input w-full text-xs">
+                  <option value="true">Yes — Canonical Base Unit for Category</option>
+                  <option value="false">No — Secondary / Derivative Unit</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Conversion Multiplier to Base</label>
+                <input type="number" id="uom-factor" value="1.0000" step="0.0001" oninput="markFormDirty('uom')" class="mac-input w-full font-mono text-xs">
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Description / ISO Symbol Reference</label>
+                <input type="text" id="uom-iso" placeholder="e.g. ISO 80000-1 / UNECE Rec 20 compliant standard unit" oninput="markFormDirty('uom')" class="mac-input w-full text-xs">
+              </div>
+            </div>
+          </div>
         </div>
 
       </section>
@@ -7398,6 +7605,126 @@
     <footer class="mt-auto pt-6 pb-2 border-t border-slate-200 dark:border-white/5 text-center text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors duration-150">
       <p>&copy; 2026 ERP Enterprise Suite &bull; All rights reserved.</p>
     </footer>
+
+  
+    <!-- =======================================================================
+         STUDIO 31: USER PROFILE & SECURITY STUDIO
+         ======================================================================= -->
+    <section id="studio-user-profile" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6 border border-white/10 space-y-6">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/10">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+              <i data-lucide="user-cog" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">User Profile &amp; Security</h2>
+              <p class="text-xs text-slate-400">Manage account information, active company context, and security credentials</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="navigateBackFrom('user-profile')" class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer" title="Return to Dashboard" aria-label="Back">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Two Column Layout: Profile Info + Change Password -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Left: Profile Information -->
+          <div class="glass-card rounded-xl p-5 border border-white/5 space-y-4">
+            <div class="flex items-center gap-2 pb-3 border-b border-white/5">
+              <i data-lucide="badge-info" class="w-4 h-4 text-blue-400"></i>
+              <h3 class="text-sm font-bold text-white">Profile Information</h3>
+            </div>
+
+            <form id="form-user-profile" onsubmit="handleProfileUpdateSubmit(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">User Code</label>
+                <input type="text" id="prof-user-code" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-white/10 text-xs text-slate-400 font-mono cursor-not-allowed" readonly />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Username</label>
+                <input type="text" id="prof-username" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-white/10 text-xs text-slate-400 font-mono cursor-not-allowed" readonly />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Full Name <span class="text-rose-400">*</span></label>
+                <input type="text" id="prof-fullname" required class="w-full h-9 px-3 rounded-lg bg-white/5 border border-white/10 focus:border-blue-500 focus:outline-none text-xs text-white" placeholder="Enter your full name" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Email Address <span class="text-rose-400">*</span></label>
+                <input type="email" id="prof-email" required class="w-full h-9 px-3 rounded-lg bg-white/5 border border-white/10 focus:border-blue-500 focus:outline-none text-xs text-white" placeholder="user@erp.local" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Assigned Roles</label>
+                <div id="prof-roles-badge" class="flex flex-wrap gap-1.5 pt-1"></div>
+              </div>
+              <div class="pt-2 flex justify-end">
+                <button type="submit" id="btn-save-profile" class="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm cursor-pointer transition flex items-center gap-1.5" title="Save Profile Details" aria-label="Save">
+                  <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                  <span>Save</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right: Change Password -->
+          <div class="glass-card rounded-xl p-5 border border-white/5 space-y-4">
+            <div class="flex items-center gap-2 pb-3 border-b border-white/5">
+              <i data-lucide="key-round" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-sm font-bold text-white">Change Password</h3>
+            </div>
+
+            <form id="form-change-password" onsubmit="handleChangePasswordSubmit(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Current Password <span class="text-rose-400">*</span></label>
+                <div class="relative">
+                  <input type="password" id="pwd-current" required class="w-full h-9 pl-3 pr-10 rounded-lg bg-white/5 border border-white/10 focus:border-blue-500 focus:outline-none text-xs text-white" placeholder="Enter current password" />
+                  <button type="button" onclick="togglePasswordVisibility('pwd-current', this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center gap-1 border border-white/5 cursor-pointer" title="Toggle visibility" aria-label="Show">
+                    <i data-lucide="eye" class="w-3 h-3"></i>
+                    <span>Show</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">New Password <span class="text-rose-400">*</span></label>
+                <div class="relative">
+                  <input type="password" id="pwd-new" required minlength="8" class="w-full h-9 pl-3 pr-10 rounded-lg bg-white/5 border border-white/10 focus:border-blue-500 focus:outline-none text-xs text-white" placeholder="Minimum 8 characters" />
+                  <button type="button" onclick="togglePasswordVisibility('pwd-new', this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center gap-1 border border-white/5 cursor-pointer" title="Toggle visibility" aria-label="Show">
+                    <i data-lucide="eye" class="w-3 h-3"></i>
+                    <span>Show</span>
+                  </button>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1">Must be at least 8 characters long and differ from the current password.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Confirm New Password <span class="text-rose-400">*</span></label>
+                <div class="relative">
+                  <input type="password" id="pwd-confirm" required minlength="8" class="w-full h-9 pl-3 pr-10 rounded-lg bg-white/5 border border-white/10 focus:border-blue-500 focus:outline-none text-xs text-white" placeholder="Re-enter new password" />
+                  <button type="button" onclick="togglePasswordVisibility('pwd-confirm', this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center gap-1 border border-white/5 cursor-pointer" title="Toggle visibility" aria-label="Show">
+                    <i data-lucide="eye" class="w-3 h-3"></i>
+                    <span>Show</span>
+                  </button>
+                </div>
+              </div>
+
+              <div id="pwd-error-alert" class="hidden p-2.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-medium"></div>
+
+              <div class="pt-2 flex justify-end">
+                <button type="submit" id="btn-update-password" class="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm cursor-pointer transition flex items-center gap-1.5" title="Update Password Securely" aria-label="Update">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                  <span>Update</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
 
   </main>
 
