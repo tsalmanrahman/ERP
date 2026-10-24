@@ -244,17 +244,18 @@ const MODULE_SUITES_REGISTRY = {
         id: 1, title: 'Master Setup Suite', color: 'blue',
         cards: [
           { title: 'Product', desc: 'Finished goods, raw materials, spares & assets', badge: '4 Products', icon: 'box', action: "navigateToList('products')" },
-          { title: 'Warehouses & Depots', desc: 'Regional stock depots & plant holding locations', badge: '3 Depots', icon: 'warehouse', action: "navigateToList('warehouses')" },
+          { title: 'Depots & Plants', desc: 'Manufacturing plants, factories & regional hubs', badge: 'Depots', icon: 'factory', action: "navigateToList('depots')" },
+          { title: 'Warehouses', desc: 'Store rooms, raw material yards & FG stores', badge: 'Stores', icon: 'warehouse', action: "navigateToList('warehouses')" },
           { title: 'Units of Measure (UOM)', desc: 'Kg, Metric Ton, Meters, Boxes & conversion ratios', badge: '12 UOMs', icon: 'ruler', action: "navigateToList('uoms')" }
         ]
       },
       {
         id: 2, title: 'Transaction Processing Suite', color: 'emerald',
         cards: [
-          { title: 'Stock Ledger Studio', desc: 'Multi-warehouse movement tracking & CSV export', badge: 'Ledger Studio', icon: 'package', action: "navigateToStudio('stock')" },
-          { title: 'Goods Receipt Note (GRN)', desc: 'Receive vendor shipments with inspection & bins', badge: 'GRN Studio', icon: 'truck', action: "navigateToStudio('grn')" },
-          { title: 'Material Issues (WIP)', desc: 'Issue raw materials to production floor & orders', badge: 'WIP Issue', icon: 'log-out', action: "showToast('Material issue voucher created', 'success')" },
-          { title: 'Stock Transfers (IWT)', desc: 'Inter-warehouse transfers between holding depots', badge: 'Transit', icon: 'arrow-left-right', action: "navigateToStudio('entry-stock-transfer')" }
+          { title: 'Stock Transfers', desc: 'Inter-warehouse transfers registry & holding vouchers', badge: 'Transfers', icon: 'arrow-right-left', action: "navigateToList('transfers')" },
+          { title: 'Goods Receipt Notes', desc: 'Receive vendor shipments with inspection & bins', badge: 'GRN Registry', icon: 'package-check', action: "navigateToList('grn')" },
+          { title: 'Stock Adjustments', desc: 'Physical inventory count adjustment & variance vouchers', badge: 'Audit Adj', icon: 'sliders', action: "navigateToList('adjustments')" },
+          { title: 'Stock Ledger Studio', desc: 'Multi-warehouse movement tracking & CSV export', badge: 'Ledger Studio', icon: 'package', action: "navigateToStudio('stock')" }
         ]
       },
       {
@@ -658,7 +659,8 @@ const ALL_ERP_VIEWS = [
   'entry-employee', 'entry-contra',
   'entry-challan', 'entry-invoice', 'entry-pr', 'entry-stock-transfer', 'entry-bank',
   'entry-asset', 'entry-bom', 'payroll-batch', 'audit-trail',
-  'list-accounts', 'list-customers', 'list-vendors', 'list-products', 'list-warehouses', 'list-uoms', 'entry-uom',
+  'list-accounts', 'list-customers', 'list-vendors', 'list-products', 'list-depots', 'entry-depot', 'list-warehouses', 'list-uoms', 'entry-uom',
+  'list-transfers', 'list-adjustments', 'entry-adjustment', 'list-grn',
   'list-employees', 'list-banks', 'list-assets', 'list-boms', 'list-sales-orders', 'view-record', 'user-profile'
 ];
 
@@ -672,20 +674,27 @@ const PARENT_VIEW_MAP = {
   'entry-customer': 'list-customers',
   'entry-vendor': 'list-vendors',
   'entry-product': 'list-products',
+  'entry-depot': 'list-depots',
   'entry-warehouse': 'list-warehouses',
   'entry-uom': 'list-uoms',
   'entry-employee': 'list-employees',
   'entry-bank': 'list-banks',
   'entry-asset': 'list-assets',
   'entry-bom': 'list-boms',
+  'entry-stock-transfer': 'list-transfers',
+  'entry-adjustment': 'list-adjustments',
 
   // Master Data & Transaction List Pages -> Return to parent Module Workspace
   'list-accounts': 'module-general-ledger',
   'list-customers': 'module-accounts-receivable',
   'list-vendors': 'module-accounts-payable',
   'list-products': 'module-inventory',
+  'list-depots': 'module-inventory',
   'list-warehouses': 'module-inventory',
   'list-uoms': 'module-inventory',
+  'list-transfers': 'module-inventory',
+  'list-adjustments': 'module-inventory',
+  'list-grn': 'module-inventory',
   'list-employees': 'module-hris',
   'list-banks': 'module-cash-book',
   'list-assets': 'module-fixed-assets',
@@ -1223,7 +1232,8 @@ const ENTITY_VIEW_METADATA = {
   customer: { group: 'Accounts Receivable', modSlug: 'accounts-receivable', listStudio: 'list-customers', listLabel: 'Customer Master Directory' },
   vendor: { group: 'Accounts Payable', modSlug: 'accounts-payable', listStudio: 'list-vendors', listLabel: 'Vendor & Supplier Directory' },
   account: { group: 'General Ledger', modSlug: 'general-ledger', listStudio: 'list-accounts', listLabel: 'Chart of Accounts Registry' },
-  warehouse: { group: 'Inventory Control', modSlug: 'inventory', listStudio: 'list-warehouses', listLabel: 'Warehouses & Depots Registry' },
+  warehouse: { group: 'Inventory Control', modSlug: 'inventory', listStudio: 'list-warehouses', listLabel: 'Warehouses' },
+  depot: { group: 'Inventory Control', modSlug: 'inventory', listStudio: 'list-depots', listLabel: 'Depots & Plants' },
   employee: { group: 'HRIS & Payroll', modSlug: 'hris', listStudio: 'list-employees', listLabel: 'Employee Master Directory' },
   bank: { group: 'Treasury & Banking', modSlug: 'cash-book', listStudio: 'list-banks', listLabel: 'Corporate Bank Accounts Registry' },
   asset: { group: 'Fixed Assets', modSlug: 'fixed-assets', listStudio: 'list-assets', listLabel: 'Fixed Asset Capital Registry' },
@@ -1303,7 +1313,8 @@ function updateBreadcrumbs(studioId) {
     'entry-vendor': { group: 'Accounts Payable', page: 'Vendor & Supplier Master Registration' },
     'entry-product': { group: 'Inventory Control', page: 'Product Specification' },
     'entry-account': { group: 'General Ledger', page: 'GL Chart of Accounts Ledger Setup' },
-    'entry-warehouse': { group: 'Inventory Control', page: 'Warehouse & Distribution Depot Registration' },
+    'entry-depot': { group: 'Inventory Control', page: 'Depot & Plant Registration' },
+    'entry-warehouse': { group: 'Inventory Control', page: 'Warehouse Store Registration' },
     'entry-uom': { group: 'Inventory Control', page: 'Unit of Measure (UOM) Definition' },
     'entry-employee': { group: 'HRIS & Payroll', page: 'Employee Master HRIS Enrollment' },
     'entry-contra': { group: 'Treasury & Banking', page: 'Inter-Account Contra Transfer Studio' },
@@ -1320,7 +1331,8 @@ function updateBreadcrumbs(studioId) {
     'list-customers': { group: 'Accounts Receivable', page: 'Customer Master Directory' },
     'list-vendors': { group: 'Accounts Payable', page: 'Vendor & Supplier Directory' },
     'list-products': { group: 'Inventory Control', page: 'Product' },
-    'list-warehouses': { group: 'Inventory Control', page: 'Warehouses & Depots Registry' },
+    'list-depots': { group: 'Inventory Control', page: 'Depots & Plants Registry' },
+    'list-warehouses': { group: 'Inventory Control', page: 'Warehouses' },
     'list-uoms': { group: 'Inventory Control', page: 'Units of Measure (UOM) Registry' },
     'list-employees': { group: 'HRIS & Payroll', page: 'Employee Master Directory' },
     'list-banks': { group: 'Treasury & Banking', page: 'Corporate Bank Accounts Registry' },
@@ -1729,6 +1741,7 @@ const DIRTY_BADGE_MAP = {
   'vendor': 'vend-dirty-badge',
   'product': 'prod-dirty-badge',
   'account': 'acc-dirty-badge',
+  'depot': 'depot-dirty-badge',
   'warehouse': 'wh-dirty-badge',
   'employee': 'emp-dirty-badge',
   'contra': 'contra-dirty-badge',
@@ -2289,13 +2302,23 @@ async function saveProductEntry() {
   const category = document.getElementById('prod-category')?.value;
   const name = document.getElementById('prod-name')?.value.trim();
   const grade = document.getElementById('prod-grade')?.value.trim();
+  const hsCode = document.getElementById('prod-hs-code')?.value.trim();
+  const netWeight = parseFloat(document.getElementById('prod-net-weight')?.value) || 0;
+  const grossWeight = parseFloat(document.getElementById('prod-gross-weight')?.value) || netWeight;
+  const weightUom = document.getElementById('prod-weight-uom')?.value || 'KG';
+  const length = parseFloat(document.getElementById('prod-length')?.value) || null;
+  const width = parseFloat(document.getElementById('prod-width')?.value) || null;
+  const height = parseFloat(document.getElementById('prod-height')?.value) || null;
+  const dimUom = document.getElementById('prod-dim-uom')?.value || 'MM';
+  const volumeCbm = parseFloat(document.getElementById('prod-volume-cbm')?.value) || null;
+  const trackingPolicy = parseInt(document.getElementById('prod-tracking-policy')?.value) || 1;
+  const costingMethod = document.getElementById('prod-costing-method')?.value || 'MovingAverage';
   const uom = document.getElementById('prod-uom')?.value || 'MT';
   const reorder = parseFloat(document.getElementById('prod-reorder')?.value) || 0;
   const safety = parseFloat(document.getElementById('prod-safety')?.value) || 0;
   const leadtime = parseInt(document.getElementById('prod-leadtime')?.value) || 14;
   const cost = parseFloat(document.getElementById('prod-cost')?.value) || 0;
   const wholesale = parseFloat(document.getElementById('prod-wholesale')?.value) || 0;
-  const retail = parseFloat(document.getElementById('prod-retail')?.value) || 0;
   const vatRate = parseFloat(document.getElementById('prod-vat-rate')?.value) || 0.15;
   const warehouse = document.getElementById('prod-warehouse')?.value;
   const bin = document.getElementById('prod-bin')?.value.trim();
@@ -2344,7 +2367,21 @@ async function saveProductEntry() {
       standardCost: cost,
       currentCost: cost,
       sellingPrice: wholesale,
-      reorderLevel: reorder
+      reorderLevel: reorder,
+      hsCode: hsCode || null,
+      netWeight: netWeight,
+      grossWeight: grossWeight,
+      weightUom: weightUom,
+      length: length,
+      width: width,
+      height: height,
+      dimensionUom: dimUom,
+      volumeCbm: volumeCbm,
+      trackingPolicy: trackingPolicy,
+      safetyStock: safety,
+      leadTimeDays: leadtime,
+      costingMethod: costingMethod,
+      taxRatePercent: vatRate * 100
     };
 
     const res = await apiFetch('/api/inv/products', {
@@ -3572,22 +3609,40 @@ function onGrnStatusChange(idx, status) {
 async function saveGrn() {
   const carrier = document.getElementById('grn-carrier')?.value || 'DHAKA METRO-TA-14-8921';
   const challan = document.getElementById('grn-challan')?.value || 'DC-88319-TAT';
+  const vendorSelect = document.getElementById('grn-vendor');
+  const warehouseSelect = document.getElementById('grn-warehouse');
+  const poInput = document.getElementById('grn-po-ref');
+
+  const vendorId = parseInt(vendorSelect?.value) || 1;
+  const warehouseId = parseInt(warehouseSelect?.value) || 1;
+  const poNumber = poInput?.value?.trim() || 'PO-2026-0419';
 
   try {
+    const lines = ERP_STATE.grnItems && ERP_STATE.grnItems.length > 0
+      ? ERP_STATE.grnItems.map((item, idx) => ({
+          productId: item.productId || (idx + 1),
+          quantityReceived: Number(item.receivedQty || item.acceptedQty || 10),
+          unitPrice: Number(item.rate || item.unitCost || 8500),
+          batchNumber: item.heatNo || item.batch || 'LOT-2026-A'
+        }))
+      : [
+          {
+            productId: 1,
+            quantityReceived: 10,
+            unitPrice: 42000,
+            batchNumber: 'LOT-2026-03-A'
+          }
+        ];
+
     const payload = {
       grnDate: new Date().toISOString(),
-      warehouseId: 1,
-      vendorId: 1,
-      poNumber: 'PO-2026-0419',
+      warehouseId: warehouseId,
+      vendorId: vendorId,
+      poNumber: poNumber,
       challanNumber: challan,
       challanDate: new Date().toISOString(),
       remarks: `Carrier: ${carrier}`,
-      lines: ERP_STATE.grnItems.map(item => ({
-        productId: 1,
-        quantityReceived: item.receivedQty,
-        unitPrice: 8500,
-        batchNumber: 'LOT-2026-03-A'
-      }))
+      lines: lines
     };
 
     const res = await apiFetch('/api/inv/goodsreceipt', {
@@ -3595,15 +3650,18 @@ async function saveGrn() {
       body: JSON.stringify(payload)
     });
 
-    if (res.ok) {
-      const json = await res.json();
-      const grnId = json.data ? json.data.id : null;
+    if (res?.success) {
+      const grnId = res.data?.id;
       if (grnId) {
         await apiFetch(`/api/inv/goodsreceipt/${grnId}/receive`, { method: 'POST' });
       }
+      showToast(`GRN ${res.data?.grnNumber || ''} received & posted to Stock Ledger!`, 'success');
+      navigateToList('grn');
+      return;
     }
   } catch (err) {
     console.warn('Backend GRN post notice:', err);
+    showToast('Notice: Saved locally. Server response logged.', 'info');
   }
 
   // Update Stock Records in live state reactively
@@ -5161,31 +5219,144 @@ function setStockMovementMode(mode) {
 
 async function saveStockTransferEntry() {
   clearAllFieldErrors('stock-transfer');
-  const docNo = document.getElementById('st-doc-no')?.value.trim();
-  if (!docNo) {
-    setFieldError('st-doc-no', 'Transfer Document Number is required.');
-    showToast('Transfer Document Number required.', 'warning');
-    return;
+  const sourceWh = parseInt(document.getElementById('st-source-wh')?.value);
+  const destWh = parseInt(document.getElementById('st-dest-wh')?.value);
+  const moveDate = document.getElementById('st-date')?.value;
+  const prodId = parseInt(document.getElementById('st-prod-select')?.value);
+  const qty = parseFloat(document.getElementById('st-transfer-qty')?.value) || 0;
+  const vehicle = document.getElementById('st-vehicle-no')?.value?.trim();
+  const driver = document.getElementById('st-driver-name')?.value?.trim();
+
+  let hasError = false;
+  if (!sourceWh) {
+    showToast('Source origin warehouse is required.', 'warning');
+    hasError = true;
   }
+  if (!destWh || sourceWh === destWh) {
+    showToast('Destination warehouse must be different from source warehouse.', 'warning');
+    hasError = true;
+  }
+  if (!prodId) {
+    showToast('Please select a product item to transfer.', 'warning');
+    hasError = true;
+  }
+  if (qty <= 0) {
+    showToast('Transfer quantity must be greater than zero.', 'warning');
+    hasError = true;
+  }
+
+  if (hasError) return;
 
   const btn = document.getElementById('btn-save-stock-movement');
   const txt = document.getElementById('txt-save-stock-movement');
   if (btn) btn.disabled = true;
-  if (txt) txt.textContent = 'Saving';
+  if (txt) txt.textContent = 'Posting...';
 
   try {
     const payload = {
-      documentNumber: docNo,
-      sourceWarehouse: document.getElementById('st-source-wh')?.value,
-      destinationWarehouse: document.getElementById('st-dest-wh')?.value,
-      movementDate: document.getElementById('st-date')?.value
+      fromWarehouseId: sourceWh,
+      toWarehouseId: destWh,
+      transferDate: moveDate ? new Date(moveDate).toISOString() : new Date().toISOString(),
+      remarks: `Carrier: ${vehicle || 'Standard'} | Custodian: ${driver || 'Store Staff'}`,
+      lines: [
+        {
+          productId: prodId,
+          transferQuantity: qty
+        }
+      ]
     };
-    ERP_STATE.stockTransfers.unshift(payload);
-    showToast(`Stock Movement ${docNo} committed! In-transit clearing & stock ledger aligned.`, 'success');
-    clearFormDirty();
+
+    const res = await apiFetch('/api/inv/stockmovements/transfers', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    if (res?.success) {
+      showToast(`Stock Transfer ${res.data?.transferNumber || ''} committed! Source & destination ledgers updated.`, 'success');
+      clearFormDirty('stock-transfer');
+      navigateToList('transfers');
+    } else {
+      showToast(res?.message || 'Failed to process stock transfer.', 'error');
+    }
+  } catch (err) {
+    console.error('Stock transfer error:', err);
+    showToast(err.message || 'Error communicating with server during stock transfer.', 'error');
   } finally {
     if (btn) btn.disabled = false;
-    if (txt) txt.textContent = 'Save';
+    if (txt) txt.textContent = 'Post';
+  }
+}
+
+// --------------------------------------------------------------------------
+// PHYSICAL INVENTORY STOCK ADJUSTMENT PROCESSING
+// --------------------------------------------------------------------------
+async function saveStockAdjustmentEntry() {
+  clearAllFieldErrors('stock-adjustment');
+  const whId = parseInt(document.getElementById('adj-warehouse')?.value);
+  const adjDate = document.getElementById('adj-date')?.value;
+  const adjType = parseInt(document.getElementById('adj-type')?.value) || 1;
+  const reason = document.getElementById('adj-reason')?.value?.trim();
+  const prodId = parseInt(document.getElementById('adj-prod-select')?.value);
+  const netQty = parseFloat(document.getElementById('adj-net-qty')?.value) || 0;
+
+  let hasError = false;
+  if (!whId) {
+    showToast('Please select target storage warehouse.', 'warning');
+    hasError = true;
+  }
+  if (!reason || reason.length < 3) {
+    setFieldError('adj-reason', 'Business reason & memo is required (min 3 chars).');
+    hasError = true;
+  }
+  if (!prodId) {
+    showToast('Please select a product item.', 'warning');
+    hasError = true;
+  }
+  if (netQty === 0) {
+    showToast('Net adjustment quantity cannot be zero.', 'warning');
+    hasError = true;
+  }
+
+  if (hasError) return;
+
+  const btn = document.getElementById('btn-save-stock-adjustment');
+  const txt = document.getElementById('txt-save-stock-adjustment');
+  if (btn) btn.disabled = true;
+  if (txt) txt.textContent = 'Posting...';
+
+  try {
+    const payload = {
+      warehouseId: whId,
+      adjustmentDate: adjDate ? new Date(adjDate).toISOString() : new Date().toISOString(),
+      adjustmentType: adjType,
+      reason: reason,
+      lines: [
+        {
+          productId: prodId,
+          adjustmentQuantity: netQty,
+          notes: reason
+        }
+      ]
+    };
+
+    const res = await apiFetch('/api/inv/stockmovements/adjustments', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    if (res?.success) {
+      showToast(`Stock Adjustment ${res.data?.adjustmentNumber || ''} posted! GL Voucher generated.`, 'success');
+      clearFormDirty('stock-adjustment');
+      navigateToList('adjustments');
+    } else {
+      showToast(res?.message || 'Failed to process stock adjustment.', 'error');
+    }
+  } catch (err) {
+    console.error('Stock adjustment error:', err);
+    showToast(err.message || 'Error processing stock adjustment.', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (txt) txt.textContent = 'Post';
   }
 }
 
@@ -5622,6 +5793,9 @@ function loadListData(entity) {
     case 'vendors': loadVendorListData(); break;
     case 'products': loadProductListData(); break;
     case 'warehouses': loadWarehouseListData(); break;
+    case 'transfers': loadTransfersListData(); break;
+    case 'adjustments': loadAdjustmentsListData(); break;
+    case 'grn': loadGrnListData(); break;
     case 'uoms': loadUomListData(); break;
     case 'employees': loadEmployeeListData(); break;
     case 'banks': loadBankListData(); break;
@@ -6261,7 +6435,200 @@ function editProductRecord(code, name, cost, price, uom) {
 }
 
 // --------------------------------------------------------------------------
-// 17.5 WAREHOUSES & DEPOTS REGISTRY
+// 17.5A DEPOTS & PLANTS REGISTRY
+// --------------------------------------------------------------------------
+async function loadDepotListData() {
+  const tbody = document.getElementById('tbody-list-depots');
+  const emptyState = document.getElementById('empty-list-depots');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-sky-400"></i><span>Loading depot registry...</span></td></tr>';
+  initLucide();
+
+  try {
+    const res = await apiFetch('/api/inv/products/depots');
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.data && json.data.length > 0) {
+        ERP_STATE.depots = json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('Depots API fetch notice:', err);
+  }
+
+  if (!ERP_STATE.depots || ERP_STATE.depots.length === 0) {
+    ERP_STATE.depots = [
+      { id: 1, depotCode: 'DEP-TG-01', depotName: 'Tongi PEB Structural Fabrication Plant', depotTypeName: 'Manufacturing Plant', city: 'Gazipur', warehouseCount: 2, isActive: true },
+      { id: 2, depotCode: 'DEP-DHK-01', depotName: 'Tejgaon Central Logistics & Distribution Hub', depotTypeName: 'Central Distribution Hub', city: 'Dhaka', warehouseCount: 1, isActive: true },
+      { id: 3, depotCode: 'DEP-CTG-01', depotName: 'Chittagong Maritime Terminal Depot', depotTypeName: 'Regional Logistics Depot', city: 'Chittagong', warehouseCount: 1, isActive: true }
+    ];
+  }
+
+  renderDepotListTable(ERP_STATE.depots);
+}
+
+function renderDepotListTable(list) {
+  const tbody = document.getElementById('tbody-list-depots');
+  const emptyState = document.getElementById('empty-list-depots');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    const pag = document.getElementById('pagination-list-depots');
+    if (pag) pag.innerHTML = '';
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  if (emptyState) emptyState.classList.add('hidden');
+
+  const rowRenderer = (item) => {
+    const code = item.depotCode || item.code || '';
+    const name = item.depotName || item.name || '';
+    const type = item.depotTypeName || 'Manufacturing Plant';
+    const city = item.city || item.address || 'Gazipur';
+    const whCount = item.warehouseCount ?? 0;
+    const statusBadge = item.isActive !== false
+      ? '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Active</span>'
+      : '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-500/15 text-slate-400 border border-slate-500/20">Inactive</span>';
+
+    return `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-mono font-bold text-sky-400">
+          <a href="javascript:void(0)" onclick="viewRecord('depot', '${code}')" class="clickable-code hover:underline" title="View details for ${code}" aria-label="View ${code}">${code}</a>
+        </td>
+        <td class="py-3 px-4 font-medium text-slate-100">${name}</td>
+        <td class="py-3 px-4 text-xs font-semibold text-slate-300">
+          <span class="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[10px]">${type}</span>
+        </td>
+        <td class="py-3 px-4 text-slate-300 font-medium">${city}</td>
+        <td class="py-3 px-4 text-center font-mono font-bold text-slate-200">${whCount} Stores</td>
+        <td class="py-3 px-4">${statusBadge}</td>
+        <td class="py-3 px-4 text-right">
+          <div class="inline-flex items-center gap-1.5 justify-end">
+            <button 
+              type="button" 
+              onclick="viewRecord('depot', '${code}')" 
+              class="erp-row-action-btn btn-view"
+              title="View Record"
+              aria-label="View"
+            >
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            </button>
+            <button 
+              type="button" 
+              onclick="editDepotRecord('${code}', '${escape(name)}', '${escape(city)}')" 
+              class="erp-row-action-btn btn-edit"
+              title="Edit Record"
+              aria-label="Edit"
+            >
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button 
+              type="button" 
+              onclick="confirmSoftDelete('depot', '${code}', '${escape(name)}', ${item.id || 0})" 
+              class="erp-row-action-btn btn-delete"
+              title="Delete Record"
+              aria-label="Delete"
+            >
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  };
+
+  if (!window.ERP_PAGINATION['tbody-list-depots']) {
+    new ErpAdaptiveTablePagination({
+      tableId: 'table-list-depots',
+      tbodyId: 'tbody-list-depots',
+      paginationId: 'pagination-list-depots',
+      renderRow: rowRenderer,
+      data: list
+    });
+  } else {
+    window.ERP_PAGINATION['tbody-list-depots'].renderRow = rowRenderer;
+    window.ERP_PAGINATION['tbody-list-depots'].setData(list);
+  }
+}
+
+function filterDepotListTable() {
+  const query = (document.getElementById('search-list-depots')?.value || '').toLowerCase();
+  const filtered = (ERP_STATE.depots || []).filter(item => {
+    const code = (item.depotCode || '').toLowerCase();
+    const name = (item.depotName || '').toLowerCase();
+    const city = (item.city || '').toLowerCase();
+    return !query || code.includes(query) || name.includes(query) || city.includes(query);
+  });
+  renderDepotListTable(filtered);
+}
+
+function openNewDepotForm() {
+  resetEntryForm('depot');
+  const txt = document.getElementById('txt-save-depot');
+  if (txt) txt.textContent = 'Save';
+  navigateToStudio('entry-depot');
+}
+
+function editDepotRecord(code, name, city) {
+  navigateToStudio('entry-depot');
+  const codeEl = document.getElementById('depot-code');
+  if (codeEl) codeEl.value = code;
+  const nameEl = document.getElementById('depot-name');
+  if (nameEl) nameEl.value = unescape(name);
+  const cityEl = document.getElementById('depot-city');
+  if (cityEl) cityEl.value = unescape(city);
+  const txt = document.getElementById('txt-save-depot');
+  if (txt) txt.textContent = 'Save';
+  markFormDirty('depot');
+}
+
+async function saveDepotEntry() {
+  const name = document.getElementById('depot-name')?.value?.trim();
+  const type = parseInt(document.getElementById('depot-type')?.value) || 1;
+  const city = document.getElementById('depot-city')?.value || 'Gazipur';
+  const incharge = document.getElementById('depot-incharge')?.value?.trim();
+  const phone = document.getElementById('depot-phone')?.value?.trim();
+  const address = document.getElementById('depot-address')?.value?.trim();
+
+  if (!name) {
+    showToast('Depot / Facility Name is required.', 'warning');
+    return;
+  }
+
+  const code = 'DEP-' + Math.floor(Math.random() * 9000 + 1000);
+  const payload = {
+    depotCode: code,
+    depotName: name,
+    depotType: type,
+    city: city,
+    address: address || city,
+    contactPerson: incharge,
+    contactPhone: phone
+  };
+
+  try {
+    const res = await apiFetch('/api/inv/products/depots', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast(`Depot ${name} registered successfully!`, 'success');
+      clearFormDirty('depot');
+      navigateToList('depots');
+    } else {
+      const err = await res.json();
+      showToast(err.message || 'Failed to save depot.', 'error');
+    }
+  } catch (e) {
+    console.error('Depot save error:', e);
+    showToast('Network error while saving depot.', 'error');
+  }
+}
+
+// --------------------------------------------------------------------------
+// 17.5 WAREHOUSES REGISTRY
 // --------------------------------------------------------------------------
 async function loadWarehouseListData() {
   const tbody = document.getElementById('tbody-list-warehouses');
@@ -6269,8 +6636,27 @@ async function loadWarehouseListData() {
   const emptyState = document.getElementById('empty-list-warehouses');
   if (!tbody) return;
 
-  tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-indigo-400"></i><span>Loading warehouse registry...</span></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-indigo-400"></i><span>Loading warehouse registry...</span></td></tr>';
   initLucide();
+
+  // Populate Depots dropdown for entry form
+  try {
+    const depotRes = await apiFetch('/api/inv/products/depots');
+    if (depotRes.ok) {
+      const j = await depotRes.json();
+      ERP_STATE.depots = j.data || [];
+      const sel = document.getElementById('wh-depot');
+      if (sel) {
+        sel.innerHTML = '<option value="">-- Direct Standalone / No Parent Depot --</option>';
+        (ERP_STATE.depots || []).forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = `${d.depotCode} - ${d.depotName} (${d.city || ''})`;
+          sel.appendChild(opt);
+        });
+      }
+    }
+  } catch (_) {}
 
   try {
     const res = await apiFetch('/api/inv/products/warehouses');
@@ -6286,9 +6672,9 @@ async function loadWarehouseListData() {
 
   if (!ERP_STATE.warehouses || ERP_STATE.warehouses.length === 0) {
     ERP_STATE.warehouses = [
-      { warehouseCode: 'WH-01', warehouseName: 'Central Industrial Depot', location: 'Tongi, Gazipur', isActive: true },
-      { warehouseCode: 'WH-02', warehouseName: 'Chittagong Port Terminal', location: 'Patenga, Chittagong', isActive: true },
-      { warehouseCode: 'WH-03', warehouseName: 'Sylhet Regional Store', location: 'South Surma, Sylhet', isActive: true }
+      { warehouseCode: 'WH-01', warehouseName: 'Raw Materials Steel Yard', warehouseTypeName: 'Raw Materials', depotName: 'Tongi PEB Structural Fabrication Plant', location: 'Tongi, Gazipur', isActive: true },
+      { warehouseCode: 'WH-02', warehouseName: 'Central Finished Goods Yard', warehouseTypeName: 'Finished Goods', depotName: 'Tejgaon Central Logistics & Distribution Hub', location: 'Tejgaon, Dhaka', isActive: true },
+      { warehouseCode: 'WH-03', warehouseName: 'Maritime Transit Holding Store', warehouseTypeName: 'General Transit', depotName: 'Chittagong Maritime Terminal Depot', location: 'Patenga, Chittagong', isActive: true }
     ];
   }
 
@@ -6301,7 +6687,7 @@ function renderWarehouseListTable(list) {
   const emptyState = document.getElementById('empty-list-warehouses');
   if (!tbody) return;
 
-  if (countBadge) countBadge.textContent = `${list.length} Depots`;
+  if (countBadge) countBadge.textContent = `${list.length} Warehouses`;
 
   if (list.length === 0) {
     tbody.innerHTML = '';
@@ -6313,9 +6699,10 @@ function renderWarehouseListTable(list) {
   if (emptyState) emptyState.classList.add('hidden');
 
   const rowRenderer = (item) => {
-
     const code = item.warehouseCode || item.code || '';
     const name = item.warehouseName || item.name || '';
+    const type = item.warehouseTypeName || 'Finished Goods';
+    const depot = item.depotName || 'Standalone Facility';
     const loc = item.location || 'Gazipur, Dhaka';
     const statusBadge = item.isActive !== false
       ? '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Active</span>'
@@ -6327,6 +6714,12 @@ function renderWarehouseListTable(list) {
           <a href="javascript:void(0)" onclick="viewRecord('warehouse', '${code}')" class="clickable-code hover:underline" title="View details for ${code}" aria-label="View ${code}">${code}</a>
         </td>
         <td class="py-3 px-4 font-medium text-slate-100">${name}</td>
+        <td class="py-3 px-4">
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${type}</span>
+        </td>
+        <td class="py-3 px-4 text-xs font-semibold text-slate-300">
+          <span class="text-sky-400 font-bold">${depot}</span>
+        </td>
         <td class="py-3 px-4 text-slate-300 font-medium">${loc}</td>
         <td class="py-3 px-4">${statusBadge}</td>
         <td class="py-3 px-4 text-right">
@@ -6393,7 +6786,470 @@ function openNewWarehouseForm() {
   resetEntryForm('warehouse');
   const txt = document.getElementById('txt-save-warehouse');
   if (txt) txt.textContent = 'Save';
+
+  // Ensure depots are loaded in dropdown
+  const sel = document.getElementById('wh-depot');
+  if (sel && ERP_STATE.depots && ERP_STATE.depots.length > 0) {
+    sel.innerHTML = '<option value="">-- Direct Standalone / No Parent Depot --</option>';
+    ERP_STATE.depots.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = `${d.depotCode} - ${d.depotName} (${d.city || ''})`;
+      sel.appendChild(opt);
+    });
+  }
+
   navigateToStudio('entry-warehouse');
+}
+
+// --------------------------------------------------------------------------
+// 17.5B STOCK TRANSFERS REGISTRY & LOGISTICS
+// --------------------------------------------------------------------------
+async function loadTransfersListData() {
+  const tbody = document.getElementById('tbody-list-transfers');
+  const emptyState = document.getElementById('empty-list-transfers');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-teal-400"></i><span>Loading transfer vouchers...</span></td></tr>';
+  initLucide();
+
+  try {
+    const res = await apiFetch('/api/inv/stockmovements/transfers');
+    if (res?.success && res.data) {
+      ERP_STATE.stockTransfersList = res.data;
+    }
+  } catch (err) {
+    console.warn('Transfers API notice:', err);
+  }
+
+  if (!ERP_STATE.stockTransfersList) {
+    ERP_STATE.stockTransfersList = [];
+  }
+
+  renderTransfersListTable(ERP_STATE.stockTransfersList);
+}
+
+function renderTransfersListTable(list) {
+  const tbody = document.getElementById('tbody-list-transfers');
+  const emptyState = document.getElementById('empty-list-transfers');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    const pag = document.getElementById('pagination-list-transfers');
+    if (pag) pag.innerHTML = '';
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  if (emptyState) emptyState.classList.add('hidden');
+
+  const rowRenderer = (item) => {
+    const no = item.transferNumber || '';
+    const date = item.transferDate ? item.transferDate.split('T')[0] : '';
+    const fromWh = item.fromWarehouseName || 'Source Facility';
+    const toWh = item.toWarehouseName || 'Destination Hub';
+    const remarks = item.remarks || 'Inter-warehouse standard transfer';
+    const status = item.status === 2 ? 'Completed' : (item.status === 1 ? 'In-Transit' : 'Posted');
+
+    return `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-mono font-bold text-teal-400">${no}</td>
+        <td class="py-3 px-4 font-mono text-slate-300">${date}</td>
+        <td class="py-3 px-4 font-medium text-slate-200">${fromWh}</td>
+        <td class="py-3 px-4 font-medium text-slate-200">${toWh}</td>
+        <td class="py-3 px-4">
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-500/15 text-teal-400 border border-teal-500/20">${status}</span>
+        </td>
+        <td class="py-3 px-4 text-slate-400 text-xs">${remarks}</td>
+        <td class="py-3 px-4 text-right">
+          <span class="text-xs text-slate-500 font-mono">Stock Synced</span>
+        </td>
+      </tr>
+    `;
+  };
+
+  if (!window.ERP_PAGINATION['tbody-list-transfers']) {
+    new ErpAdaptiveTablePagination({
+      tableId: 'table-list-transfers',
+      tbodyId: 'tbody-list-transfers',
+      paginationId: 'pagination-list-transfers',
+      renderRow: rowRenderer,
+      data: list
+    });
+  } else {
+    window.ERP_PAGINATION['tbody-list-transfers'].renderRow = rowRenderer;
+    window.ERP_PAGINATION['tbody-list-transfers'].setData(list);
+  }
+}
+
+function filterTransfersListTable() {
+  const query = (document.getElementById('search-list-transfers')?.value || '').toLowerCase();
+  const filtered = (ERP_STATE.stockTransfersList || []).filter(item => {
+    const no = (item.transferNumber || '').toLowerCase();
+    const fromWh = (item.fromWarehouseName || '').toLowerCase();
+    const toWh = (item.toWarehouseName || '').toLowerCase();
+    return !query || no.includes(query) || fromWh.includes(query) || toWh.includes(query);
+  });
+  renderTransfersListTable(filtered);
+}
+
+async function openNewStockTransferForm() {
+  resetEntryForm('stock-transfer');
+  navigateToStudio('entry-stock-transfer');
+
+  // Load warehouses into source & dest dropdowns
+  try {
+    const res = await apiFetch('/api/inv/products/warehouses');
+    if (res?.data) {
+      const srcSel = document.getElementById('st-source-wh');
+      const dstSel = document.getElementById('st-dest-wh');
+      if (srcSel && dstSel) {
+        srcSel.innerHTML = '';
+        dstSel.innerHTML = '';
+        res.data.forEach((w, idx) => {
+          const opt1 = document.createElement('option');
+          opt1.value = w.id;
+          opt1.textContent = `${w.warehouseCode} - ${w.warehouseName}`;
+          srcSel.appendChild(opt1);
+
+          const opt2 = document.createElement('option');
+          opt2.value = w.id;
+          opt2.textContent = `${w.warehouseCode} - ${w.warehouseName}`;
+          if (idx === 1) opt2.selected = true;
+          dstSel.appendChild(opt2);
+        });
+      }
+    }
+  } catch (_) {}
+
+  // Load active products into item select
+  try {
+    const pRes = await apiFetch('/api/inv/products');
+    if (pRes?.data) {
+      ERP_STATE.availableProducts = pRes.data;
+      const pSel = document.getElementById('st-prod-select');
+      if (pSel) {
+        pSel.innerHTML = '<option value="">-- Select Product Item --</option>';
+        pRes.data.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.productCode} - ${p.productName}`;
+          pSel.appendChild(opt);
+        });
+      }
+    }
+  } catch (_) {}
+}
+
+function onTransferProductChange() {
+  const pId = parseInt(document.getElementById('st-prod-select')?.value);
+  const prod = (ERP_STATE.availableProducts || []).find(p => p.id === pId);
+  const nameEl = document.getElementById('st-prod-name');
+  const availEl = document.getElementById('st-avail-stock');
+  const uomEl = document.getElementById('st-item-uom');
+  const costEl = document.getElementById('st-unit-cost');
+
+  if (prod) {
+    if (nameEl) nameEl.textContent = prod.productName;
+    if (availEl) availEl.textContent = Number(prod.totalQuantityOnHand || 0).toLocaleString();
+    if (uomEl) uomEl.textContent = prod.uomCode || 'PCS';
+    if (costEl) costEl.textContent = `৳${Number(prod.currentCost || prod.standardCost || 0).toLocaleString()}`;
+  } else {
+    if (nameEl) nameEl.textContent = '-';
+    if (availEl) availEl.textContent = '0.00';
+    if (uomEl) uomEl.textContent = 'PCS';
+    if (costEl) costEl.textContent = '৳0.00';
+  }
+  calculateTransferTotal();
+}
+
+function calculateTransferTotal() {
+  const pId = parseInt(document.getElementById('st-prod-select')?.value);
+  const prod = (ERP_STATE.availableProducts || []).find(p => p.id === pId);
+  const qty = parseFloat(document.getElementById('st-transfer-qty')?.value) || 0;
+  const cost = prod ? (prod.currentCost || prod.standardCost || 0) : 0;
+  const total = qty * cost;
+  const totalEl = document.getElementById('st-line-total');
+  if (totalEl) totalEl.textContent = `৳${Number(total).toLocaleString()}`;
+}
+
+// --------------------------------------------------------------------------
+// 17.5C STOCK ADJUSTMENTS REGISTRY
+// --------------------------------------------------------------------------
+async function loadAdjustmentsListData() {
+  const tbody = document.getElementById('tbody-list-adjustments');
+  const emptyState = document.getElementById('empty-list-adjustments');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-amber-400"></i><span>Loading adjustment vouchers...</span></td></tr>';
+  initLucide();
+
+  try {
+    const res = await apiFetch('/api/inv/stockmovements/adjustments');
+    if (res?.success && res.data) {
+      ERP_STATE.stockAdjustmentsList = res.data;
+    }
+  } catch (err) {
+    console.warn('Adjustments API notice:', err);
+  }
+
+  if (!ERP_STATE.stockAdjustmentsList) {
+    ERP_STATE.stockAdjustmentsList = [];
+  }
+
+  renderAdjustmentsListTable(ERP_STATE.stockAdjustmentsList);
+}
+
+function renderAdjustmentsListTable(list) {
+  const tbody = document.getElementById('tbody-list-adjustments');
+  const emptyState = document.getElementById('empty-list-adjustments');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    const pag = document.getElementById('pagination-list-adjustments');
+    if (pag) pag.innerHTML = '';
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  if (emptyState) emptyState.classList.add('hidden');
+
+  const rowRenderer = (item) => {
+    const no = item.adjustmentNumber || '';
+    const date = item.adjustmentDate ? item.adjustmentDate.split('T')[0] : '';
+    const wh = item.warehouseName || 'Warehouse';
+    const reason = item.reason || 'Physical Count Adjustment';
+    const amount = Number(item.totalAmount || 0).toLocaleString();
+    const jvId = item.journalVoucherId ? `JV #${item.journalVoucherId}` : 'GL Posted';
+
+    return `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-mono font-bold text-amber-400">${no}</td>
+        <td class="py-3 px-4 font-mono text-slate-300">${date}</td>
+        <td class="py-3 px-4 font-medium text-slate-200">${wh}</td>
+        <td class="py-3 px-4 text-slate-300 text-xs">${reason}</td>
+        <td class="py-3 px-4 text-right font-mono font-bold text-slate-200">৳${amount}</td>
+        <td class="py-3 px-4">
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">${jvId}</span>
+        </td>
+        <td class="py-3 px-4 text-right">
+          <span class="text-xs text-slate-500 font-mono">Audited</span>
+        </td>
+      </tr>
+    `;
+  };
+
+  if (!window.ERP_PAGINATION['tbody-list-adjustments']) {
+    new ErpAdaptiveTablePagination({
+      tableId: 'table-list-adjustments',
+      tbodyId: 'tbody-list-adjustments',
+      paginationId: 'pagination-list-adjustments',
+      renderRow: rowRenderer,
+      data: list
+    });
+  } else {
+    window.ERP_PAGINATION['tbody-list-adjustments'].renderRow = rowRenderer;
+    window.ERP_PAGINATION['tbody-list-adjustments'].setData(list);
+  }
+}
+
+function filterAdjustmentsListTable() {
+  const query = (document.getElementById('search-list-adjustments')?.value || '').toLowerCase();
+  const filtered = (ERP_STATE.stockAdjustmentsList || []).filter(item => {
+    const no = (item.adjustmentNumber || '').toLowerCase();
+    const wh = (item.warehouseName || '').toLowerCase();
+    const reason = (item.reason || '').toLowerCase();
+    return !query || no.includes(query) || wh.includes(query) || reason.includes(query);
+  });
+  renderAdjustmentsListTable(filtered);
+}
+
+async function openNewStockAdjustmentForm() {
+  resetEntryForm('stock-adjustment');
+  navigateToStudio('entry-adjustment');
+
+  // Populate warehouses
+  try {
+    const res = await apiFetch('/api/inv/products/warehouses');
+    if (res?.data) {
+      const whSel = document.getElementById('adj-warehouse');
+      if (whSel) {
+        whSel.innerHTML = '';
+        res.data.forEach(w => {
+          const opt = document.createElement('option');
+          opt.value = w.id;
+          opt.textContent = `${w.warehouseCode} - ${w.warehouseName}`;
+          whSel.appendChild(opt);
+        });
+      }
+    }
+  } catch (_) {}
+
+  // Populate products
+  try {
+    const pRes = await apiFetch('/api/inv/products');
+    if (pRes?.data) {
+      ERP_STATE.availableProducts = pRes.data;
+      const pSel = document.getElementById('adj-prod-select');
+      if (pSel) {
+        pSel.innerHTML = '<option value="">-- Select Product Item --</option>';
+        pRes.data.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.productCode} - ${p.productName}`;
+          pSel.appendChild(opt);
+        });
+      }
+    }
+  } catch (_) {}
+}
+
+function onAdjustmentWarehouseChange() {
+  onAdjustmentProductChange();
+}
+
+function onAdjustmentProductChange() {
+  const pId = parseInt(document.getElementById('adj-prod-select')?.value);
+  const prod = (ERP_STATE.availableProducts || []).find(p => p.id === pId);
+  const sysStockEl = document.getElementById('adj-sys-stock');
+  const uomEl = document.getElementById('adj-item-uom');
+  const costEl = document.getElementById('adj-unit-cost');
+
+  if (prod) {
+    if (sysStockEl) sysStockEl.textContent = Number(prod.totalQuantityOnHand || 0).toLocaleString();
+    if (uomEl) uomEl.textContent = prod.uomCode || 'PCS';
+    if (costEl) costEl.textContent = `৳${Number(prod.currentCost || prod.standardCost || 0).toLocaleString()}`;
+    const physInput = document.getElementById('adj-physical-count');
+    if (physInput) physInput.value = prod.totalQuantityOnHand || 0;
+    const netInput = document.getElementById('adj-net-qty');
+    if (netInput) netInput.value = 0;
+  } else {
+    if (sysStockEl) sysStockEl.textContent = '0.00';
+    if (uomEl) uomEl.textContent = 'PCS';
+    if (costEl) costEl.textContent = '৳0.00';
+  }
+  calculateAdjustmentTotal();
+}
+
+function calculateAdjustmentFromPhysical() {
+  const pId = parseInt(document.getElementById('adj-prod-select')?.value);
+  const prod = (ERP_STATE.availableProducts || []).find(p => p.id === pId);
+  const sysStock = prod ? (prod.totalQuantityOnHand || 0) : 0;
+  const phys = parseFloat(document.getElementById('adj-physical-count')?.value) || 0;
+  const net = phys - sysStock;
+  const netInput = document.getElementById('adj-net-qty');
+  if (netInput) netInput.value = net;
+  calculateAdjustmentTotal();
+}
+
+function calculateAdjustmentTotal() {
+  const pId = parseInt(document.getElementById('adj-prod-select')?.value);
+  const prod = (ERP_STATE.availableProducts || []).find(p => p.id === pId);
+  const net = parseFloat(document.getElementById('adj-net-qty')?.value) || 0;
+  const cost = prod ? (prod.currentCost || prod.standardCost || 0) : 0;
+  const lineTotal = Math.abs(net) * cost;
+  const totalEl = document.getElementById('adj-line-total');
+  if (totalEl) {
+    totalEl.textContent = `৳${Number(lineTotal).toLocaleString()} (${net >= 0 ? 'Gain' : 'Loss'})`;
+    totalEl.className = net >= 0 ? 'py-2.5 px-3 text-right font-mono font-bold text-emerald-400' : 'py-2.5 px-3 text-right font-mono font-bold text-rose-400';
+  }
+}
+
+// --------------------------------------------------------------------------
+// 17.5D GOODS RECEIPT NOTES (GRN) REGISTRY
+// --------------------------------------------------------------------------
+async function loadGrnListData() {
+  const tbody = document.getElementById('tbody-list-grn');
+  const emptyState = document.getElementById('empty-list-grn');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-blue-400"></i><span>Loading GRN registry...</span></td></tr>';
+  initLucide();
+
+  try {
+    const res = await apiFetch('/api/inv/goodsreceipt');
+    if (res?.success && res.data) {
+      ERP_STATE.grnList = res.data;
+    }
+  } catch (err) {
+    console.warn('GRN API notice:', err);
+  }
+
+  if (!ERP_STATE.grnList) {
+    ERP_STATE.grnList = [];
+  }
+
+  renderGrnListTable(ERP_STATE.grnList);
+}
+
+function renderGrnListTable(list) {
+  const tbody = document.getElementById('tbody-list-grn');
+  const emptyState = document.getElementById('empty-list-grn');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    const pag = document.getElementById('pagination-list-grn');
+    if (pag) pag.innerHTML = '';
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  if (emptyState) emptyState.classList.add('hidden');
+
+  const rowRenderer = (item) => {
+    const no = item.grnNumber || '';
+    const date = item.grnDate ? item.grnDate.split('T')[0] : '';
+    const wh = item.warehouseName || 'Central Hub';
+    const vendor = item.vendorName || 'Summit Electronics Components Ltd.';
+    const po = item.poNumber || item.challanNumber || 'Direct PO';
+    const amount = Number(item.totalAmount || 0).toLocaleString();
+    const status = item.status === 2 ? 'Received & Cleared' : (item.status === 1 ? 'Pending QC' : 'Draft');
+
+    return `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-mono font-bold text-blue-400">${no}</td>
+        <td class="py-3 px-4 font-mono text-slate-300">${date}</td>
+        <td class="py-3 px-4 font-medium text-slate-200">${wh}</td>
+        <td class="py-3 px-4 text-slate-200">${vendor}</td>
+        <td class="py-3 px-4 font-mono text-slate-400 text-xs">${po}</td>
+        <td class="py-3 px-4 text-right font-mono font-bold text-slate-200">৳${amount}</td>
+        <td class="py-3 px-4">
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/15 text-blue-400 border border-blue-500/20">${status}</span>
+        </td>
+        <td class="py-3 px-4 text-right">
+          <span class="text-xs text-slate-500 font-mono">Posted</span>
+        </td>
+      </tr>
+    `;
+  };
+
+  if (!window.ERP_PAGINATION['tbody-list-grn']) {
+    new ErpAdaptiveTablePagination({
+      tableId: 'table-list-grn',
+      tbodyId: 'tbody-list-grn',
+      paginationId: 'pagination-list-grn',
+      renderRow: rowRenderer,
+      data: list
+    });
+  } else {
+    window.ERP_PAGINATION['tbody-list-grn'].renderRow = rowRenderer;
+    window.ERP_PAGINATION['tbody-list-grn'].setData(list);
+  }
+}
+
+function filterGrnListTable() {
+  const query = (document.getElementById('search-list-grn')?.value || '').toLowerCase();
+  const filtered = (ERP_STATE.grnList || []).filter(item => {
+    const no = (item.grnNumber || '').toLowerCase();
+    const vendor = (item.vendorName || '').toLowerCase();
+    const po = (item.poNumber || '').toLowerCase();
+    return !query || no.includes(query) || vendor.includes(query) || po.includes(query);
+  });
+  renderGrnListTable(filtered);
+}
+
+function openNewGrnForm() {
+  navigateToStudio('grn');
 }
 
 function editWarehouseRecord(code, name, loc) {
@@ -6407,6 +7263,46 @@ function editWarehouseRecord(code, name, loc) {
   const txt = document.getElementById('txt-save-warehouse');
   if (txt) txt.textContent = 'Save';
   markFormDirty('warehouse');
+}
+
+async function saveWarehouseEntry() {
+  const name = document.getElementById('wh-name')?.value?.trim();
+  const depotId = parseInt(document.getElementById('wh-depot')?.value) || null;
+  const type = parseInt(document.getElementById('wh-type')?.value) || 2;
+  const city = document.getElementById('wh-city')?.value || 'Gazipur';
+  const address = document.getElementById('wh-address')?.value?.trim();
+
+  if (!name) {
+    showToast('Warehouse Facility Name is required.', 'warning');
+    return;
+  }
+
+  const code = 'WH-' + Math.floor(Math.random() * 9000 + 1000);
+  const payload = {
+    warehouseCode: code,
+    warehouseName: name,
+    location: address || city,
+    depotId: depotId,
+    warehouseType: type
+  };
+
+  try {
+    const res = await apiFetch('/api/inv/products/warehouses', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast(`Warehouse ${name} created successfully!`, 'success');
+      clearFormDirty('warehouse');
+      navigateToList('warehouses');
+    } else {
+      const err = await res.json();
+      showToast(err.message || 'Failed to save warehouse.', 'error');
+    }
+  } catch (e) {
+    console.error('Warehouse save error:', e);
+    showToast('Network error while saving warehouse.', 'error');
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -7591,20 +8487,47 @@ function renderViewRecord(entityType, item) {
   if (entityType === 'product') {
     code = item.productCode || item.code || 'PRD-101';
     title = 'Product Specification';
-    sectionTitle = 'Product Specification & Inventory Controls';
+    sectionTitle = 'Product Specification';
     iconName = 'box';
     status = item.isActive !== false ? 'Active Catalog' : 'Inactive';
+    
+    const trackingText = item.trackingPolicy === 2 ? 'Batch / Heat Number Tracked' : 
+                         item.trackingPolicy === 3 ? 'Serial Number Tracked' : 'Standard Lot Control';
+    const dimText = (item.length && item.width && item.height) 
+      ? `${item.length} × ${item.width} × ${item.height} ${item.dimensionUom || 'MM'}`
+      : 'Not Specified';
+    const wtUom = item.weightUom || 'KG';
+    const netWt = item.netWeight != null ? `${Number(item.netWeight).toLocaleString()} ${wtUom}` : 'N/A';
+    const grossWt = item.grossWeight != null ? `${Number(item.grossWeight).toLocaleString()} ${wtUom}` : 'N/A';
+    const cbmText = item.volumeCbm != null ? `${Number(item.volumeCbm).toFixed(4)} m³` : 'N/A';
+    const uom = item.uomCode || item.primaryUomName || item.unitOfMeasure || 'MT';
+    const currStock = item.totalQuantityOnHand != null ? item.totalQuantityOnHand : (item.totalStock || item.stock || 0);
+
     fields = [
       { label: 'Product Item Code', value: code, mono: true, highlight: true },
       { label: 'Product Item Name', value: item.productName || item.name || 'Structural Steel Beam HEB-300' },
-      { label: 'Category / Class', value: item.category || item.categoryName || 'Heavy Structural Profiles' },
-      { label: 'Primary UOM', value: item.primaryUomName || item.unitOfMeasure || 'MT', mono: true },
+      { label: 'Category / Class', value: item.className || item.category || item.categoryName || 'Heavy Structural Profiles' },
+      { label: 'HS / Tariff Code (Customs)', value: item.hsCode || '7214.20.00 (Standard)', mono: true },
+      
+      { label: 'Primary Inventory UOM', value: uom, mono: true },
+      { label: 'Specification / Material Grade', value: item.packSize || 'Grade 50B / ASTM A36' },
+      { label: 'Net Weight', value: netWt, mono: true },
+      { label: 'Gross Shipping Weight', value: grossWt, mono: true },
+
+      { label: 'Dimensions (L × W × H)', value: dimText, mono: true },
+      { label: 'Logistics Volume (CBM)', value: cbmText, mono: true },
+      { label: 'Traceability & Quality Policy', value: trackingText },
+      { label: 'Default Receiving Warehouse', value: item.defaultWarehouseName || item.defaultWarehouse || 'Central Finished Goods Hub' },
+
       { label: 'Procurement Standard Cost', value: `৳${Number(item.standardCost || item.cost || 0).toLocaleString()}`, mono: true },
       { label: 'Commercial Selling Price', value: `৳${Number(item.sellingPrice || item.rate || 0).toLocaleString()}`, mono: true },
-      { label: 'Total Current Stock', value: `${Number(item.totalStock || item.stock || 250).toLocaleString()} MT`, mono: true },
-      { label: 'Reorder Warning Level', value: `${Number(item.reorderLevel || 50).toLocaleString()} MT`, mono: true },
-      { label: 'Default Storage Warehouse', value: item.defaultWarehouse || 'Central Steel Yard Depot' },
-      { label: 'QC Inspection Policy', value: item.qcPolicy || 'Mandatory Pre-Receipt QC' }
+      { label: 'Inventory Costing Method', value: item.costingMethod || 'Moving Average (IAS 2)' },
+      { label: 'VAT / Tax Rate', value: `${item.taxRatePercent || 15}% Standard Commercial`, mono: true },
+
+      { label: 'Total Current Stock', value: `${Number(currStock).toLocaleString()} ${uom}`, mono: true },
+      { label: 'Reorder Warning Level', value: `${Number(item.reorderLevel || 50).toLocaleString()} ${uom}`, mono: true },
+      { label: 'Safety Stock Floor', value: `${Number(item.safetyStock || 20).toLocaleString()} ${uom}`, mono: true },
+      { label: 'Procurement Lead Time', value: `${item.leadTimeDays || 14} Days`, mono: true }
     ];
   } else if (entityType === 'customer') {
     code = item.customerCode || item.code || 'CUST-001';
@@ -7999,6 +8922,295 @@ async function executePendingDelete() {
   }
 }
 
+function printRecordReport() {
+  const rec = ERP_STATE.viewingRecord;
+  if (!rec || !rec.item) {
+    window.print();
+    return;
+  }
+
+  const item = rec.item;
+  const isProduct = rec.entityType === 'product';
+  const company = localStorage.getItem('erp_active_company_name') || 'HATIM STEEL STRUCTURE LTD (HSF)';
+  const printDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const printTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  // Read fields rendered in view
+  const fields = [];
+  const cards = document.querySelectorAll('#view-record-fields-grid .view-record-card');
+  cards.forEach(c => {
+    const lbl = c.querySelector('.view-field-label')?.textContent?.trim() || '';
+    const val = c.querySelector('.view-field-value')?.textContent?.trim() || '';
+    if (lbl && val) fields.push({ label: lbl, value: val });
+  });
+
+  const code = item.productCode || item.code || document.getElementById('view-record-code-badge')?.textContent || 'PRD-SPEC';
+  const name = item.productName || item.name || 'Product Specification';
+  const category = item.category || item.categoryName || 'General';
+  const status = item.isActive !== false ? 'Active' : 'Inactive';
+
+  const reportTitle = isProduct ? 'PRODUCT SPECIFICATION SHEET' : `${rec.entityType.toUpperCase()} SPECIFICATION REPORT`;
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${reportTitle} - ${code}</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 15mm;
+    }
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #0f172a;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      font-size: 11pt;
+      line-height: 1.4;
+    }
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .company-name {
+      font-size: 15pt;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+    .company-sub {
+      font-size: 8.5pt;
+      color: #64748b;
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .report-meta {
+      text-align: right;
+    }
+    .report-badge {
+      display: inline-block;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+    .report-date {
+      font-size: 8.5pt;
+      color: #64748b;
+    }
+    .doc-title-block {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #0284c7;
+      padding: 12px 14px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .doc-title {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+    .doc-subtitle {
+      font-size: 9pt;
+      color: #475569;
+      margin-top: 2px;
+    }
+    .doc-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11pt;
+      font-weight: 700;
+      color: #0369a1;
+      background: #e0f2fe;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+    .spec-table th, .spec-table td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      font-size: 9.5pt;
+      vertical-align: top;
+    }
+    .spec-table th {
+      width: 32%;
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #334155;
+      text-align: left;
+      text-transform: uppercase;
+      font-size: 8pt;
+      letter-spacing: 0.04em;
+    }
+    .spec-table td {
+      width: 68%;
+      color: #0f172a;
+      font-weight: 500;
+    }
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .spec-card {
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      border-radius: 4px;
+      padding: 8px 10px;
+    }
+    .spec-card-label {
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+    .spec-card-value {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .spec-card-value.mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .report-footer {
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #94a3b8;
+      margin-top: 24px;
+    }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 36px;
+      padding: 0 10px;
+    }
+    .sig-block {
+      text-align: center;
+      width: 140px;
+      border-top: 1px solid #94a3b8;
+      padding-top: 4px;
+      font-size: 8pt;
+      color: #475569;
+    }
+    @media screen {
+      body {
+        max-width: 210mm;
+        margin: 20px auto;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-header">
+    <div>
+      <div class="company-name">${company}</div>
+      <div class="company-sub">Enterprise Resource Planning &bull; Inventory Governance</div>
+    </div>
+    <div class="report-meta">
+      <div class="report-badge">${reportTitle}</div>
+      <div class="report-date">Generated: ${printDate} ${printTime}</div>
+    </div>
+  </div>
+
+  <div class="doc-title-block">
+    <div>
+      <h1 class="doc-title">${name}</h1>
+      <div class="doc-subtitle">Classification: <strong>${category}</strong> &bull; Status: <strong>${status}</strong></div>
+    </div>
+    <div class="doc-code">${code}</div>
+  </div>
+
+  <div class="spec-grid">
+    ${fields.map(f => `
+      <div class="spec-card">
+        <div class="spec-card-label">${f.label}</div>
+        <div class="spec-card-value mono">${f.value}</div>
+      </div>
+    `).join('')}
+  </div>
+
+  <table class="spec-table">
+    <tr>
+      <th>Enterprise Unit</th>
+      <td>${company}</td>
+    </tr>
+    <tr>
+      <th>Verification Context</th>
+      <td>Strict Read-Only Master Record Audit</td>
+    </tr>
+    <tr>
+      <th>Printed By</th>
+      <td>Authorized Enterprise User</td>
+    </tr>
+  </table>
+
+  <div class="signature-row">
+    <div class="sig-block">Prepared By</div>
+    <div class="sig-block">Inventory In-Charge</div>
+    <div class="sig-block">Quality Assurance</div>
+    <div class="sig-block">Authorized Signatory</div>
+  </div>
+
+  <div class="report-footer">
+    <span>ERP Enterprise Suite &bull; Official Specification Document</span>
+    <span>Page 1 of 1</span>
+  </div>
+
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 250);
+    };
+  </script>
+</body>
+</html>`;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
 // Global window registrations
 window.viewRecord = viewRecord;
 window.executeViewRecord = executeViewRecord;
@@ -8006,6 +9218,7 @@ window.renderViewRecord = renderViewRecord;
 window.navigateBackFromView = navigateBackFromView;
 window.editRecordFromView = editRecordFromView;
 window.deleteRecordFromView = deleteRecordFromView;
+window.printRecordReport = printRecordReport;
 window.confirmSoftDelete = confirmSoftDelete;
 window.closeDeleteModal = closeDeleteModal;
 window.executePendingDelete = executePendingDelete;
@@ -8025,6 +9238,22 @@ window.renderUomListTable = renderUomListTable;
 window.filterUomListTable = filterUomListTable;
 window.openNewUomForm = openNewUomForm;
 window.editUomRecord = editUomRecord;
+
+// Depot & Plant Registry functions
+window.loadDepotListData = loadDepotListData;
+window.renderDepotListTable = renderDepotListTable;
+window.filterDepotListTable = filterDepotListTable;
+window.openNewDepotForm = openNewDepotForm;
+window.editDepotRecord = editDepotRecord;
+window.saveDepotEntry = saveDepotEntry;
+
+// Warehouse Registry functions
+window.loadWarehouseListData = loadWarehouseListData;
+window.renderWarehouseListTable = renderWarehouseListTable;
+window.filterWarehouseListTable = filterWarehouseListTable;
+window.openNewWarehouseForm = openNewWarehouseForm;
+window.editWarehouseRecord = editWarehouseRecord;
+window.saveWarehouseEntry = saveWarehouseEntry;
 window.saveUomEntry = saveUomEntry;
 
 

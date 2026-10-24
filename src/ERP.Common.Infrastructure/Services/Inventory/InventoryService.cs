@@ -36,6 +36,8 @@ public class InventoryService : IInventoryService
                     from pc in pcJoin.DefaultIfEmpty()
                     join uom in _dbContext.UnitsOfMeasure.AsNoTracking() on p.PrimaryUomId equals uom.Id into uomJoin
                     from uom in uomJoin.DefaultIfEmpty()
+                    join wh in _dbContext.Warehouses.AsNoTracking() on p.DefaultWarehouseId equals wh.Id into whJoin
+                    from wh in whJoin.DefaultIfEmpty()
                     select new ProductDto
                     {
                         Id = p.Id,
@@ -52,6 +54,22 @@ public class InventoryService : IInventoryService
                         SellingPrice = p.SellingPrice,
                         ReorderLevel = p.ReorderLevel,
                         IsActive = p.IsActive,
+                        HsCode = p.HsCode,
+                        NetWeight = p.NetWeight,
+                        GrossWeight = p.GrossWeight,
+                        WeightUom = p.WeightUom,
+                        Length = p.Length,
+                        Width = p.Width,
+                        Height = p.Height,
+                        DimensionUom = p.DimensionUom,
+                        VolumeCbm = p.VolumeCbm,
+                        TrackingPolicy = p.TrackingPolicy,
+                        SafetyStock = p.SafetyStock,
+                        LeadTimeDays = p.LeadTimeDays,
+                        CostingMethod = p.CostingMethod,
+                        TaxRatePercent = p.TaxRatePercent,
+                        DefaultWarehouseId = p.DefaultWarehouseId,
+                        DefaultWarehouseName = wh != null ? wh.WarehouseName : null,
                         TotalQuantityOnHand = _dbContext.ProductStock
                             .Where(s => s.CompanyId == companyId && s.ProductId == p.Id && !s.IsDeleted)
                             .Sum(s => (decimal?)s.QuantityOnHand) ?? 0m
@@ -69,6 +87,8 @@ public class InventoryService : IInventoryService
                     from pc in pcJoin.DefaultIfEmpty()
                     join uom in _dbContext.UnitsOfMeasure.AsNoTracking() on p.PrimaryUomId equals uom.Id into uomJoin
                     from uom in uomJoin.DefaultIfEmpty()
+                    join wh in _dbContext.Warehouses.AsNoTracking() on p.DefaultWarehouseId equals wh.Id into whJoin
+                    from wh in whJoin.DefaultIfEmpty()
                     select new ProductDto
                     {
                         Id = p.Id,
@@ -85,6 +105,22 @@ public class InventoryService : IInventoryService
                         SellingPrice = p.SellingPrice,
                         ReorderLevel = p.ReorderLevel,
                         IsActive = p.IsActive,
+                        HsCode = p.HsCode,
+                        NetWeight = p.NetWeight,
+                        GrossWeight = p.GrossWeight,
+                        WeightUom = p.WeightUom,
+                        Length = p.Length,
+                        Width = p.Width,
+                        Height = p.Height,
+                        DimensionUom = p.DimensionUom,
+                        VolumeCbm = p.VolumeCbm,
+                        TrackingPolicy = p.TrackingPolicy,
+                        SafetyStock = p.SafetyStock,
+                        LeadTimeDays = p.LeadTimeDays,
+                        CostingMethod = p.CostingMethod,
+                        TaxRatePercent = p.TaxRatePercent,
+                        DefaultWarehouseId = p.DefaultWarehouseId,
+                        DefaultWarehouseName = wh != null ? wh.WarehouseName : null,
                         TotalQuantityOnHand = _dbContext.ProductStock
                             .Where(s => s.CompanyId == companyId && s.ProductId == p.Id && !s.IsDeleted)
                             .Sum(s => (decimal?)s.QuantityOnHand) ?? 0m
@@ -103,6 +139,8 @@ public class InventoryService : IInventoryService
                     from pc in pcJoin.DefaultIfEmpty()
                     join uom in _dbContext.UnitsOfMeasure.AsNoTracking() on p.PrimaryUomId equals uom.Id into uomJoin
                     from uom in uomJoin.DefaultIfEmpty()
+                    join wh in _dbContext.Warehouses.AsNoTracking() on p.DefaultWarehouseId equals wh.Id into whJoin
+                    from wh in whJoin.DefaultIfEmpty()
                     select new ProductDto
                     {
                         Id = p.Id,
@@ -119,6 +157,22 @@ public class InventoryService : IInventoryService
                         SellingPrice = p.SellingPrice,
                         ReorderLevel = p.ReorderLevel,
                         IsActive = p.IsActive,
+                        HsCode = p.HsCode,
+                        NetWeight = p.NetWeight,
+                        GrossWeight = p.GrossWeight,
+                        WeightUom = p.WeightUom,
+                        Length = p.Length,
+                        Width = p.Width,
+                        Height = p.Height,
+                        DimensionUom = p.DimensionUom,
+                        VolumeCbm = p.VolumeCbm,
+                        TrackingPolicy = p.TrackingPolicy,
+                        SafetyStock = p.SafetyStock,
+                        LeadTimeDays = p.LeadTimeDays,
+                        CostingMethod = p.CostingMethod,
+                        TaxRatePercent = p.TaxRatePercent,
+                        DefaultWarehouseId = p.DefaultWarehouseId,
+                        DefaultWarehouseName = wh != null ? wh.WarehouseName : null,
                         TotalQuantityOnHand = _dbContext.ProductStock
                             .Where(s => s.CompanyId == companyId && s.ProductId == p.Id && !s.IsDeleted)
                             .Sum(s => (decimal?)s.QuantityOnHand) ?? 0m
@@ -193,7 +247,22 @@ public class InventoryService : IInventoryService
             CurrentCost = request.CurrentCost > 0 ? request.CurrentCost : request.StandardCost,
             SellingPrice = request.SellingPrice,
             ReorderLevel = request.ReorderLevel,
-            IsActive = true
+            IsActive = true,
+            HsCode = request.HsCode?.Trim(),
+            NetWeight = request.NetWeight ?? 0m,
+            GrossWeight = request.GrossWeight ?? request.NetWeight ?? 0m,
+            WeightUom = !string.IsNullOrWhiteSpace(request.WeightUom) ? request.WeightUom.Trim() : "KG",
+            Length = request.Length,
+            Width = request.Width,
+            Height = request.Height,
+            DimensionUom = !string.IsNullOrWhiteSpace(request.DimensionUom) ? request.DimensionUom.Trim() : "MM",
+            VolumeCbm = request.VolumeCbm ?? (request.Length.HasValue && request.Width.HasValue && request.Height.HasValue ? (request.Length.Value * request.Width.Value * request.Height.Value) / 1000000000m : null),
+            TrackingPolicy = request.TrackingPolicy ?? 1,
+            SafetyStock = request.SafetyStock ?? 0m,
+            LeadTimeDays = request.LeadTimeDays ?? 7,
+            CostingMethod = !string.IsNullOrWhiteSpace(request.CostingMethod) ? request.CostingMethod.Trim() : "MovingAverage",
+            TaxRatePercent = request.TaxRatePercent ?? 15.00m,
+            DefaultWarehouseId = request.DefaultWarehouseId
         };
 
         _dbContext.Products.Add(product);
@@ -223,6 +292,23 @@ public class InventoryService : IInventoryService
         product.SellingPrice = request.SellingPrice;
         product.ReorderLevel = request.ReorderLevel;
         product.IsActive = request.IsActive;
+
+        // International Standards
+        product.HsCode = request.HsCode?.Trim();
+        if (request.NetWeight.HasValue) product.NetWeight = request.NetWeight.Value;
+        if (request.GrossWeight.HasValue) product.GrossWeight = request.GrossWeight.Value;
+        if (!string.IsNullOrWhiteSpace(request.WeightUom)) product.WeightUom = request.WeightUom.Trim();
+        product.Length = request.Length;
+        product.Width = request.Width;
+        product.Height = request.Height;
+        if (!string.IsNullOrWhiteSpace(request.DimensionUom)) product.DimensionUom = request.DimensionUom.Trim();
+        product.VolumeCbm = request.VolumeCbm ?? (request.Length.HasValue && request.Width.HasValue && request.Height.HasValue ? (request.Length.Value * request.Width.Value * request.Height.Value) / 1000000000m : product.VolumeCbm);
+        if (request.TrackingPolicy.HasValue) product.TrackingPolicy = request.TrackingPolicy.Value;
+        if (request.SafetyStock.HasValue) product.SafetyStock = request.SafetyStock.Value;
+        if (request.LeadTimeDays.HasValue) product.LeadTimeDays = request.LeadTimeDays.Value;
+        if (!string.IsNullOrWhiteSpace(request.CostingMethod)) product.CostingMethod = request.CostingMethod.Trim();
+        if (request.TaxRatePercent.HasValue) product.TaxRatePercent = request.TaxRatePercent.Value;
+        product.DefaultWarehouseId = request.DefaultWarehouseId;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -324,12 +410,81 @@ public class InventoryService : IInventoryService
         return new UnitOfMeasureDto { Id = uom.Id, UomCode = uom.UomCode, UomName = uom.UomName };
     }
 
+    // --- Depots & Facilities ---
+
+    public async Task<List<DepotDto>> GetDepotsAsync(CancellationToken cancellationToken = default)
+    {
+        var companyId = GetCompanyId();
+        return await _dbContext.Depots.AsNoTracking()
+            .Where(d => d.CompanyId == companyId)
+            .OrderBy(d => d.DepotCode)
+            .Select(d => new DepotDto
+            {
+                Id = d.Id,
+                DepotCode = d.DepotCode,
+                DepotName = d.DepotName,
+                DepotType = (int)d.DepotType,
+                DepotTypeName = d.DepotType == DepotType.ManufacturingPlant ? "Manufacturing Plant" :
+                                d.DepotType == DepotType.RegionalDepot ? "Regional Logistics Depot" : "Central Distribution Hub",
+                Address = d.Address,
+                City = d.City,
+                ContactPerson = d.ContactPerson,
+                ContactPhone = d.ContactPhone,
+                IsActive = d.IsActive,
+                WarehouseCount = d.Warehouses.Count(w => !w.IsDeleted)
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<DepotDto> CreateDepotAsync(CreateDepotRequest request, CancellationToken cancellationToken = default)
+    {
+        var companyId = GetCompanyId();
+        var exists = await _dbContext.Depots.AnyAsync(d => d.CompanyId == companyId && d.DepotCode == request.DepotCode, cancellationToken);
+        if (exists)
+        {
+            throw new InvalidOperationException($"Depot with code '{request.DepotCode}' already exists.");
+        }
+
+        var depot = new Depot
+        {
+            CompanyId = companyId,
+            DepotCode = request.DepotCode.Trim().ToUpperInvariant(),
+            DepotName = request.DepotName.Trim(),
+            DepotType = Enum.IsDefined(typeof(DepotType), request.DepotType) ? (DepotType)request.DepotType : DepotType.ManufacturingPlant,
+            Address = request.Address?.Trim(),
+            City = request.City?.Trim(),
+            ContactPerson = request.ContactPerson?.Trim(),
+            ContactPhone = request.ContactPhone?.Trim(),
+            IsActive = true
+        };
+
+        _dbContext.Depots.Add(depot);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return new DepotDto
+        {
+            Id = depot.Id,
+            DepotCode = depot.DepotCode,
+            DepotName = depot.DepotName,
+            DepotType = (int)depot.DepotType,
+            DepotTypeName = depot.DepotType == DepotType.ManufacturingPlant ? "Manufacturing Plant" :
+                            depot.DepotType == DepotType.RegionalDepot ? "Regional Logistics Depot" : "Central Distribution Hub",
+            Address = depot.Address,
+            City = depot.City,
+            ContactPerson = depot.ContactPerson,
+            ContactPhone = depot.ContactPhone,
+            IsActive = depot.IsActive,
+            WarehouseCount = 0
+        };
+    }
+
     // --- Warehouses ---
 
     public async Task<List<WarehouseDto>> GetWarehousesAsync(CancellationToken cancellationToken = default)
     {
         var companyId = GetCompanyId();
         return await _dbContext.Warehouses.AsNoTracking()
+            .Include(w => w.Depot)
             .Where(w => w.CompanyId == companyId)
             .OrderBy(w => w.WarehouseCode)
             .Select(w => new WarehouseDto
@@ -338,7 +493,14 @@ public class InventoryService : IInventoryService
                 WarehouseCode = w.WarehouseCode,
                 WarehouseName = w.WarehouseName,
                 Location = w.Location,
-                IsActive = w.IsActive
+                IsActive = w.IsActive,
+                DepotId = w.DepotId,
+                DepotName = w.Depot != null ? w.Depot.DepotName : null,
+                WarehouseType = (int)w.WarehouseType,
+                WarehouseTypeName = w.WarehouseType == WarehouseType.RawMaterial ? "Raw Materials" :
+                                   w.WarehouseType == WarehouseType.FinishedGoods ? "Finished Goods" :
+                                   w.WarehouseType == WarehouseType.WorkInProgress ? "Work In Progress" :
+                                   w.WarehouseType == WarehouseType.SparesAndHardware ? "Spares & Fasteners" : "General Transit"
             })
             .ToListAsync(cancellationToken);
     }
@@ -352,12 +514,25 @@ public class InventoryService : IInventoryService
             throw new InvalidOperationException($"Warehouse with code '{request.WarehouseCode}' already exists.");
         }
 
+        string? depotName = null;
+        if (request.DepotId.HasValue)
+        {
+            var depot = await _dbContext.Depots.FirstOrDefaultAsync(d => d.Id == request.DepotId.Value && d.CompanyId == companyId, cancellationToken);
+            if (depot == null)
+            {
+                throw new InvalidOperationException($"Depot with ID '{request.DepotId.Value}' does not exist.");
+            }
+            depotName = depot.DepotName;
+        }
+
         var warehouse = new Warehouse
         {
             CompanyId = companyId,
             WarehouseCode = request.WarehouseCode.Trim().ToUpperInvariant(),
             WarehouseName = request.WarehouseName.Trim(),
             Location = request.Location?.Trim(),
+            DepotId = request.DepotId,
+            WarehouseType = Enum.IsDefined(typeof(WarehouseType), request.WarehouseType) ? (WarehouseType)request.WarehouseType : WarehouseType.FinishedGoods,
             IsActive = true
         };
 
@@ -370,7 +545,14 @@ public class InventoryService : IInventoryService
             WarehouseCode = warehouse.WarehouseCode,
             WarehouseName = warehouse.WarehouseName,
             Location = warehouse.Location,
-            IsActive = warehouse.IsActive
+            IsActive = warehouse.IsActive,
+            DepotId = warehouse.DepotId,
+            DepotName = depotName,
+            WarehouseType = (int)warehouse.WarehouseType,
+            WarehouseTypeName = warehouse.WarehouseType == WarehouseType.RawMaterial ? "Raw Materials" :
+                               warehouse.WarehouseType == WarehouseType.FinishedGoods ? "Finished Goods" :
+                               warehouse.WarehouseType == WarehouseType.WorkInProgress ? "Work In Progress" :
+                               warehouse.WarehouseType == WarehouseType.SparesAndHardware ? "Spares & Fasteners" : "General Transit"
         };
     }
 

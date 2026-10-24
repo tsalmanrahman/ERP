@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ERP.Common.Domain.Entities.Inventory;
 
@@ -30,6 +30,28 @@ public class ProductClassConfiguration : IEntityTypeConfiguration<ProductClass>
     }
 }
 
+public class DepotConfiguration : IEntityTypeConfiguration<Depot>
+{
+    public void Configure(EntityTypeBuilder<Depot> builder)
+    {
+        builder.ToTable("Depots", "inv");
+        builder.HasKey(d => d.Id);
+        builder.Property(d => d.DepotCode).HasMaxLength(20).IsRequired();
+        builder.Property(d => d.DepotName).HasMaxLength(100).IsRequired();
+        builder.Property(d => d.Address).HasMaxLength(250);
+        builder.Property(d => d.City).HasMaxLength(100);
+        builder.Property(d => d.ContactPerson).HasMaxLength(100);
+        builder.Property(d => d.ContactPhone).HasMaxLength(50);
+        builder.HasIndex(d => new { d.CompanyId, d.DepotCode }).IsUnique();
+        builder.Property(d => d.RowVersion).IsRowVersion();
+
+        builder.HasMany(d => d.Warehouses)
+               .WithOne(w => w.Depot)
+               .HasForeignKey(w => w.DepotId)
+               .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
 public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
 {
     public void Configure(EntityTypeBuilder<Warehouse> builder)
@@ -41,6 +63,11 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
         builder.Property(w => w.Location).HasMaxLength(200);
         builder.HasIndex(w => new { w.CompanyId, w.WarehouseCode }).IsUnique();
         builder.Property(w => w.RowVersion).IsRowVersion();
+
+        builder.HasOne(w => w.Depot)
+               .WithMany(d => d.Warehouses)
+               .HasForeignKey(w => w.DepotId)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

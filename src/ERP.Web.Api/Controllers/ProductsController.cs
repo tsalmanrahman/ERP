@@ -138,6 +138,27 @@ public class ProductsController : ControllerBase
         }
     }
 
+    [HttpGet("depots")]
+    public async Task<IActionResult> GetDepots(CancellationToken cancellationToken)
+    {
+        var depots = await _inventoryService.GetDepotsAsync(cancellationToken);
+        return Ok(new { success = true, data = depots });
+    }
+
+    [HttpPost("depots")]
+    public async Task<IActionResult> CreateDepot([FromBody] CreateDepotRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _inventoryService.CreateDepotAsync(request, cancellationToken);
+            return Ok(new { success = true, data = result });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
     [HttpGet("warehouses")]
     public async Task<IActionResult> GetWarehouses(CancellationToken cancellationToken)
     {

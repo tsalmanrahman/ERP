@@ -99,25 +99,21 @@ public class SidebarModernizationTests
             Assert.Contains($"toggleModuleAccordion('{slug}')", indexHtml);
         }
 
-        // Verify sub-items exist under parent modules
+        // Verify sub-items exist under parent modules (simplified list-first pattern)
         Assert.Contains("data-list=\"accounts\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-account\"", indexHtml);
         Assert.Contains("data-studio=\"jv\"", indexHtml);
         Assert.Contains("data-studio=\"trial-balance\"", indexHtml);
 
         Assert.Contains("data-list=\"vendors\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-vendor\"", indexHtml);
         Assert.Contains("data-studio=\"bill-entry\"", indexHtml);
         Assert.Contains("data-studio=\"ap-aging\"", indexHtml);
 
         Assert.Contains("data-list=\"customers\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-customer\"", indexHtml);
         Assert.Contains("data-studio=\"receipts\"", indexHtml);
         Assert.Contains("data-studio=\"ar-aging\"", indexHtml);
 
         Assert.Contains("data-studio=\"cash-book\"", indexHtml);
         Assert.Contains("data-list=\"banks\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-bank\"", indexHtml);
         Assert.Contains("data-studio=\"entry-contra\"", indexHtml);
 
         Assert.Contains("data-studio=\"po\"", indexHtml);
@@ -125,26 +121,25 @@ public class SidebarModernizationTests
         Assert.Contains("data-studio=\"grn\"", indexHtml);
 
         Assert.Contains("data-list=\"products\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-product\"", indexHtml);
-        Assert.Contains("data-studio=\"stock\"", indexHtml);
+        Assert.Contains("data-list=\"depots\"", indexHtml);
         Assert.Contains("data-list=\"warehouses\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-warehouse\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-stock-transfer\"", indexHtml);
+        Assert.Contains("data-list=\"transfers\"", indexHtml);
+        Assert.Contains("data-list=\"adjustments\"", indexHtml);
+        Assert.Contains("data-list=\"grn\"", indexHtml);
+        Assert.Contains("data-studio=\"stock\"", indexHtml);
+        Assert.Contains("data-list=\"uoms\"", indexHtml);
         Assert.Contains("data-studio=\"entry-challan\"", indexHtml);
 
         Assert.Contains("data-studio=\"sales-order\"", indexHtml);
         Assert.Contains("data-studio=\"entry-invoice\"", indexHtml);
 
         Assert.Contains("data-list=\"employees\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-employee\"", indexHtml);
         Assert.Contains("data-studio=\"payslip\"", indexHtml);
         Assert.Contains("data-studio=\"payroll-batch\"", indexHtml);
 
         Assert.Contains("data-list=\"assets\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-asset\"", indexHtml);
 
         Assert.Contains("data-list=\"boms\"", indexHtml);
-        Assert.Contains("data-studio=\"entry-bom\"", indexHtml);
 
         Assert.Contains("data-studio=\"audit-trail\"", indexHtml);
         Assert.Contains("/scalar/v1", indexHtml);

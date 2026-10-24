@@ -479,29 +479,29 @@
 
               <div id="accordion-content-inventory" class="accordion-content collapsed sidebar-hide-when-collapsed">
                 <div class="tree-connector-group space-y-0.5 my-1">
-                  <a href="#list-products" onclick="navigateToList('products')" data-list="products" class="tree-sub-item" title="Product">
-                    <span class="truncate">Product</span>
+                  <a href="#list-products" onclick="navigateToList('products')" data-list="products" class="tree-sub-item" title="Products">
+                    <span class="truncate">Products</span>
                   </a>
-                  <a href="#entry-product" onclick="navigateToStudio('entry-product')" data-studio="entry-product" class="tree-sub-item" title="Product Entry">
-                    <span class="truncate">Product Entry</span>
+                  <a href="#list-depots" onclick="navigateToList('depots')" data-list="depots" class="tree-sub-item" title="Depots &amp; Plants">
+                    <span class="truncate">Depots &amp; Plants</span>
                   </a>
-                  <a href="#stock" onclick="navigateToStudio('stock')" data-studio="stock" class="tree-sub-item" title="Stock Ledger Studio">
+                  <a href="#list-warehouses" onclick="navigateToList('warehouses')" data-list="warehouses" class="tree-sub-item" title="Warehouses">
+                    <span class="truncate">Warehouses</span>
+                  </a>
+                  <a href="#list-transfers" onclick="navigateToList('transfers')" data-list="transfers" class="tree-sub-item" title="Stock Transfers">
+                    <span class="truncate">Stock Transfers</span>
+                  </a>
+                  <a href="#list-adjustments" onclick="navigateToList('adjustments')" data-list="adjustments" class="tree-sub-item" title="Stock Adjustments">
+                    <span class="truncate">Stock Adjustments</span>
+                  </a>
+                  <a href="#list-grn" onclick="navigateToList('grn')" data-list="grn" class="tree-sub-item" title="Goods Receipt Notes">
+                    <span class="truncate">Goods Receipt Notes</span>
+                  </a>
+                  <a href="#stock" onclick="navigateToStudio('stock')" data-studio="stock" class="tree-sub-item" title="Stock Ledger">
                     <span class="truncate">Stock Ledger</span>
                   </a>
-                  <a href="#list-warehouses" onclick="navigateToList('warehouses')" data-list="warehouses" class="tree-sub-item" title="Warehouses &amp; Depots">
-                    <span class="truncate">Warehouses &amp; Depots</span>
-                  </a>
-                  <a href="#entry-warehouse" onclick="navigateToStudio('entry-warehouse')" data-studio="entry-warehouse" class="tree-sub-item" title="Warehouse Entry">
-                    <span class="truncate">Warehouse Entry</span>
-                  </a>
                   <a href="#list-uoms" onclick="navigateToList('uoms')" data-list="uoms" class="tree-sub-item" title="Units of Measure (UOM)">
-                    <span class="truncate">Units of Measure (UOM)</span>
-                  </a>
-                  <a href="#entry-uom" onclick="navigateToStudio('entry-uom')" data-studio="entry-uom" class="tree-sub-item" title="UOM Entry">
-                    <span class="truncate">UOM Entry</span>
-                  </a>
-                  <a href="#entry-stock-transfer" onclick="navigateToStudio('entry-stock-transfer')" data-studio="entry-stock-transfer" class="tree-sub-item" title="Stock Transfer (IWT)">
-                    <span class="truncate">Stock Transfers (IWT)</span>
+                    <span class="truncate">Units of Measure</span>
                   </a>
                   <a href="#entry-challan" onclick="navigateToStudio('entry-challan')" data-studio="entry-challan" class="tree-sub-item" title="Delivery Challan">
                     <span class="truncate">Delivery Challan</span>
@@ -3746,6 +3746,262 @@
             <p class="text-xs">No warehouse depot records found.</p>
           </div>
           <div id="pagination-list-warehouses" class="erp-pagination-bar"></div>
+        </div>
+      </section>
+
+      <!-- LIST PAGE: STOCK TRANSFERS REGISTRY -->
+      <section id="studio-list-transfers" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="navigateBackFrom('list-transfers')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Return to Inventory Control"
+              aria-label="Back"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0 border border-teal-500/20">
+              <i data-lucide="arrow-right-left" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Stock Transfers</h2>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="search-list-transfers" 
+                oninput="filterTransfersListTable()" 
+                placeholder="Search transfer no, warehouse..." 
+                class="h-9 pl-9 pr-3 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-400 focus:outline-none focus:border-teal-500/50 w-48 sm:w-60"
+              />
+            </div>
+            <button 
+              type="button" 
+              onclick="loadTransfersListData()" 
+              class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Refresh Transfers List"
+              aria-label="Refresh"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openNewStockTransferForm()" 
+              class="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Create New Stock Transfer"
+              aria-label="Add"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table id="table-list-transfers" class="w-full text-xs text-left border-collapse erp-table-compact">
+              <thead class="bg-white/[0.04] text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-white/10">
+                <tr>
+                  <th class="py-3 px-4">Transfer Number</th>
+                  <th class="py-3 px-4">Transfer Date</th>
+                  <th class="py-3 px-4">Source Warehouse</th>
+                  <th class="py-3 px-4">Destination Warehouse</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Remarks</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-list-transfers" class="divide-y divide-white/5 text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-list-transfers" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+            <p class="text-xs">No stock transfer vouchers found.</p>
+          </div>
+          <div id="pagination-list-transfers" class="erp-pagination-bar"></div>
+        </div>
+      </section>
+
+      <!-- LIST PAGE: STOCK ADJUSTMENTS REGISTRY -->
+      <section id="studio-list-adjustments" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="navigateBackFrom('list-adjustments')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Return to Inventory Control"
+              aria-label="Back"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <i data-lucide="sliders" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Stock Adjustments</h2>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="search-list-adjustments" 
+                oninput="filterAdjustmentsListTable()" 
+                placeholder="Search adjustment no, warehouse..." 
+                class="h-9 pl-9 pr-3 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-400 focus:outline-none focus:border-amber-500/50 w-48 sm:w-60"
+              />
+            </div>
+            <button 
+              type="button" 
+              onclick="loadAdjustmentsListData()" 
+              class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Refresh Adjustments List"
+              aria-label="Refresh"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openNewStockAdjustmentForm()" 
+              class="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Create Physical Stock Adjustment"
+              aria-label="Add"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table id="table-list-adjustments" class="w-full text-xs text-left border-collapse erp-table-compact">
+              <thead class="bg-white/[0.04] text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-white/10">
+                <tr>
+                  <th class="py-3 px-4">Adjustment Number</th>
+                  <th class="py-3 px-4">Adjustment Date</th>
+                  <th class="py-3 px-4">Warehouse</th>
+                  <th class="py-3 px-4">Reason / Purpose</th>
+                  <th class="py-3 px-4 text-right">Net Valuation (৳)</th>
+                  <th class="py-3 px-4">Status &amp; GL Voucher</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-list-adjustments" class="divide-y divide-white/5 text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-list-adjustments" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+            <p class="text-xs">No stock adjustment vouchers found.</p>
+          </div>
+          <div id="pagination-list-adjustments" class="erp-pagination-bar"></div>
+        </div>
+      </section>
+
+      <!-- LIST PAGE: GOODS RECEIPT NOTES (GRN) REGISTRY -->
+      <section id="studio-list-grn" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="navigateBackFrom('list-grn')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Return to Inventory Control"
+              aria-label="Back"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+              <i data-lucide="package-check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Goods Receipt Notes</h2>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="search-list-grn" 
+                oninput="filterGrnListTable()" 
+                placeholder="Search GRN, vendor, PO..." 
+                class="h-9 pl-9 pr-3 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 w-48 sm:w-60"
+              />
+            </div>
+            <button 
+              type="button" 
+              onclick="loadGrnListData()" 
+              class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Refresh GRN List"
+              aria-label="Refresh"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openNewGrnForm()" 
+              class="h-9 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Receive Inbound Goods (GRN)"
+              aria-label="Add"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table id="table-list-grn" class="w-full text-xs text-left border-collapse erp-table-compact">
+              <thead class="bg-white/[0.04] text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-white/10">
+                <tr>
+                  <th class="py-3 px-4">GRN Number</th>
+                  <th class="py-3 px-4">Receipt Date</th>
+                  <th class="py-3 px-4">Receiving Warehouse</th>
+                  <th class="py-3 px-4">Vendor Name</th>
+                  <th class="py-3 px-4">PO / Challan Ref</th>
+                  <th class="py-3 px-4 text-right">Total Amount (৳)</th>
+                  <th class="py-3 px-4">Status &amp; GL Clearing</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-list-grn" class="divide-y divide-white/5 text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-list-grn" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+            <p class="text-xs">No goods receipt notes found.</p>
+          </div>
+          <div id="pagination-list-grn" class="erp-pagination-bar"></div>
         </div>
       </section>
 
@@ -7256,6 +7512,149 @@
                 <span class="text-orange-400 block mb-0.5 font-bold">Standard Cost per Unit:</span>
                 <span id="bom-unit-cost" class="font-mono font-extrabold text-orange-400 text-sm">৳106,612.80 / MT</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           STUDIO: PHYSICAL INVENTORY STOCK ADJUSTMENT STUDIO
+           ===================================================================== -->
+      <section id="studio-entry-adjustment" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button type="button" onclick="confirmDiscardChanges('stock-adjustment')" class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" title="Return to Previous Page">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <i data-lucide="sliders" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Physical Inventory Stock Adjustment</h2>
+                <span id="adj-dirty-badge" class="dirty-badge hidden">
+                  <i data-lucide="circle-dot" class="w-2.5 h-2.5"></i>
+                  <span>Unsaved Changes</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="resetEntryForm('stock-adjustment')" class="h-9 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Reset</span>
+            </button>
+            <button type="button" onclick="confirmDiscardChanges('stock-adjustment')" class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              <span>Cancel</span>
+            </button>
+            <button type="button" id="btn-save-stock-adjustment" onclick="saveStockAdjustmentEntry()" class="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span id="txt-save-stock-adjustment">Post</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+              <i data-lucide="sliders" class="w-4 h-4 text-amber-400"></i>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Adjustment Header &amp; Warehouse Node</h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Adjustment Document Number *</label>
+                <input type="text" id="adj-doc-no" value="[Auto-Generated on Post]" readonly class="mac-input w-full font-mono font-bold text-amber-400 text-xs bg-white/5 cursor-not-allowed">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Adjustment Date *</label>
+                <input type="date" id="adj-date" value="2026-03-15" onchange="markFormDirty('stock-adjustment')" class="mac-input w-full text-xs font-bold">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Target Storage Warehouse *</label>
+                <select id="adj-warehouse" onchange="onAdjustmentWarehouseChange(); markFormDirty('stock-adjustment')" class="mac-input w-full text-xs font-bold font-mono">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Adjustment Category Type *</label>
+                <select id="adj-type" onchange="markFormDirty('stock-adjustment')" class="mac-input w-full text-xs font-bold">
+                  <option value="1">1 - Physical Count Variance (Cycle Count)</option>
+                  <option value="2">2 - Damaged / Scrap Goods Write-Off</option>
+                  <option value="3">3 - Found / Unrecorded Initial Stock</option>
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Business Reason &amp; Authorization Memo *</label>
+                <input type="text" id="adj-reason" placeholder="e.g. Q1 physical audit stock count reconciliation" oninput="markFormDirty('stock-adjustment')" class="mac-input w-full font-bold text-xs">
+                <span id="err-adj-reason" class="field-error hidden"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+              <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Automated General Ledger Integration</h3>
+            </div>
+            <div class="space-y-3 text-xs text-slate-300">
+              <p>When this adjustment is posted, the system will atomically generate a double-entry Journal Voucher in <strong class="text-white">gl.JournalVouchers</strong>:</p>
+              <div class="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2 font-mono text-[11px]">
+                <div class="flex justify-between items-center text-emerald-400">
+                  <span>If Stock Gain (+):</span>
+                  <span>DR Inventory Asset (1130) / CR Variance (5120)</span>
+                </div>
+                <div class="flex justify-between items-center text-rose-400">
+                  <span>If Stock Loss (-):</span>
+                  <span>DR Variance (5120) / CR Inventory Asset (1130)</span>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-400">Net cost is evaluated using the item's live weighted moving average cost from the Stock Ledger.</p>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4 lg:col-span-2">
+            <div class="flex items-center justify-between pb-2 border-b border-white/10">
+              <div class="flex items-center gap-2">
+                <i data-lucide="layers" class="w-4 h-4 text-amber-400"></i>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Adjustment Line Item &amp; Variance Calculation</h3>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-white/10 text-slate-400">
+                    <th class="py-2 px-3 font-semibold">Product Item *</th>
+                    <th class="py-2 px-3 font-semibold text-right">System Balance</th>
+                    <th class="py-2 px-3 font-semibold text-right">Physical Count</th>
+                    <th class="py-2 px-3 font-semibold text-right">Net Adjustment Qty *</th>
+                    <th class="py-2 px-3 font-semibold">UOM</th>
+                    <th class="py-2 px-3 font-semibold text-right">Average Cost (৳)</th>
+                    <th class="py-2 px-3 font-semibold text-right">Net Financial Variance (৳)</th>
+                  </tr>
+                </thead>
+                <tbody id="adj-items-tbody" class="divide-y divide-white/5">
+                  <tr>
+                    <td class="py-2.5 px-3">
+                      <select id="adj-prod-select" onchange="onAdjustmentProductChange()" class="mac-input w-full text-xs font-bold font-mono">
+                        <!-- Populated dynamically -->
+                      </select>
+                    </td>
+                    <td class="py-2.5 px-3 text-right font-mono text-slate-400" id="adj-sys-stock">0.00</td>
+                    <td class="py-2.5 px-3 text-right">
+                      <input type="number" id="adj-physical-count" value="0" min="0" step="1" oninput="calculateAdjustmentFromPhysical(); markFormDirty('stock-adjustment')" class="mac-input w-24 text-right font-mono font-bold py-1 text-xs">
+                    </td>
+                    <td class="py-2.5 px-3 text-right">
+                      <input type="number" id="adj-net-qty" value="0" step="1" oninput="calculateAdjustmentTotal(); markFormDirty('stock-adjustment')" class="mac-input w-24 text-right font-mono font-bold py-1 text-xs">
+                    </td>
+                    <td class="py-2.5 px-3 font-mono text-slate-400" id="adj-item-uom">PCS</td>
+                    <td class="py-2.5 px-3 text-right font-mono" id="adj-unit-cost">৳0.00</td>
+                    <td class="py-2.5 px-3 text-right font-mono font-bold" id="adj-line-total">৳0.00</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

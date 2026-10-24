@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Data;
@@ -40,6 +40,7 @@ public class ErpDbContext : DbContext, IApplicationDbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<UnitOfMeasure> UnitsOfMeasure => Set<UnitOfMeasure>();
     public DbSet<ProductClass> ProductClasses => Set<ProductClass>();
+    public DbSet<Depot> Depots => Set<Depot>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<ProductStock> ProductStock => Set<ProductStock>();
     public DbSet<StockLedger> StockLedgers => Set<StockLedger>();

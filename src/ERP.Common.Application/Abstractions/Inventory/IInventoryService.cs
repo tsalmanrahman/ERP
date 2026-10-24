@@ -20,6 +20,10 @@ public interface IInventoryService
     Task<List<UnitOfMeasureDto>> GetUnitsOfMeasureAsync(CancellationToken cancellationToken = default);
     Task<UnitOfMeasureDto> CreateUnitOfMeasureAsync(CreateUnitOfMeasureRequest request, CancellationToken cancellationToken = default);
 
+    // Depots & Facilities
+    Task<List<DepotDto>> GetDepotsAsync(CancellationToken cancellationToken = default);
+    Task<DepotDto> CreateDepotAsync(CreateDepotRequest request, CancellationToken cancellationToken = default);
+
     // Warehouses
     Task<List<WarehouseDto>> GetWarehousesAsync(CancellationToken cancellationToken = default);
     Task<WarehouseDto> CreateWarehouseAsync(CreateWarehouseRequest request, CancellationToken cancellationToken = default);

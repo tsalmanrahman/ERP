@@ -21,6 +21,24 @@ public class ProductDto
     public decimal ReorderLevel { get; set; }
     public decimal TotalQuantityOnHand { get; set; }
     public bool IsActive { get; set; }
+
+    // International Standards & Specifications
+    public string? HsCode { get; set; }
+    public decimal? NetWeight { get; set; }
+    public decimal? GrossWeight { get; set; }
+    public string? WeightUom { get; set; }
+    public decimal? Length { get; set; }
+    public decimal? Width { get; set; }
+    public decimal? Height { get; set; }
+    public string? DimensionUom { get; set; }
+    public decimal? VolumeCbm { get; set; }
+    public int TrackingPolicy { get; set; }
+    public decimal SafetyStock { get; set; }
+    public int LeadTimeDays { get; set; }
+    public string CostingMethod { get; set; } = "MovingAverage";
+    public decimal TaxRatePercent { get; set; }
+    public int? DefaultWarehouseId { get; set; }
+    public string? DefaultWarehouseName { get; set; }
 }
 
 public class CreateProductRequest
@@ -34,6 +52,23 @@ public class CreateProductRequest
     public decimal CurrentCost { get; set; }
     public decimal SellingPrice { get; set; }
     public decimal ReorderLevel { get; set; }
+
+    // International Standards
+    public string? HsCode { get; set; }
+    public decimal? NetWeight { get; set; }
+    public decimal? GrossWeight { get; set; }
+    public string? WeightUom { get; set; }
+    public decimal? Length { get; set; }
+    public decimal? Width { get; set; }
+    public decimal? Height { get; set; }
+    public string? DimensionUom { get; set; }
+    public decimal? VolumeCbm { get; set; }
+    public int? TrackingPolicy { get; set; }
+    public decimal? SafetyStock { get; set; }
+    public int? LeadTimeDays { get; set; }
+    public string? CostingMethod { get; set; }
+    public decimal? TaxRatePercent { get; set; }
+    public int? DefaultWarehouseId { get; set; }
 }
 
 public class UpdateProductRequest
@@ -48,6 +83,23 @@ public class UpdateProductRequest
     public decimal SellingPrice { get; set; }
     public decimal ReorderLevel { get; set; }
     public bool IsActive { get; set; } = true;
+
+    // International Standards
+    public string? HsCode { get; set; }
+    public decimal? NetWeight { get; set; }
+    public decimal? GrossWeight { get; set; }
+    public string? WeightUom { get; set; }
+    public decimal? Length { get; set; }
+    public decimal? Width { get; set; }
+    public decimal? Height { get; set; }
+    public string? DimensionUom { get; set; }
+    public decimal? VolumeCbm { get; set; }
+    public int? TrackingPolicy { get; set; }
+    public decimal? SafetyStock { get; set; }
+    public int? LeadTimeDays { get; set; }
+    public string? CostingMethod { get; set; }
+    public decimal? TaxRatePercent { get; set; }
+    public int? DefaultWarehouseId { get; set; }
 }
 
 public class ProductClassDto
@@ -87,6 +139,34 @@ public class CreateUnitOfMeasureRequest
     public string UomName { get; set; } = string.Empty;
 }
 
+// --- Depot & Facility DTOs ---
+
+public class DepotDto
+{
+    public int Id { get; set; }
+    public string DepotCode { get; set; } = string.Empty;
+    public string DepotName { get; set; } = string.Empty;
+    public int DepotType { get; set; }
+    public string DepotTypeName { get; set; } = string.Empty;
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? ContactPerson { get; set; }
+    public string? ContactPhone { get; set; }
+    public bool IsActive { get; set; }
+    public int WarehouseCount { get; set; }
+}
+
+public class CreateDepotRequest
+{
+    public string DepotCode { get; set; } = string.Empty;
+    public string DepotName { get; set; } = string.Empty;
+    public int DepotType { get; set; } = 1; // 1=Manufacturing Plant, 2=Regional Logistics Depot, 3=Central Distribution Hub
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? ContactPerson { get; set; }
+    public string? ContactPhone { get; set; }
+}
+
 public class WarehouseDto
 {
     public int Id { get; set; }
@@ -94,6 +174,10 @@ public class WarehouseDto
     public string WarehouseName { get; set; } = string.Empty;
     public string? Location { get; set; }
     public bool IsActive { get; set; }
+    public int? DepotId { get; set; }
+    public string? DepotName { get; set; }
+    public int WarehouseType { get; set; }
+    public string WarehouseTypeName { get; set; } = string.Empty;
 }
 
 public class CreateWarehouseRequest
@@ -101,6 +185,8 @@ public class CreateWarehouseRequest
     public string WarehouseCode { get; set; } = string.Empty;
     public string WarehouseName { get; set; } = string.Empty;
     public string? Location { get; set; }
+    public int? DepotId { get; set; }
+    public int WarehouseType { get; set; } = 2; // 1=Raw Material, 2=Finished Goods, 3=WIP, 4=Spares, 5=General/Transit
 }
 
 // --- Stock Balance DTOs ---

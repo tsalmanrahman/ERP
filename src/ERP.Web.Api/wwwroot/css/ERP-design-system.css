@@ -1479,3 +1479,46 @@ html[data-theme="light"] .master-tab-btn.active {
   color: #0F172A;
 }
 
+/* ==========================================================================
+   CLEAN MASTER RECORD PRINT REPORT STYLING
+   ========================================================================== */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  aside,
+  header,
+  nav,
+  footer,
+  .btn-action-back,
+  #btn-view-to-edit,
+  #btn-view-delete,
+  button[onclick*="print"] {
+    display: none !important;
+  }
+  #studio-view-record {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  #studio-view-record .glass-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    color: #0f172a !important;
+  }
+  .view-record-card {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    break-inside: avoid;
+  }
+  .view-field-label {
+    color: #64748b !important;
+  }
+  .view-field-value {
+    color: #0f172a !important;
+  }
+}
+
