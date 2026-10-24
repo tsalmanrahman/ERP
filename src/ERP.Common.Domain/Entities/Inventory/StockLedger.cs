@@ -8,7 +8,9 @@ public enum StockTransactionType
     GoodsIssue = 2,
     TransferIn = 3,
     TransferOut = 4,
-    Adjustment = 5
+    Adjustment = 5,
+    ProductionReceipt = 6,
+    AdjustmentOut = 7
 }
 
 public class StockLedger : Entity<int>, IMultiTenant, IAuditableEntity, ISoftDeletable

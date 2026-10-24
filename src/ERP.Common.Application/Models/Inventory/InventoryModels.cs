@@ -126,21 +126,33 @@ public class ProductStockDto
 
 public class CreateGrnRequest
 {
+    public GrnType GrnType { get; set; } = GrnType.Vendor;
     public DateTime GrnDate { get; set; }
     public int WarehouseId { get; set; }
     public int? VendorId { get; set; }
+    public int? PurchaseOrderId { get; set; }
+    public int? ProductionOrderId { get; set; }
+    public string? ProductionReference { get; set; }
     public string? PoNumber { get; set; }
     public string? ChallanNumber { get; set; }
     public DateTime? ChallanDate { get; set; }
+    public string? CarrierName { get; set; }
+    public string? VehicleNumber { get; set; }
+    public string? GateEntryNumber { get; set; }
+    public string? QcStatus { get; set; } = "Passed";
     public string? Remarks { get; set; }
     public List<CreateGrnLineRequest> Lines { get; set; } = new();
 }
 
 public class CreateGrnLineRequest
 {
+    public int? PurchaseOrderLineId { get; set; }
     public int ProductId { get; set; }
     public decimal QuantityReceived { get; set; }
+    public decimal AcceptedQuantity { get; set; }
+    public decimal RejectedQuantity { get; set; }
     public decimal UnitPrice { get; set; }
+    public string? StorageBinLocation { get; set; }
     public string? BatchNumber { get; set; }
     public DateTime? ExpiryDate { get; set; }
     public string? Remarks { get; set; }
@@ -150,15 +162,23 @@ public class GrnDto
 {
     public int Id { get; set; }
     public string GrnNumber { get; set; } = string.Empty;
+    public GrnType GrnType { get; set; } = GrnType.Vendor;
     public DateTime GrnDate { get; set; }
     public int WarehouseId { get; set; }
     public string WarehouseCode { get; set; } = string.Empty;
     public string WarehouseName { get; set; } = string.Empty;
     public int? VendorId { get; set; }
     public string? VendorName { get; set; }
+    public int? PurchaseOrderId { get; set; }
+    public int? ProductionOrderId { get; set; }
+    public string? ProductionReference { get; set; }
     public string? PoNumber { get; set; }
     public string? ChallanNumber { get; set; }
     public DateTime? ChallanDate { get; set; }
+    public string? CarrierName { get; set; }
+    public string? VehicleNumber { get; set; }
+    public string? GateEntryNumber { get; set; }
+    public string? QcStatus { get; set; } = "Passed";
     public decimal TotalAmount { get; set; }
     public GrnStatus Status { get; set; }
     public int? JournalVoucherId { get; set; }
@@ -166,22 +186,125 @@ public class GrnDto
     public string? Remarks { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public List<GrnLineDto> Lines { get; set; } = new();
+    public List<GrnReturnDto> Returns { get; set; } = new();
 }
 
 public class GrnLineDto
 {
     public int Id { get; set; }
     public int LineNumber { get; set; }
+    public int? PurchaseOrderLineId { get; set; }
     public int ProductId { get; set; }
     public string ProductCode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
     public string UomCode { get; set; } = string.Empty;
     public decimal QuantityReceived { get; set; }
+    public decimal AcceptedQuantity { get; set; }
+    public decimal RejectedQuantity { get; set; }
+    public decimal ReturnedQuantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    public string? StorageBinLocation { get; set; }
     public string? BatchNumber { get; set; }
     public DateTime? ExpiryDate { get; set; }
     public string? Remarks { get; set; }
+}
+
+// --- Eligible PO / MO DTOs for GRN Intake ---
+
+public class EligiblePurchaseOrderDto
+{
+    public int Id { get; set; }
+    public string PoNumber { get; set; } = string.Empty;
+    public DateTime OrderDate { get; set; }
+    public int VendorId { get; set; }
+    public string VendorName { get; set; } = string.Empty;
+    public int WarehouseId { get; set; }
+    public string WarehouseName { get; set; } = string.Empty;
+    public List<EligiblePoLineDto> Lines { get; set; } = new();
+}
+
+public class EligiblePoLineDto
+{
+    public int Id { get; set; }
+    public int ProductId { get; set; }
+    public string ProductCode { get; set; } = string.Empty;
+    public string ProductName { get; set; } = string.Empty;
+    public string UomCode { get; set; } = string.Empty;
+    public decimal OrderedQuantity { get; set; }
+    public decimal PreviouslyReceivedQuantity { get; set; }
+    public decimal OutstandingQuantity { get; set; }
+    public decimal UnitPrice { get; set; }
+}
+
+public class EligibleProductionOrderDto
+{
+    public int Id { get; set; }
+    public string OrderNumber { get; set; } = string.Empty;
+    public DateTime OrderDate { get; set; }
+    public int FinishedGoodProductId { get; set; }
+    public string FinishedGoodCode { get; set; } = string.Empty;
+    public string FinishedGoodName { get; set; } = string.Empty;
+    public string UomCode { get; set; } = string.Empty;
+    public decimal TargetQuantity { get; set; }
+    public decimal PreviouslyCompletedQuantity { get; set; }
+    public decimal OutstandingQuantity { get; set; }
+    public decimal EstimatedUnitCost { get; set; }
+    public int FinishedGoodWarehouseId { get; set; }
+    public string FinishedGoodWarehouseName { get; set; } = string.Empty;
+}
+
+// --- Goods Receipt Return DTOs ---
+
+public class CreateGrnReturnRequest
+{
+    public int GoodsReceiptNoteId { get; set; }
+    public DateTime ReturnDate { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public string? Remarks { get; set; }
+    public List<CreateGrnReturnLineRequest> Lines { get; set; } = new();
+}
+
+public class CreateGrnReturnLineRequest
+{
+    public int GoodsReceiptNoteLineId { get; set; }
+    public decimal ReturnedQuantity { get; set; }
+    public string? ReturnReason { get; set; }
+}
+
+public class GrnReturnDto
+{
+    public int Id { get; set; }
+    public string ReturnNumber { get; set; } = string.Empty;
+    public DateTime ReturnDate { get; set; }
+    public int GoodsReceiptNoteId { get; set; }
+    public string GrnNumber { get; set; } = string.Empty;
+    public GoodsReceiptReturnType ReturnType { get; set; }
+    public int WarehouseId { get; set; }
+    public string WarehouseName { get; set; } = string.Empty;
+    public int? VendorId { get; set; }
+    public string? VendorName { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public GoodsReceiptReturnStatus Status { get; set; }
+    public int? JournalVoucherId { get; set; }
+    public string? Remarks { get; set; }
+    public List<GrnReturnLineDto> Lines { get; set; } = new();
+}
+
+public class GrnReturnLineDto
+{
+    public int Id { get; set; }
+    public int LineNumber { get; set; }
+    public int GoodsReceiptNoteLineId { get; set; }
+    public int ProductId { get; set; }
+    public string ProductCode { get; set; } = string.Empty;
+    public string ProductName { get; set; } = string.Empty;
+    public string UomCode { get; set; } = string.Empty;
+    public decimal ReturnedQuantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal LineTotal { get; set; }
+    public string? ReturnReason { get; set; }
 }
 
 // --- Stock Adjustment DTOs ---

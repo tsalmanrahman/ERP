@@ -83,6 +83,53 @@ public class StockLedgerConfiguration : IEntityTypeConfiguration<StockLedger>
     }
 }
 
+public class GoodsReceiptReturnConfiguration : IEntityTypeConfiguration<GoodsReceiptReturn>
+{
+    public void Configure(EntityTypeBuilder<GoodsReceiptReturn> builder)
+    {
+        builder.ToTable("GoodsReceiptReturns", "inv");
+        builder.HasKey(r => r.Id);
+        builder.Property(r => r.ReturnNumber).HasMaxLength(50).IsRequired();
+        builder.Property(r => r.Reason).HasMaxLength(250).IsRequired();
+        builder.Property(r => r.TotalAmount).HasPrecision(18, 4);
+        builder.Property(r => r.Remarks).HasMaxLength(500);
+        builder.HasIndex(r => new { r.CompanyId, r.ReturnNumber }).IsUnique();
+
+        builder.HasOne(r => r.GoodsReceiptNote)
+            .WithMany(g => g.Returns)
+            .HasForeignKey(r => r.GoodsReceiptNoteId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(r => r.Lines)
+            .WithOne()
+            .HasForeignKey(l => l.ReturnId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(r => r.RowVersion).IsRowVersion();
+    }
+}
+
+public class GoodsReceiptReturnLineConfiguration : IEntityTypeConfiguration<GoodsReceiptReturnLine>
+{
+    public void Configure(EntityTypeBuilder<GoodsReceiptReturnLine> builder)
+    {
+        builder.ToTable("GoodsReceiptReturnLines", "inv");
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.ReturnedQuantity).HasPrecision(18, 4);
+        builder.Property(l => l.UnitPrice).HasPrecision(18, 4);
+        builder.Property(l => l.LineTotal).HasPrecision(18, 4);
+        builder.Property(l => l.ReturnReason).HasMaxLength(250);
+        builder.HasIndex(l => new { l.ReturnId, l.LineNumber }).IsUnique();
+
+        builder.HasOne(l => l.GoodsReceiptNoteLine)
+            .WithMany()
+            .HasForeignKey(l => l.GoodsReceiptNoteLineId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(l => l.RowVersion).IsRowVersion();
+    }
+}
+
 public class GoodsReceiptNoteConfiguration : IEntityTypeConfiguration<GoodsReceiptNote>
 {
     public void Configure(EntityTypeBuilder<GoodsReceiptNote> builder)
@@ -115,6 +162,10 @@ public class GoodsReceiptNoteLineConfiguration : IEntityTypeConfiguration<GoodsR
         builder.Property(l => l.UnitPrice).HasPrecision(18, 4);
         builder.Property(l => l.LineTotal).HasPrecision(18, 4);
         builder.Property(l => l.BatchNumber).HasMaxLength(50);
+        builder.Property(l => l.AcceptedQuantity).HasPrecision(18, 4);
+        builder.Property(l => l.RejectedQuantity).HasPrecision(18, 4);
+        builder.Property(l => l.ReturnedQuantity).HasPrecision(18, 4);
+        builder.Property(l => l.StorageBinLocation).HasMaxLength(50);
         builder.Property(l => l.Remarks).HasMaxLength(250);
         builder.HasIndex(l => new { l.GrnId, l.LineNumber }).IsUnique();
         builder.Property(l => l.RowVersion).IsRowVersion();

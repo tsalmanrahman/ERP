@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ERP.Common.Application.Abstractions.Inventory;
 using ERP.Common.Application.Models.Inventory;
@@ -35,6 +35,20 @@ public class GoodsReceiptController : ControllerBase
         return Ok(new { success = true, data = grn });
     }
 
+    [HttpGet("eligible-pos")]
+    public async Task<IActionResult> GetEligiblePurchaseOrders(CancellationToken cancellationToken)
+    {
+        var pos = await _goodsReceiptService.GetEligiblePurchaseOrdersAsync(cancellationToken);
+        return Ok(new { success = true, data = pos });
+    }
+
+    [HttpGet("eligible-mos")]
+    public async Task<IActionResult> GetEligibleProductionOrders(CancellationToken cancellationToken)
+    {
+        var mos = await _goodsReceiptService.GetEligibleProductionOrdersAsync(cancellationToken);
+        return Ok(new { success = true, data = mos });
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateGrn([FromBody] CreateGrnRequest request, CancellationToken cancellationToken)
     {
@@ -56,6 +70,34 @@ public class GoodsReceiptController : ControllerBase
         {
             var grn = await _goodsReceiptService.ReceiveAndPostGrnAsync(id, cancellationToken);
             return Ok(new { success = true, message = $"GRN {grn.GrnNumber} successfully received and posted to General Ledger.", data = grn });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost("returns")]
+    public async Task<IActionResult> CreateGrnReturn([FromBody] CreateGrnReturnRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var grnReturn = await _goodsReceiptService.CreateGoodsReceiptReturnAsync(request, cancellationToken);
+            return Ok(new { success = true, message = $"GRN Return {grnReturn.ReturnNumber} created successfully.", data = grnReturn });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost("returns/{id:int}/post")]
+    public async Task<IActionResult> PostGrnReturn(int id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var grnReturn = await _goodsReceiptService.PostGoodsReceiptReturnAsync(id, cancellationToken);
+            return Ok(new { success = true, message = $"GRN Return {grnReturn.ReturnNumber} successfully posted and inventory updated.", data = grnReturn });
         }
         catch (InvalidOperationException ex)
         {

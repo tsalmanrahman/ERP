@@ -45,6 +45,8 @@ public class ErpDbContext : DbContext, IApplicationDbContext
     public DbSet<StockLedger> StockLedgers => Set<StockLedger>();
     public DbSet<GoodsReceiptNote> GoodsReceiptNotes => Set<GoodsReceiptNote>();
     public DbSet<GoodsReceiptNoteLine> GoodsReceiptNoteLines => Set<GoodsReceiptNoteLine>();
+    public DbSet<GoodsReceiptReturn> GoodsReceiptReturns => Set<GoodsReceiptReturn>();
+    public DbSet<GoodsReceiptReturnLine> GoodsReceiptReturnLines => Set<GoodsReceiptReturnLine>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
     public DbSet<StockAdjustmentLine> StockAdjustmentLines => Set<StockAdjustmentLine>();
     public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
