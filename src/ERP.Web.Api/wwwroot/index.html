@@ -5050,24 +5050,6 @@
           <div class="flex items-center gap-2 shrink-0">
             <button 
               type="button" 
-              onclick="resetEntryForm('product')" 
-              class="h-9 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
-              title="Reset Form Fields"
-            >
-              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
-              <span>Reset</span>
-            </button>
-            <button 
-              type="button" 
-              onclick="confirmDiscardChanges('product')" 
-              class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-              title="Cancel Changes"
-            >
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
-              <span>Cancel</span>
-            </button>
-            <button 
-              type="button" 
               id="btn-save-product" 
               onclick="saveProductEntry()" 
               class="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
@@ -5091,10 +5073,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-xs font-semibold text-slate-400">Product Item Code</label>
-                  <span class="text-[10px] text-amber-400/80 font-mono">System Generated (Immutable)</span>
-                </div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Product Item Code</label>
                 <input type="text" id="prod-code" value="[Auto-Generated on Save]" readonly class="mac-input w-full font-mono font-bold text-amber-400/80 text-xs bg-white/[0.03] border border-white/10 cursor-not-allowed select-all" title="System-generated immutable product code">
                 <span id="err-prod-code" class="field-error hidden"></span>
               </div>
@@ -5229,13 +5208,6 @@
               </div>
             </div>
 
-            <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-slate-300 flex items-start gap-2">
-              <i data-lucide="layers" class="w-4 h-4 text-purple-400 shrink-0 mt-0.5"></i>
-              <div>
-                <span class="font-bold text-white">Stock Ledger Integration:</span>
-                <p class="text-[11px] text-slate-400 mt-0.5">Once registered, this product will be available for GRN receipts, Sales Orders, and real-time weighted average valuation in the Stock Ledger.</p>
-              </div>
-            </div>
           </div>
 
         </div>
@@ -7946,8 +7918,8 @@
             <div>
               <div class="flex items-center gap-2">
                 <h2 id="view-record-title" class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Record View</h2>
-                <span id="view-record-code-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">REC-001</span>
-                <span id="view-record-status-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Active</span>
+                <span id="view-record-code-badge" class="hidden px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">REC-001</span>
+                <span id="view-record-status-badge" class="hidden px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Active</span>
               </div>
             </div>
           </div>
@@ -7956,7 +7928,7 @@
               <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
               <span>Edit</span>
             </button>
-            <button type="button" id="btn-view-delete" onclick="deleteRecordFromView()" class="h-9 px-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-bold flex items-center gap-1.5 cursor-pointer text-xs" title="Delete Record" aria-label="Delete">
+            <button type="button" id="btn-view-delete" onclick="deleteRecordFromView()" class="hidden h-9 px-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-bold flex items-center gap-1.5 cursor-pointer text-xs" title="Delete Record" aria-label="Delete">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               <span>Delete</span>
             </button>
@@ -7974,7 +7946,7 @@
               <i data-lucide="info" class="w-4 h-4 text-sky-400"></i>
               <h3 id="view-section-title" class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Entity Specification &amp; Master Data Details</h3>
             </div>
-            <span class="text-[11px] font-mono text-slate-400">Mode: <strong class="text-emerald-400">Read-Only Verified Context</strong></span>
+            
           </div>
 
           <div id="view-record-fields-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -7982,7 +7954,7 @@
           </div>
 
           <!-- Audit Metadata Card -->
-          <div class="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div id="view-record-audit-metadata" class="hidden pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5">
               <span class="text-slate-400 block text-[11px] mb-0.5">Assigned Subsidiary:</span>
               <span id="view-record-company" class="font-bold text-slate-200">HATIM STEEL STRUCTURE LTD (HSF)</span>

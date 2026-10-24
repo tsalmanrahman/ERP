@@ -901,10 +901,22 @@ function executeNavigateToStudio(studioId, updateHash = true) {
     }
   });
 
+  // Resolve parent list view and entity for sub-item highlighting
+  let parentListStudio = studioId.startsWith('list-') ? studioId : (PARENT_VIEW_MAP[studioId] || null);
+  if (studioId === 'view-record' && ERP_STATE.viewingRecord?.entityType) {
+    const meta = ENTITY_VIEW_METADATA[ERP_STATE.viewingRecord.entityType];
+    if (meta?.listStudio) parentListStudio = meta.listStudio;
+  }
+  const resolvedListEntity = parentListStudio?.startsWith('list-') ? parentListStudio.replace('list-', '') : null;
+
   // Update tree-sub-item active state
   document.querySelectorAll('.tree-sub-item').forEach(link => {
-    const target = link.getAttribute('data-studio') || link.getAttribute('data-list');
-    if (target === studioId || (studioId.startsWith('list-') && target === studioId.replace('list-', ''))) {
+    const targetList = link.getAttribute('data-list');
+    const targetStudio = link.getAttribute('data-studio');
+    const isDirectMatch = (targetStudio && targetStudio === studioId) || (targetList && targetList === studioId);
+    const isListMatch = (resolvedListEntity && targetList === resolvedListEntity) || (parentListStudio && targetStudio === parentListStudio);
+
+    if (isDirectMatch || isListMatch) {
       link.classList.add('active');
     } else {
       link.classList.remove('active');

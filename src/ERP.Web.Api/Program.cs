@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +9,7 @@ using ERP.Common.Application.Security;
 using ERP.Common.Infrastructure;
 using ERP.Web.Api.Health;
 using ERP.Common.Infrastructure.Services.Identity;
+using ERP.Web.Api.Middleware;
 
 const string CorsPolicyName = "ErpClients";
 
@@ -93,6 +94,9 @@ builder.Services.AddHealthChecks()
     .AddCheck<SqlDatabaseHealthCheck>("sqlserver_db", tags: new[] { "ready" });
 
 var app = builder.Build();
+
+// Intercept client-aborted HTTP requests (browser refresh, navigation, tab close)
+app.UseMiddleware<ClientCancellationMiddleware>();
 
 // Reverse Proxy & Forwarded Headers Configuration (Nginx / YARP)
 app.UseForwardedHeaders(new ForwardedHeadersOptions
