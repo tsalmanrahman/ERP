@@ -675,6 +675,7 @@ const PARENT_VIEW_MAP = {
   'entry-vendor': 'list-vendors',
   'entry-product': 'list-products',
   'entry-depot': 'list-depots',
+  'entry-plant': 'list-plants',
   'entry-warehouse': 'list-warehouses',
   'entry-uom': 'list-uoms',
   'entry-employee': 'list-employees',
@@ -733,7 +734,10 @@ function navigateBackFrom(viewId) {
   if (!PARENT_VIEW_MAP[key] && PARENT_VIEW_MAP[`entry-${key}`]) {
     key = `entry-${key}`;
   }
-  const target = PARENT_VIEW_MAP[key] || 'dashboard';
+  let target = PARENT_VIEW_MAP[key] || 'dashboard';
+  if ((key === 'entry-depot' || key === 'depot') && ERP_STATE.lastFacilityEntryOrigin) {
+    target = `list-${ERP_STATE.lastFacilityEntryOrigin}`;
+  }
 
   if (target === 'dashboard') {
     navigateToStudio('dashboard');
@@ -1128,6 +1132,7 @@ function syncEntryCompanyDisplays() {
     'vend-company-display',
     'prod-company-display',
     'acc-company-display',
+    'depot-company-display',
     'wh-company-display',
     'emp-company-display',
     'contra-company-display',
@@ -2019,6 +2024,21 @@ function resetEntryForm(entityType) {
     if (factorEl) factorEl.value = '1.0000';
     const isoEl = document.getElementById('uom-iso');
     if (isoEl) isoEl.value = '';
+  } else if (entityType === 'depot') {
+    const codeEl = document.getElementById('depot-code');
+    if (codeEl) { codeEl.value = '[Auto-Generated on Save]'; codeEl.readOnly = true; }
+    const typeEl = document.getElementById('depot-type');
+    if (typeEl) typeEl.selectedIndex = 0;
+    const nameEl = document.getElementById('depot-name');
+    if (nameEl) nameEl.value = '';
+    const cityEl = document.getElementById('depot-city');
+    if (cityEl) cityEl.selectedIndex = 0;
+    const incEl = document.getElementById('depot-incharge');
+    if (incEl) incEl.value = '';
+    const phoneEl = document.getElementById('depot-phone');
+    if (phoneEl) phoneEl.value = '';
+    const addrEl = document.getElementById('depot-address');
+    if (addrEl) addrEl.value = '';
   } else if (entityType === 'warehouse') {
     const codeEl = document.getElementById('wh-code');
     if (codeEl) { codeEl.value = '[Auto-Generated on Save]'; codeEl.readOnly = true; }
@@ -6591,7 +6611,27 @@ function filterPlantListTable() {
 }
 
 function openNewPlantForm() {
-  openNewDepotForm(1);
+  resetEntryForm('depot');
+  const typeEl = document.getElementById('depot-type');
+  if (typeEl) typeEl.value = '1';
+  const titleEl = document.getElementById('depot-entry-title');
+  if (titleEl) titleEl.textContent = 'Manufacturing Plant Registration';
+  const txt = document.getElementById('txt-save-depot');
+  if (txt) txt.textContent = 'Save';
+  ERP_STATE.lastFacilityEntryOrigin = 'plants';
+  navigateToStudio('entry-depot');
+}
+
+function openNewDepotForm(defaultType = 2) {
+  resetEntryForm('depot');
+  const typeEl = document.getElementById('depot-type');
+  if (typeEl) typeEl.value = String(defaultType);
+  const titleEl = document.getElementById('depot-entry-title');
+  if (titleEl) titleEl.textContent = defaultType === 1 ? 'Manufacturing Plant Registration' : 'Regional Depot Registration';
+  const txt = document.getElementById('txt-save-depot');
+  if (txt) txt.textContent = 'Save';
+  ERP_STATE.lastFacilityEntryOrigin = defaultType === 1 ? 'plants' : 'depots';
+  navigateToStudio('entry-depot');
 }
 
 // --------------------------------------------------------------------------
@@ -6724,12 +6764,7 @@ function filterDepotListTable() {
   renderDepotListTable(filtered);
 }
 
-function openNewDepotForm() {
-  resetEntryForm('depot');
-  const txt = document.getElementById('txt-save-depot');
-  if (txt) txt.textContent = 'Save';
-  navigateToStudio('entry-depot');
-}
+
 
 function editDepotRecord(code, name, city) {
   navigateToStudio('entry-depot');
@@ -6776,7 +6811,8 @@ async function saveDepotEntry() {
     if (res.ok) {
       showToast(`Depot ${name} registered successfully!`, 'success');
       clearFormDirty('depot');
-      navigateToList('depots');
+      const origin = ERP_STATE.lastFacilityEntryOrigin || (type === 1 ? 'plants' : 'depots');
+      navigateToList(origin);
     } else {
       const err = await res.json();
       showToast(err.message || 'Failed to save depot.', 'error');
