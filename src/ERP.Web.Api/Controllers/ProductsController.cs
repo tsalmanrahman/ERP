@@ -46,6 +46,13 @@ public class ProductsController : ControllerBase
         return Ok(new { success = true, data = product });
     }
 
+    [HttpGet("{id:int}/price-history")]
+    public async Task<IActionResult> GetProductPriceHistory(int id, CancellationToken cancellationToken)
+    {
+        var history = await _inventoryService.GetProductPriceHistoryAsync(id, cancellationToken);
+        return Ok(new { success = true, data = history });
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteProduct(int id, CancellationToken cancellationToken)
     {
@@ -96,6 +103,8 @@ public class ProductsController : ControllerBase
         }
     }
 
+    // --- Product Classes ---
+
     [HttpGet("classes")]
     public async Task<IActionResult> GetProductClasses(CancellationToken cancellationToken)
     {
@@ -117,6 +126,34 @@ public class ProductsController : ControllerBase
         }
     }
 
+    [HttpPut("classes/{id:int}")]
+    public async Task<IActionResult> UpdateProductClass(int id, [FromBody] CreateProductClassRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _inventoryService.UpdateProductClassAsync(id, request, cancellationToken);
+            return Ok(new { success = true, data = result });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { success = false, message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpDelete("classes/{id:int}")]
+    public async Task<IActionResult> DeleteProductClass(int id, CancellationToken cancellationToken)
+    {
+        var result = await _inventoryService.DeleteProductClassAsync(id, cancellationToken);
+        if (!result) return NotFound(new { success = false, message = $"Product class with ID {id} was not found." });
+        return Ok(new { success = true, message = "Product class updated/deactivated successfully." });
+    }
+
+    // --- Units of Measure ---
+
     [HttpGet("uoms")]
     public async Task<IActionResult> GetUnitsOfMeasure(CancellationToken cancellationToken)
     {
@@ -137,6 +174,87 @@ public class ProductsController : ControllerBase
             return BadRequest(new { success = false, message = ex.Message });
         }
     }
+
+    [HttpPut("uoms/{id:int}")]
+    public async Task<IActionResult> UpdateUnitOfMeasure(int id, [FromBody] CreateUnitOfMeasureRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _inventoryService.UpdateUnitOfMeasureAsync(id, request, cancellationToken);
+            return Ok(new { success = true, data = result });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { success = false, message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpDelete("uoms/{id:int}")]
+    public async Task<IActionResult> DeleteUnitOfMeasure(int id, CancellationToken cancellationToken)
+    {
+        var result = await _inventoryService.DeleteUnitOfMeasureAsync(id, cancellationToken);
+        if (!result) return NotFound(new { success = false, message = $"Unit of measure with ID {id} was not found." });
+        return Ok(new { success = true, message = "Unit of measure deactivated/deleted successfully." });
+    }
+
+    // --- Configurable Master Lookups ---
+
+    [HttpGet("lookups")]
+    public async Task<IActionResult> GetMasterLookups(
+        [FromQuery] string? type,
+        [FromQuery] int? parentId,
+        [FromQuery] bool includeInactive = false,
+        CancellationToken cancellationToken = default)
+    {
+        var lookups = await _inventoryService.GetMasterLookupsAsync(type, parentId, includeInactive, cancellationToken);
+        return Ok(new { success = true, data = lookups });
+    }
+
+    [HttpPost("lookups")]
+    public async Task<IActionResult> CreateMasterLookup([FromBody] SaveMasterLookupRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _inventoryService.CreateMasterLookupAsync(request, cancellationToken);
+            return Ok(new { success = true, data = result });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPut("lookups/{id:int}")]
+    public async Task<IActionResult> UpdateMasterLookup(int id, [FromBody] SaveMasterLookupRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _inventoryService.UpdateMasterLookupAsync(id, request, cancellationToken);
+            return Ok(new { success = true, data = result });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { success = false, message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpDelete("lookups/{id:int}")]
+    public async Task<IActionResult> DeleteMasterLookup(int id, CancellationToken cancellationToken)
+    {
+        var result = await _inventoryService.DeleteMasterLookupAsync(id, cancellationToken);
+        if (!result) return NotFound(new { success = false, message = $"Master lookup with ID {id} was not found." });
+        return Ok(new { success = true, message = "Master lookup deactivated successfully." });
+    }
+
+    // --- Depots & Warehouses ---
 
     [HttpGet("depots")]
     public async Task<IActionResult> GetDepots([FromQuery] int? type, CancellationToken cancellationToken)

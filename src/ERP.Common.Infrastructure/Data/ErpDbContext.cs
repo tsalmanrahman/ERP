@@ -40,6 +40,8 @@ public class ErpDbContext : DbContext, IApplicationDbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<UnitOfMeasure> UnitsOfMeasure => Set<UnitOfMeasure>();
     public DbSet<ProductClass> ProductClasses => Set<ProductClass>();
+    public DbSet<MasterLookup> MasterLookups => Set<MasterLookup>();
+    public DbSet<ProductPriceHistory> ProductPriceHistories => Set<ProductPriceHistory>();
     public DbSet<Depot> Depots => Set<Depot>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<ProductStock> ProductStock => Set<ProductStock>();

@@ -12,8 +12,42 @@ public class UnitOfMeasureConfiguration : IEntityTypeConfiguration<UnitOfMeasure
         builder.HasKey(u => u.Id);
         builder.Property(u => u.UomCode).HasMaxLength(10).IsRequired();
         builder.Property(u => u.UomName).HasMaxLength(50).IsRequired();
+        builder.Property(u => u.UomCategory).HasMaxLength(30).IsRequired();
         builder.HasIndex(u => new { u.CompanyId, u.UomCode }).IsUnique();
         builder.Property(u => u.RowVersion).IsRowVersion();
+    }
+}
+
+public class MasterLookupConfiguration : IEntityTypeConfiguration<MasterLookup>
+{
+    public void Configure(EntityTypeBuilder<MasterLookup> builder)
+    {
+        builder.ToTable("MasterLookups", "inv");
+        builder.HasKey(m => m.Id);
+        builder.Property(m => m.LookupType).HasMaxLength(50).IsRequired();
+        builder.Property(m => m.LookupCode).HasMaxLength(50).IsRequired();
+        builder.Property(m => m.LookupName).HasMaxLength(150).IsRequired();
+        builder.Property(m => m.Description).HasMaxLength(250);
+        builder.Property(m => m.NumericValue).HasPrecision(18, 4);
+        builder.HasIndex(m => new { m.CompanyId, m.LookupType, m.LookupCode }).IsUnique();
+        builder.Property(m => m.RowVersion).IsRowVersion();
+    }
+}
+
+public class ProductPriceHistoryConfiguration : IEntityTypeConfiguration<ProductPriceHistory>
+{
+    public void Configure(EntityTypeBuilder<ProductPriceHistory> builder)
+    {
+        builder.ToTable("ProductPriceHistory", "inv");
+        builder.HasKey(h => h.Id);
+        builder.Property(h => h.OldStandardCost).HasPrecision(18, 4);
+        builder.Property(h => h.NewStandardCost).HasPrecision(18, 4);
+        builder.Property(h => h.OldSellingPrice).HasPrecision(18, 4);
+        builder.Property(h => h.NewSellingPrice).HasPrecision(18, 4);
+        builder.Property(h => h.OldMinRetailPrice).HasPrecision(18, 4);
+        builder.Property(h => h.NewMinRetailPrice).HasPrecision(18, 4);
+        builder.Property(h => h.ChangeReason).HasMaxLength(250);
+        builder.Property(h => h.ChangedBy).HasMaxLength(100).IsRequired();
     }
 }
 

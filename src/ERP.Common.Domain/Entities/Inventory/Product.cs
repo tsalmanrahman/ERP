@@ -17,6 +17,22 @@ public class Product : Entity<int>, IMultiTenant, IAuditableEntity, ISoftDeletab
     public bool IsActive { get; set; } = true;
 
     // International Standards & Specifications (UNSPSC, GS1, ISO 80000, IAS 2)
+    public string? Description { get; set; }
+    public string? BarcodeGtin { get; set; }
+    public int? SubcategoryId { get; set; }
+    public int? BrandId { get; set; }
+    public string? MaterialGrade { get; set; }
+    public int? SecondaryUomId { get; set; }
+    public decimal? UomConversionFactor { get; set; }
+    public decimal MinimumRetailPrice { get; set; }
+    public string? TaxScheduleCode { get; set; } = "VAT_STD_15";
+    public string? DefaultStorageBin { get; set; }
+    public string QcPolicy { get; set; } = "Visual Inspection";
+    public bool IsPurchasable { get; set; } = true;
+    public bool IsSellable { get; set; } = true;
+    public bool IsManufactured { get; set; } = false;
+    public string LifecycleStatus { get; set; } = "Active";
+
     public string? HsCode { get; set; }
     public decimal? NetWeight { get; set; }
     public decimal? GrossWeight { get; set; }

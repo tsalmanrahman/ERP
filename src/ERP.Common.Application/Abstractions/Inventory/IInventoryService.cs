@@ -11,14 +11,25 @@ public interface IInventoryService
     Task<ProductDto> CreateProductAsync(CreateProductRequest request, CancellationToken cancellationToken = default);
     Task<ProductDto> UpdateProductAsync(int id, UpdateProductRequest request, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteProductAsync(int id, CancellationToken cancellationToken = default);
+    Task<List<ProductPriceHistoryDto>> GetProductPriceHistoryAsync(int productId, CancellationToken cancellationToken = default);
 
     // Product Classes
     Task<List<ProductClassDto>> GetProductClassesAsync(CancellationToken cancellationToken = default);
     Task<ProductClassDto> CreateProductClassAsync(CreateProductClassRequest request, CancellationToken cancellationToken = default);
+    Task<ProductClassDto> UpdateProductClassAsync(int id, CreateProductClassRequest request, CancellationToken cancellationToken = default);
+    Task<bool> DeleteProductClassAsync(int id, CancellationToken cancellationToken = default);
 
     // Units of Measure
     Task<List<UnitOfMeasureDto>> GetUnitsOfMeasureAsync(CancellationToken cancellationToken = default);
     Task<UnitOfMeasureDto> CreateUnitOfMeasureAsync(CreateUnitOfMeasureRequest request, CancellationToken cancellationToken = default);
+    Task<UnitOfMeasureDto> UpdateUnitOfMeasureAsync(int id, CreateUnitOfMeasureRequest request, CancellationToken cancellationToken = default);
+    Task<bool> DeleteUnitOfMeasureAsync(int id, CancellationToken cancellationToken = default);
+
+    // Configurable Master Lookups (Subcategories, Material Grades, Brands, Packaging, Tax Schedules, QC Policies, Storage Bins)
+    Task<List<MasterLookupDto>> GetMasterLookupsAsync(string? lookupType = null, int? parentId = null, bool includeInactive = false, CancellationToken cancellationToken = default);
+    Task<MasterLookupDto> CreateMasterLookupAsync(SaveMasterLookupRequest request, CancellationToken cancellationToken = default);
+    Task<MasterLookupDto> UpdateMasterLookupAsync(int id, SaveMasterLookupRequest request, CancellationToken cancellationToken = default);
+    Task<bool> DeleteMasterLookupAsync(int id, CancellationToken cancellationToken = default);
 
     // Depots & Facilities
     Task<List<DepotDto>> GetDepotsAsync(int? depotType = null, CancellationToken cancellationToken = default);

@@ -9,18 +9,34 @@ public class ProductDto
     public int Id { get; set; }
     public string ProductCode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? BarcodeGtin { get; set; }
     public int ProductClassId { get; set; }
     public string? ClassCode { get; set; }
     public string? ClassName { get; set; }
+    public int? CategoryType { get; set; }
+    public int? SubcategoryId { get; set; }
+    public string? SubcategoryName { get; set; }
+    public int? BrandId { get; set; }
+    public string? BrandName { get; set; }
+    public string? MaterialGrade { get; set; }
     public int PrimaryUomId { get; set; }
     public string? UomCode { get; set; }
+    public int? SecondaryUomId { get; set; }
+    public decimal? UomConversionFactor { get; set; }
     public string? PackSize { get; set; }
     public decimal StandardCost { get; set; }
     public decimal CurrentCost { get; set; }
     public decimal SellingPrice { get; set; }
+    public decimal MinimumRetailPrice { get; set; }
+    public string? TaxScheduleCode { get; set; }
     public decimal ReorderLevel { get; set; }
     public decimal TotalQuantityOnHand { get; set; }
     public bool IsActive { get; set; }
+    public string LifecycleStatus { get; set; } = "Active";
+    public bool IsPurchasable { get; set; } = true;
+    public bool IsSellable { get; set; } = true;
+    public bool IsManufactured { get; set; } = false;
 
     // International Standards & Specifications
     public string? HsCode { get; set; }
@@ -39,19 +55,35 @@ public class ProductDto
     public decimal TaxRatePercent { get; set; }
     public int? DefaultWarehouseId { get; set; }
     public string? DefaultWarehouseName { get; set; }
+    public string? DefaultStorageBin { get; set; }
+    public string QcPolicy { get; set; } = "Visual Inspection";
+    public bool HasTransactions { get; set; }
 }
 
 public class CreateProductRequest
 {
     public string? ProductCode { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? BarcodeGtin { get; set; }
     public int ProductClassId { get; set; }
+    public int? SubcategoryId { get; set; }
+    public int? BrandId { get; set; }
+    public string? MaterialGrade { get; set; }
     public int PrimaryUomId { get; set; }
+    public int? SecondaryUomId { get; set; }
+    public decimal? UomConversionFactor { get; set; }
     public string? PackSize { get; set; }
     public decimal StandardCost { get; set; }
     public decimal CurrentCost { get; set; }
     public decimal SellingPrice { get; set; }
+    public decimal MinimumRetailPrice { get; set; }
+    public string? TaxScheduleCode { get; set; }
     public decimal ReorderLevel { get; set; }
+    public string? LifecycleStatus { get; set; }
+    public bool? IsPurchasable { get; set; }
+    public bool? IsSellable { get; set; }
+    public bool? IsManufactured { get; set; }
 
     // International Standards
     public string? HsCode { get; set; }
@@ -69,20 +101,35 @@ public class CreateProductRequest
     public string? CostingMethod { get; set; }
     public decimal? TaxRatePercent { get; set; }
     public int? DefaultWarehouseId { get; set; }
+    public string? DefaultStorageBin { get; set; }
+    public string? QcPolicy { get; set; }
 }
 
 public class UpdateProductRequest
 {
     // Business code is intentionally immutable: client-supplied codes are never accepted for modification
     public string ProductName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? BarcodeGtin { get; set; }
     public int ProductClassId { get; set; }
+    public int? SubcategoryId { get; set; }
+    public int? BrandId { get; set; }
+    public string? MaterialGrade { get; set; }
     public int PrimaryUomId { get; set; }
+    public int? SecondaryUomId { get; set; }
+    public decimal? UomConversionFactor { get; set; }
     public string? PackSize { get; set; }
     public decimal StandardCost { get; set; }
     public decimal CurrentCost { get; set; }
     public decimal SellingPrice { get; set; }
+    public decimal MinimumRetailPrice { get; set; }
+    public string? TaxScheduleCode { get; set; }
     public decimal ReorderLevel { get; set; }
     public bool IsActive { get; set; } = true;
+    public string? LifecycleStatus { get; set; }
+    public bool? IsPurchasable { get; set; }
+    public bool? IsSellable { get; set; }
+    public bool? IsManufactured { get; set; }
 
     // International Standards
     public string? HsCode { get; set; }
@@ -100,6 +147,8 @@ public class UpdateProductRequest
     public string? CostingMethod { get; set; }
     public decimal? TaxRatePercent { get; set; }
     public int? DefaultWarehouseId { get; set; }
+    public string? DefaultStorageBin { get; set; }
+    public string? QcPolicy { get; set; }
 }
 
 public class ProductClassDto
@@ -108,12 +157,14 @@ public class ProductClassDto
     public string ClassCode { get; set; } = string.Empty;
     public string ClassName { get; set; } = string.Empty;
     public ProductCategoryType CategoryType { get; set; }
+    public string CategoryTypeName { get; set; } = string.Empty;
     public int GlInventoryAccountId { get; set; }
     public string? GlInventoryAccountCode { get; set; }
     public int GlCogsAccountId { get; set; }
     public string? GlCogsAccountCode { get; set; }
     public int GlRevenueAccountId { get; set; }
     public string? GlRevenueAccountCode { get; set; }
+    public bool IsActive { get; set; } = true;
 }
 
 public class CreateProductClassRequest
@@ -124,6 +175,7 @@ public class CreateProductClassRequest
     public int GlInventoryAccountId { get; set; }
     public int GlCogsAccountId { get; set; }
     public int GlRevenueAccountId { get; set; }
+    public bool IsActive { get; set; } = true;
 }
 
 public class UnitOfMeasureDto
@@ -131,12 +183,60 @@ public class UnitOfMeasureDto
     public int Id { get; set; }
     public string UomCode { get; set; } = string.Empty;
     public string UomName { get; set; } = string.Empty;
+    public string UomCategory { get; set; } = "Unit";
+    public int DecimalPrecision { get; set; } = 2;
+    public bool IsActive { get; set; } = true;
 }
 
 public class CreateUnitOfMeasureRequest
 {
     public string UomCode { get; set; } = string.Empty;
     public string UomName { get; set; } = string.Empty;
+    public string? UomCategory { get; set; }
+    public int? DecimalPrecision { get; set; }
+    public bool? IsActive { get; set; }
+}
+
+public class MasterLookupDto
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public string LookupType { get; set; } = string.Empty;
+    public string LookupCode { get; set; } = string.Empty;
+    public string LookupName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal? NumericValue { get; set; }
+    public int? ParentId { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class SaveMasterLookupRequest
+{
+    public string LookupType { get; set; } = string.Empty;
+    public string LookupCode { get; set; } = string.Empty;
+    public string LookupName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal? NumericValue { get; set; }
+    public int? ParentId { get; set; }
+    public int SortOrder { get; set; } = 0;
+    public bool IsActive { get; set; } = true;
+    public bool IsGlobal { get; set; } = true;
+}
+
+public class ProductPriceHistoryDto
+{
+    public int Id { get; set; }
+    public int ProductId { get; set; }
+    public decimal OldStandardCost { get; set; }
+    public decimal NewStandardCost { get; set; }
+    public decimal OldSellingPrice { get; set; }
+    public decimal NewSellingPrice { get; set; }
+    public decimal OldMinRetailPrice { get; set; }
+    public decimal NewMinRetailPrice { get; set; }
+    public string? ChangeReason { get; set; }
+    public DateTime EffectiveFromUtc { get; set; }
+    public string ChangedBy { get; set; } = string.Empty;
 }
 
 // --- Depot & Facility DTOs ---

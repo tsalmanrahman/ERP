@@ -1,4 +1,4 @@
-﻿using ERP.Common.Domain.Common;
+using ERP.Common.Domain.Common;
 
 namespace ERP.Common.Domain.Entities.Inventory;
 
@@ -21,6 +21,7 @@ public class ProductClass : Entity<int>, IMultiTenant, IAuditableEntity, ISoftDe
     public int GlInventoryAccountId { get; set; }
     public int GlCogsAccountId { get; set; }
     public int GlRevenueAccountId { get; set; }
+    public bool IsActive { get; set; } = true;
 
     // Auditing & Concurrency
     public DateTime CreatedAtUtc { get; set; }

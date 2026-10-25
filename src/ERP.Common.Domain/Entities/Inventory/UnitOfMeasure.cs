@@ -1,4 +1,4 @@
-﻿using ERP.Common.Domain.Common;
+using ERP.Common.Domain.Common;
 
 namespace ERP.Common.Domain.Entities.Inventory;
 
@@ -7,6 +7,9 @@ public class UnitOfMeasure : Entity<int>, IMultiTenant, IAuditableEntity, ISoftD
     public int CompanyId { get; set; }
     public string UomCode { get; set; } = string.Empty;
     public string UomName { get; set; } = string.Empty;
+    public string UomCategory { get; set; } = "Unit";
+    public int DecimalPrecision { get; set; } = 2;
+    public bool IsActive { get; set; } = true;
 
     // Auditing & Concurrency
     public DateTime CreatedAtUtc { get; set; }

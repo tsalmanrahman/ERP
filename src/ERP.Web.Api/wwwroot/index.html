@@ -506,6 +506,12 @@
                   <a href="#list-uoms" onclick="navigateToList('uoms')" data-list="uoms" class="tree-sub-item" title="Units of Measure (UOM)">
                     <span class="truncate">Units of Measure</span>
                   </a>
+                  <a href="#list-product-classes" onclick="navigateToList('product-classes')" data-list="product-classes" class="tree-sub-item" title="Product Classes &amp; GL Categories">
+                    <span class="truncate">Product Classes</span>
+                  </a>
+                  <a href="#list-lookups" onclick="navigateToList('lookups')" data-list="lookups" class="tree-sub-item" title="Master Data Lookups Registry">
+                    <span class="truncate">Master Lookups</span>
+                  </a>
                   <a href="#entry-challan" onclick="navigateToStudio('entry-challan')" data-studio="entry-challan" class="tree-sub-item" title="Delivery Challan">
                     <span class="truncate">Delivery Challan</span>
                   </a>
@@ -4257,6 +4263,186 @@
         </div>
       </section>
 
+      <!-- LIST PAGE: PRODUCT CLASSES & GL CATEGORIES REGISTRY -->
+      <section id="studio-list-product-classes" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="navigateBackFrom('list-product-classes')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Return to Inventory Control"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <i data-lucide="layers" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Product Classes &amp; GL Integration</h2>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="search-list-product-classes" 
+                oninput="filterProductClassListTable()" 
+                placeholder="Search class code or name..." 
+                class="h-9 pl-9 pr-3 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-400 focus:outline-none focus:border-amber-500/50 w-48 sm:w-60"
+              />
+            </div>
+            <button 
+              type="button" 
+              onclick="loadProductClassListData()" 
+              class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Refresh Product Classes"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openNewProductClassForm()" 
+              class="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Add New Product Class"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table id="table-list-product-classes" class="w-full text-xs text-left border-collapse erp-table-compact">
+              <thead class="bg-white/[0.04] text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-white/10">
+                <tr>
+                  <th class="py-3 px-4">Class Code</th>
+                  <th class="py-3 px-4">Class Name</th>
+                  <th class="py-3 px-4">Operational Type</th>
+                  <th class="py-3 px-4">GL Inventory Asset</th>
+                  <th class="py-3 px-4">GL COGS Expense</th>
+                  <th class="py-3 px-4">GL Sales Revenue</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-list-product-classes" class="divide-y divide-white/5 text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-list-product-classes" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+            <p class="text-xs">No product classes found.</p>
+          </div>
+          <div id="pagination-list-product-classes" class="erp-pagination-bar"></div>
+        </div>
+      </section>
+
+      <!-- LIST PAGE: CONFIGURABLE MASTER DATA LOOKUPS REGISTRY -->
+      <section id="studio-list-lookups" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="navigateBackFrom('list-lookups')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Return to Inventory Control"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/20">
+              <i data-lucide="database" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Configurable Master Data Lookups</h2>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <select 
+              id="filter-lookup-type" 
+              onchange="loadMasterLookupListData()" 
+              class="h-9 px-3 text-xs rounded-xl bg-white/5 border border-white/10 text-slate-200 font-semibold focus:outline-none focus:border-cyan-500/50 cursor-pointer"
+            >
+              <option value="ALL" class="bg-slate-900">All Lookup Categories</option>
+              <option value="PRODUCT_SUBCATEGORY" class="bg-slate-900">Item Subcategories</option>
+              <option value="MATERIAL_GRADE" class="bg-slate-900">Material Grades &amp; Standards</option>
+              <option value="PRODUCT_BRAND" class="bg-slate-900">Brands &amp; Manufacturers</option>
+              <option value="PACKAGING_TYPE" class="bg-slate-900">Packaging Configurations</option>
+              <option value="TAX_SCHEDULE" class="bg-slate-900">VAT / Tax Schedules</option>
+              <option value="QC_POLICY" class="bg-slate-900">Inbound QC Policies</option>
+              <option value="STORAGE_BIN" class="bg-slate-900">Storage Bays &amp; Bins</option>
+            </select>
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="search-list-lookups" 
+                oninput="filterMasterLookupListTable()" 
+                placeholder="Search code or value..." 
+                class="h-9 pl-9 pr-3 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/50 w-48 sm:w-56"
+              />
+            </div>
+            <button 
+              type="button" 
+              onclick="loadMasterLookupListData()" 
+              class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Refresh Lookups"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openNewMasterLookupForm()" 
+              class="h-9 px-3.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Add New Master Lookup Value"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table id="table-list-lookups" class="w-full text-xs text-left border-collapse erp-table-compact">
+              <thead class="bg-white/[0.04] text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-white/10">
+                <tr>
+                  <th class="py-3 px-4">Lookup Category</th>
+                  <th class="py-3 px-4">Lookup Code</th>
+                  <th class="py-3 px-4">Display Value / Name</th>
+                  <th class="py-3 px-4">Description / Spec</th>
+                  <th class="py-3 px-4 text-right">Rate / Value</th>
+                  <th class="py-3 px-4">Scope</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-list-lookups" class="divide-y divide-white/5 text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-list-lookups" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+            <p class="text-xs">No master lookup records found.</p>
+          </div>
+          <div id="pagination-list-lookups" class="erp-pagination-bar"></div>
+        </div>
+      </section>
+
       <!-- LIST PAGE 6: EMPLOYEE MASTER DIRECTORY -->
       <section id="studio-list-employees" class="space-y-4 hidden">
         <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
@@ -5181,7 +5367,7 @@
       <!-- =====================================================================
            DEDICATED FULL-PAGE ENTRY 3: PRODUCT MASTER CATALOG SPECIFICATION
            ===================================================================== -->
-      <section id="studio-entry-product" class="space-y-4 hidden">
+      <section id="studio-entry-product" class="space-y-4 hidden" data-editing-id="">
         
         <!-- Header Action Banner -->
         <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
@@ -5220,6 +5406,24 @@
           <div class="flex items-center gap-2 shrink-0">
             <button 
               type="button" 
+              onclick="resetEntryForm('product')" 
+              class="h-9 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+              title="Reset Form Fields"
+            >
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Reset</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="confirmDiscardChanges('product')" 
+              class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+              title="Cancel Changes"
+            >
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              <span>Cancel</span>
+            </button>
+            <button 
+              type="button" 
               id="btn-save-product" 
               onclick="saveProductEntry()" 
               class="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
@@ -5231,14 +5435,17 @@
           </div>
         </div>
 
-        <!-- 4-Card Multi-Column Responsive Grid -->
+        <!-- 5-Card Multi-Column Responsive Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           
           <!-- Card 1: Product Classification & Metadata -->
           <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
-            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
-              <i data-lucide="box" class="w-4 h-4 text-amber-400"></i>
-              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Product Identification &amp; Category</h3>
+            <div class="flex items-center justify-between pb-2 border-b border-white/10">
+              <div class="flex items-center gap-2">
+                <i data-lucide="box" class="w-4 h-4 text-amber-400"></i>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Product Identification &amp; Category</h3>
+              </div>
+              <span id="prod-tx-lock-hint" class="hidden text-[10px] font-mono text-amber-400">Transactions Active</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -5247,25 +5454,87 @@
                 <input type="text" id="prod-code" value="[Auto-Generated on Save]" readonly class="mac-input w-full font-mono font-bold text-amber-400/80 text-xs bg-white/[0.03] border border-white/10 cursor-not-allowed select-all" title="System-generated immutable product code">
                 <span id="err-prod-code" class="field-error hidden"></span>
               </div>
+
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Item Category *</label>
-                <select id="prod-category" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
-                  <option value="Finished Goods (PEB Steel)">Finished Goods (PEB Structural Steel)</option>
-                  <option value="Finished Goods (Polymer)">Finished Goods (uPVC Polymer Pipes)</option>
-                  <option value="Raw Material (Steel)">Raw Material (Hot-Rolled Coils &amp; Plates)</option>
-                  <option value="Raw Material (Resin)">Raw Material (Polymer Resin Granules)</option>
-                  <option value="Spares & Hardware">Manufacturing Spares &amp; Fasteners</option>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Item Category (GL Class) *</label>
+                  <button type="button" onclick="openMasterQuickAddModal('PRODUCT_CLASS', 'prod-category')" class="px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New Product Class / Category">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
+                <select id="prod-category" onchange="onProductClassChange(); markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                  <option value="1">FG-PEB — Finished Goods (PEB Structural Steel)</option>
                 </select>
               </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Item Subcategory</label>
+                  <button type="button" onclick="openMasterQuickAddModal('PRODUCT_SUBCATEGORY', 'prod-subcategory')" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New Item Subcategory">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
+                <select id="prod-subcategory" onchange="markFormDirty('product')" class="mac-input w-full text-xs">
+                  <option value="">-- Select Subcategory --</option>
+                </select>
+              </div>
+
+              <div id="wrap-prod-brand">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Brand / Manufacturer</label>
+                  <button type="button" onclick="openMasterQuickAddModal('PRODUCT_BRAND', 'prod-brand')" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New Brand or Manufacturer">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
+                <select id="prod-brand" onchange="markFormDirty('product')" class="mac-input w-full text-xs">
+                  <option value="">-- Select Brand / OEM --</option>
+                </select>
+              </div>
+
               <div class="sm:col-span-2">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Product Title / Description *</label>
                 <input type="text" id="prod-name" placeholder="e.g. High-Yield Structural Steel Beam (UB 203x133)" oninput="markFormDirty('product')" class="mac-input w-full font-bold text-xs">
                 <span id="err-prod-name" class="field-error hidden"></span>
               </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Standard / Material Grade</label>
-                <input type="text" id="prod-grade" placeholder="e.g. Grade 50B / ASTM A36" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Technical Specification Summary</label>
+                <input type="text" id="prod-description" placeholder="Optional engineering dimensions, coating, or tolerance notes..." oninput="markFormDirty('product')" class="mac-input w-full text-xs">
               </div>
+
+              <div id="wrap-prod-grade">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Standard / Material Grade</label>
+                  <button type="button" onclick="openMasterQuickAddModal('MATERIAL_GRADE', 'prod-grade')" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New Material Grade / Standard">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
+                <select id="prod-grade" onchange="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                  <option value="ASTM A572 Grade 50">ASTM A572 Grade 50</option>
+                  <option value="ASTM A36 Mild Steel">ASTM A36 Mild Steel</option>
+                  <option value="Standard Commercial Spec">Standard Commercial Spec</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Lifecycle Status</label>
+                <select id="prod-lifecycle-status" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                  <option value="Active">Active (Released for Transactions)</option>
+                  <option value="Draft">Draft (Specification Under Review)</option>
+                  <option value="Inactive">Inactive (Temporarily On Hold)</option>
+                  <option value="Discontinued">Discontinued (Obsolete / No New PO)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Barcode / GS1 GTIN</label>
+                <input type="text" id="prod-barcode" placeholder="e.g. 8941100240119" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+              </div>
+
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Target Subsidiary Entity</label>
                 <input type="text" id="prod-company-display" value="HATIM STEEL STRUCTURE LTD (HSF)" disabled class="mac-input w-full text-xs bg-white/[0.02] text-slate-400 cursor-not-allowed">
@@ -5282,38 +5551,82 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Base Unit of Measure (UOM) *</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Base Unit of Measure (UOM) *</label>
+                  <button type="button" onclick="openMasterQuickAddModal('UOM', 'prod-uom')" class="px-1.5 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New Unit of Measure">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
                 <select id="prod-uom" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
-                  <option value="MT">MT - Metric Ton</option>
-                  <option value="KG">KG - Kilogram</option>
-                  <option value="PCS">PCS - Pieces</option>
-                  <option value="LENGTH">LENGTH - 6-Meter Standard Pipe</option>
-                  <option value="BOX">BOX - 100 Pcs Industrial Box</option>
-                  <option value="DRUM">DRUM - 200 Litre Industrial Drum</option>
+                  <option value="1">MT - Metric Ton</option>
+                  <option value="2">KG - Kilogram</option>
+                  <option value="3">PCS - Pieces</option>
                 </select>
               </div>
+
+              <div id="wrap-prod-pack-size">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Standard Pack Size</label>
+                  <button type="button" onclick="openMasterQuickAddModal('PACKAGING_TYPE', 'prod-pack-size')" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New Packaging Configuration">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
+                <select id="prod-pack-size" onchange="markFormDirty('product')" class="mac-input w-full text-xs">
+                  <option value="Loose / Unpacked Bulk">Loose / Unpacked Bulk</option>
+                  <option value="Steel Master Coil (3-5 MT)">Steel Master Coil (3-5 MT)</option>
+                  <option value="25 KG Woven Sack / Bag">25 KG Woven Sack / Bag</option>
+                </select>
+              </div>
+
               <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Secondary / Alt UOM</label>
+                <select id="prod-sec-uom" onchange="markFormDirty('product')" class="mac-input w-full text-xs">
+                  <option value="">-- Single UOM Only --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Conversion Factor (Alt to Base)</label>
+                <input type="number" id="prod-uom-factor" value="1" min="0.0001" step="0.0001" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs" placeholder="e.g. 1000 (1 MT = 1000 KG)">
+              </div>
+
+              <div id="wrap-prod-reorder">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Reorder Level Threshold *</label>
                 <input type="number" id="prod-reorder" value="50" min="0" oninput="markFormDirty('product')" class="mac-input w-full font-mono font-bold text-amber-400 text-xs">
                 <span id="err-prod-reorder" class="field-error hidden"></span>
               </div>
-              <div>
+
+              <div id="wrap-prod-safety">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Safety Stock Floor Level</label>
                 <input type="number" id="prod-safety" value="20" min="0" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
               </div>
-              <div>
+
+              <div id="wrap-prod-leadtime">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Standard Procurement Lead Time (Days)</label>
-                <input type="number" id="prod-leadtime" value="14" min="1" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-leadtime" value="14" min="0" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+              </div>
+
+              <div id="wrap-prod-tracking">
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Traceability / Tracking Policy</label>
+                <select id="prod-tracking-policy" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                  <option value="1">Standard (Quantity Only)</option>
+                  <option value="2">Batch / Lot / Heat Number Tracked</option>
+                  <option value="3">Unique Serial Number Tracked</option>
+                </select>
               </div>
             </div>
-
           </div>
 
           <!-- Card 3: Valuation & Commercial Pricing -->
           <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
-            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
-              <i data-lucide="tag" class="w-4 h-4 text-emerald-400"></i>
-              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Commercial Pricing &amp; Cost Valuation</h3>
+            <div class="flex items-center justify-between pb-2 border-b border-white/10">
+              <div class="flex items-center gap-2">
+                <i data-lucide="tag" class="w-4 h-4 text-emerald-400"></i>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Commercial Pricing &amp; Cost Valuation</h3>
+              </div>
+              <span class="text-[10px] font-mono text-slate-400">Moving Avg Cost: <strong id="prod-current-cost-display" class="text-emerald-400">৳0.00</strong></span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -5332,18 +5645,37 @@
                 <input type="number" id="prod-retail" value="9200" min="0" step="10" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">VAT Output Schedule</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">VAT Output Schedule</label>
+                  <button type="button" onclick="openMasterQuickAddModal('TAX_SCHEDULE', 'prod-vat-rate')" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New VAT / Tax Schedule">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
                 <select id="prod-vat-rate" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
-                  <option value="0.15">15% - Standard Commercial VAT</option>
-                  <option value="0.05">5% - Concessional Manufacturing</option>
-                  <option value="0.00">0% - Zero-Rated Export</option>
+                  <option value="15" data-code="VAT_STD_15">15.0% — Standard VAT Schedule</option>
+                  <option value="7.5" data-code="VAT_TRADE_7_5">7.5% — Manufacturing / Trade VAT</option>
+                  <option value="5" data-code="VAT_RED_5">5.0% — Reduced Commercial VAT</option>
+                  <option value="0" data-code="VAT_ZERO_0">0.0% — Zero-Rated Export</option>
                 </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Inventory Valuation Method (IAS 2)</label>
+                <select id="prod-costing-method" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                  <option value="MovingAverage">Weighted Moving Average (IAS 2)</option>
+                  <option value="FIFO">First-In, First-Out (FIFO)</option>
+                  <option value="StandardCost">Standard Cost Valuation</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">HS / Customs Tariff Code</label>
+                <input type="text" id="prod-hs-code" value="7214.20.00" placeholder="e.g. 7214.20.00" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
               </div>
             </div>
           </div>
 
           <!-- Card 4: Warehouse Allocation & Logistics -->
-          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+          <div id="card-prod-warehouse" class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
             <div class="flex items-center gap-2 pb-2 border-b border-white/10">
               <i data-lucide="warehouse" class="w-4 h-4 text-purple-400"></i>
               <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Default Warehouse &amp; QC Policy</h3>
@@ -5351,26 +5683,116 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Default Receiving Warehouse *</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Default Receiving Warehouse *</label>
+                  <button type="button" onclick="openMasterQuickAddModal('WAREHOUSE', 'prod-warehouse')" class="px-1.5 py-0.5 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New Warehouse">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
                 <select id="prod-warehouse" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
-                  <option value="Central Warehouse">Central Finished Goods Hub (Dhaka)</option>
-                  <option value="Gazipur Yard">Plant Heavy Structural Yard (Gazipur)</option>
-                  <option value="Chittagong Depot">Chittagong Regional Depot</option>
+                  <option value="1">Central Finished Goods Hub (Dhaka)</option>
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Designated Storage Bay / Bin</label>
-                <input type="text" id="prod-bin" placeholder="e.g. Bay-A12 / Coil Rack-03" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
-              </div>
-              <div class="sm:col-span-2">
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Inbound Inspection (QC) Mandate</label>
-                <select id="prod-qc-toggle" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
-                  <option value="Mandatory QC">Mandatory Physical &amp; Lab QC Testing before GRN</option>
-                  <option value="Visual Inspection">Standard Visual Receiving Check</option>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Designated Storage Bay / Bin</label>
+                  <button type="button" onclick="openMasterQuickAddModal('STORAGE_BIN', 'prod-bin')" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New Storage Bin / Bay">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
+                <select id="prod-bin" onchange="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                  <option value="A-01-R1">A-01-R1 — Bay A-01 / Rack R1 (Heavy Coil Yard)</option>
+                  <option value="B-01-FG">B-01-FG — Zone B-01 (Finished Goods Dispatch Yard)</option>
                 </select>
               </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-400">Inbound Inspection (QC) Mandate</label>
+                  <button type="button" onclick="openMasterQuickAddModal('QC_POLICY', 'prod-qc-toggle')" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[10px] font-semibold flex items-center gap-1 cursor-pointer" title="Add New QC Inspection Policy">
+                    <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                    <span>New</span>
+                  </button>
+                </div>
+                <select id="prod-qc-toggle" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                  <option value="Mandatory QC">Mandatory Lab &amp; Dimensional QC</option>
+                  <option value="Mill Cert Check">Mill Test Certificate (MTC) Verification</option>
+                  <option value="Visual Inspection">Standard Visual Inspection</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Operational Eligibility</label>
+                <div class="flex items-center gap-3 h-9 px-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="prod-is-purchasable" checked onchange="markFormDirty('product')" class="rounded border-white/20">
+                    <span>Buy</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="prod-is-sellable" checked onchange="markFormDirty('product')" class="rounded border-white/20">
+                    <span>Sell</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="prod-is-manufactured" onchange="markFormDirty('product')" class="rounded border-white/20">
+                    <span>Make</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 5: Physical Dimensions, Mass & Freight Volume (Full Width) -->
+          <div id="card-prod-dimensions" class="glass-card rounded-2xl p-5 border border-white/10 space-y-4 lg:col-span-2">
+            <div class="flex items-center justify-between pb-2 border-b border-white/10">
+              <div class="flex items-center gap-2">
+                <i data-lucide="scale" class="w-4 h-4 text-cyan-400"></i>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Physical Dimensions, Unit Weight &amp; Cubic Volume (ISO 80000)</h3>
+              </div>
+              <span class="text-[10px] font-mono text-slate-400">Auto-Calculates Cubic Meter (CBM)</span>
             </div>
 
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Net Weight</label>
+                <input type="number" id="prod-net-weight" value="0" min="0" step="0.01" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Gross Weight</label>
+                <input type="number" id="prod-gross-weight" value="0" min="0" step="0.01" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Weight UOM</label>
+                <select id="prod-weight-uom" onchange="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                  <option value="KG">KG</option>
+                  <option value="MT">MT</option>
+                  <option value="GM">GM</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Length</label>
+                <input type="number" id="prod-length" value="0" min="0" step="1" oninput="recalcProductVolumeCbm(); markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Width</label>
+                <input type="number" id="prod-width" value="0" min="0" step="1" oninput="recalcProductVolumeCbm(); markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Height / Thick</label>
+                <input type="number" id="prod-height" value="0" min="0" step="0.1" oninput="recalcProductVolumeCbm(); markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Dim UOM</label>
+                <select id="prod-dim-uom" onchange="recalcProductVolumeCbm(); markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                  <option value="MM">MM</option>
+                  <option value="CM">CM</option>
+                  <option value="M">M</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Volume (CBM)</label>
+                <input type="number" id="prod-volume-cbm" value="0" min="0" step="0.0001" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs text-cyan-400 font-bold">
+              </div>
+            </div>
           </div>
 
         </div>
@@ -6104,6 +6526,264 @@
           </div>
         </div>
 
+      </section>
+
+      <!-- =====================================================================
+           DEDICATED FULL-PAGE ENTRY: PRODUCT CLASS & GL ACCOUNT MAPPING
+           ===================================================================== -->
+      <section id="studio-entry-product-class" class="space-y-4 hidden" data-editing-id="">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button"
+              onclick="confirmDiscardChanges('product-class')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+              title="Return to Product Classes Registry"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <i data-lucide="layers" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Product Class &amp; GL Account Mapping</h2>
+                <span id="pclass-dirty-badge" class="dirty-badge hidden">
+                  <i data-lucide="circle-dot" class="w-2.5 h-2.5"></i>
+                  <span>Unsaved Changes</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button 
+              type="button" 
+              onclick="resetEntryForm('product-class')" 
+              class="h-9 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+              title="Reset Form Fields"
+            >
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Reset</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="confirmDiscardChanges('product-class')" 
+              class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+              title="Cancel"
+            >
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              <span>Cancel</span>
+            </button>
+            <button 
+              type="button" 
+              id="btn-save-product-class" 
+              onclick="saveProductClassEntry()" 
+              class="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Save Product Class"
+            >
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span id="txt-save-product-class">Save</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+              <i data-lucide="layers" class="w-4 h-4 text-amber-400"></i>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Classification Identity</h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Class Code *</label>
+                <input type="text" id="pclass-code" placeholder="e.g. FG-STEEL, RM-COIL" oninput="markFormDirty('product-class')" class="mac-input w-full font-mono font-bold text-amber-400 text-xs uppercase">
+                <span id="err-pclass-code" class="field-error hidden"></span>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Operational Category Type *</label>
+                <select id="pclass-type" onchange="markFormDirty('product-class')" class="mac-input w-full text-xs font-bold">
+                  <option value="1">Finished Goods (Manufactured / Traded)</option>
+                  <option value="2">Raw Materials &amp; Direct Inputs</option>
+                  <option value="3">Semi-Finished Goods / WIP</option>
+                  <option value="4">Consumables &amp; Engineering Spares</option>
+                  <option value="5">Service / Non-Stock Item</option>
+                  <option value="6">Fixed Asset / Capital Item</option>
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Product Class Title *</label>
+                <input type="text" id="pclass-name" placeholder="e.g. PEB Fabricated Structural Steel Members" oninput="markFormDirty('product-class')" class="mac-input w-full font-bold text-xs">
+                <span id="err-pclass-name" class="field-error hidden"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+              <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Automated General Ledger Account Integration (IAS 2)</h3>
+            </div>
+            <div class="grid grid-cols-1 gap-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">GL Inventory Valuation Asset Account *</label>
+                <select id="pclass-gl-inv" onchange="markFormDirty('product-class')" class="mac-input w-full text-xs font-mono">
+                  <option value="1">1040-01 — Inventory Asset Control Account</option>
+                  <option value="2">1040-02 — Raw Materials &amp; Coil Stock Account</option>
+                  <option value="3">1040-03 — Work-in-Progress (WIP) Inventory Account</option>
+                  <option value="4">1040-04 — Engineering Spares &amp; Consumables Account</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">GL Cost of Goods Sold (COGS) Expense Account *</label>
+                <select id="pclass-gl-cogs" onchange="markFormDirty('product-class')" class="mac-input w-full text-xs font-mono">
+                  <option value="2">5010-01 — Cost of Goods Sold (COGS)</option>
+                  <option value="5">5010-02 — Direct Material Consumption Expense</option>
+                  <option value="6">5020-01 — Factory Maintenance &amp; Consumables Expense</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">GL Sales Revenue Account *</label>
+                <select id="pclass-gl-rev" onchange="markFormDirty('product-class')" class="mac-input w-full text-xs font-mono">
+                  <option value="3">4010-01 — Commercial Sales Revenue</option>
+                  <option value="7">4010-02 — Export &amp; Deemed Export Revenue</option>
+                  <option value="8">4020-01 — Engineering &amp; Erection Service Revenue</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           DEDICATED FULL-PAGE ENTRY: CONFIGURABLE MASTER DATA LOOKUP DEFINITION
+           ===================================================================== -->
+      <section id="studio-entry-lookup" class="space-y-4 hidden" data-editing-id="">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button"
+              onclick="confirmDiscardChanges('lookup')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+              title="Return to Configurable Master Lookups"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/20">
+              <i data-lucide="database" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Configurable Master Lookup Definition</h2>
+                <span id="lookup-dirty-badge" class="dirty-badge hidden">
+                  <i data-lucide="circle-dot" class="w-2.5 h-2.5"></i>
+                  <span>Unsaved Changes</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button 
+              type="button" 
+              onclick="resetEntryForm('lookup')" 
+              class="h-9 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+              title="Reset Form Fields"
+            >
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Reset</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="confirmDiscardChanges('lookup')" 
+              class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+              title="Cancel"
+            >
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              <span>Cancel</span>
+            </button>
+            <button 
+              type="button" 
+              id="btn-save-lookup" 
+              onclick="saveMasterLookupEntry()" 
+              class="h-9 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Save Master Lookup"
+            >
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span id="txt-save-lookup">Save</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+              <i data-lucide="database" class="w-4 h-4 text-cyan-400"></i>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Lookup Category &amp; Identity</h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Lookup Category / Type *</label>
+                <select id="lookup-type" onchange="markFormDirty('lookup')" class="mac-input w-full text-xs font-bold text-cyan-400">
+                  <option value="PRODUCT_SUBCATEGORY">Item Subcategory (PRODUCT_SUBCATEGORY)</option>
+                  <option value="MATERIAL_GRADE">Material Grade &amp; Standard (MATERIAL_GRADE)</option>
+                  <option value="PRODUCT_BRAND">Brand &amp; Manufacturer (PRODUCT_BRAND)</option>
+                  <option value="PACKAGING_TYPE">Packaging Configuration (PACKAGING_TYPE)</option>
+                  <option value="TAX_SCHEDULE">VAT / Tax Schedule (TAX_SCHEDULE)</option>
+                  <option value="QC_POLICY">Inbound QC Policy (QC_POLICY)</option>
+                  <option value="STORAGE_BIN">Storage Bay &amp; Bin (STORAGE_BIN)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Lookup Code / Short Key *</label>
+                <input type="text" id="lookup-code" placeholder="e.g. ASTM-A572, BRAND-BSRM, BAY-A1" oninput="markFormDirty('lookup')" class="mac-input w-full font-mono font-bold text-amber-400 text-xs uppercase">
+                <span id="err-lookup-code" class="field-error hidden"></span>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Display Value / Official Name *</label>
+                <input type="text" id="lookup-name" placeholder="e.g. ASTM A572 Grade 50 Structural Steel" oninput="markFormDirty('lookup')" class="mac-input w-full font-bold text-xs">
+                <span id="err-lookup-name" class="field-error hidden"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+              <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Parameters, Scope &amp; Governance</h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Numeric Rate / Value (%)</label>
+                <input type="number" id="lookup-numeric" placeholder="e.g. 15.0" step="0.5" min="0" oninput="markFormDirty('lookup')" class="mac-input w-full font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Display Sort Order</label>
+                <input type="number" id="lookup-sort" value="10" step="1" min="0" oninput="markFormDirty('lookup')" class="mac-input w-full font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Enterprise Scope</label>
+                <select id="lookup-scope" onchange="markFormDirty('lookup')" class="mac-input w-full text-xs font-semibold">
+                  <option value="true">Global Group-Wide Standard</option>
+                  <option value="false">Current Subsidiary Only</option>
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Technical Specification / Reference Notes</label>
+                <input type="text" id="lookup-desc" placeholder="e.g. ISO / ASTM / NBR compliance reference or storage bay capacity..." oninput="markFormDirty('lookup')" class="mac-input w-full text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Lifecycle Status</label>
+                <select id="lookup-status" onchange="markFormDirty('lookup')" class="mac-input w-full text-xs font-bold">
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- =====================================================================
@@ -8547,8 +9227,76 @@
     </div>
   </div>
 
+  <!-- =========================================================================
+       INLINE DYNAMIC MASTER DATA QUICK-ADD MODAL (Pyrix Signature Modal)
+       ========================================================================= -->
+  <div id="erp-quick-add-master-modal" class="pyrix-modal-backdrop" onclick="closeMasterQuickAddModal()">
+    <div class="pyrix-modal-card p-6 max-w-md w-full" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 id="qa-modal-title" class="text-sm font-bold text-slate-900 dark:text-white">Quick Add Master Record</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="py-4 space-y-3.5 text-xs">
+        <input type="hidden" id="qa-lookup-type" value="">
+        <input type="hidden" id="qa-target-select-id" value="">
+        <input type="hidden" id="qa-editing-id" value="">
+
+        <div>
+          <label id="qa-lbl-code" class="block text-xs font-semibold text-slate-400 mb-1">Code / Short Key *</label>
+          <input type="text" id="qa-input-code" placeholder="e.g. ASTM-A572" class="mac-input w-full font-mono font-bold text-amber-400 text-xs">
+        </div>
+
+        <div>
+          <label id="qa-lbl-name" class="block text-xs font-semibold text-slate-400 mb-1">Display Name / Title *</label>
+          <input type="text" id="qa-input-name" placeholder="e.g. ASTM A572 Grade 50 Structural Steel" class="mac-input w-full font-bold text-xs">
+        </div>
+
+        <div id="qa-wrap-category" class="hidden">
+          <label id="qa-lbl-category" class="block text-xs font-semibold text-slate-400 mb-1">Operational Category</label>
+          <select id="qa-input-category" class="mac-input w-full text-xs font-bold">
+            <option value="1">Finished Goods</option>
+            <option value="2">Raw Materials</option>
+            <option value="3">Semi-Finished / WIP</option>
+            <option value="4">Consumables &amp; Spares</option>
+            <option value="5">Service / Non-Stock</option>
+          </select>
+        </div>
+
+        <div id="qa-wrap-numeric" class="hidden">
+          <label id="qa-lbl-numeric" class="block text-xs font-semibold text-slate-400 mb-1">Rate / Numeric Value (%)</label>
+          <input type="number" id="qa-input-numeric" value="15" step="0.5" min="0" class="mac-input w-full font-mono text-xs">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Specification / Notes</label>
+          <input type="text" id="qa-input-desc" placeholder="Optional description or standard reference..." class="mac-input w-full text-xs">
+        </div>
+
+        <div id="qa-error-alert" class="hidden p-2.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-medium"></div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
+        <button type="button" onclick="closeMasterQuickAddModal()" class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer" title="Cancel" aria-label="Cancel">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          <span>Cancel</span>
+        </button>
+        <button type="button" id="btn-qa-save" onclick="submitMasterQuickAddModal()" class="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-sm cursor-pointer transition flex items-center gap-1.5" title="Save Master Record" aria-label="Save">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          <span id="txt-qa-save">Save</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Global Client App Scripts -->
-  <script src="/js/ERP-core.js"></script>
-  <script src="/js/erp-studios.js"></script>
+  <script src="/js/ERP-core.js?v=20261025b"></script>
+  <script src="/js/erp-studios.js?v=20261025b"></script>
 </body>
 </html>

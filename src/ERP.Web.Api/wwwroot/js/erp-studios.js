@@ -243,10 +243,12 @@ const MODULE_SUITES_REGISTRY = {
       {
         id: 1, title: 'Master Setup Suite', color: 'blue',
         cards: [
-          { title: 'Product', desc: 'Finished goods, raw materials, spares & assets', badge: '4 Products', icon: 'box', action: "navigateToList('products')" },
+          { title: 'Product', desc: 'Finished goods, raw materials, spares & assets', badge: 'Catalog', icon: 'box', action: "navigateToList('products')" },
+          { title: 'Product Classes', desc: 'Item categories, valuation & GL account mappings', badge: 'Classes', icon: 'layers', action: "navigateToList('product-classes')" },
           { title: 'Depots & Plants', desc: 'Manufacturing plants, factories & regional hubs', badge: 'Depots', icon: 'factory', action: "navigateToList('depots')" },
           { title: 'Warehouses', desc: 'Store rooms, raw material yards & FG stores', badge: 'Stores', icon: 'warehouse', action: "navigateToList('warehouses')" },
-          { title: 'Units of Measure (UOM)', desc: 'Kg, Metric Ton, Meters, Boxes & conversion ratios', badge: '12 UOMs', icon: 'ruler', action: "navigateToList('uoms')" }
+          { title: 'Units of Measure (UOM)', desc: 'Kg, Metric Ton, Meters, Boxes & conversion ratios', badge: 'UOMs', icon: 'ruler', action: "navigateToList('uoms')" },
+          { title: 'Master Lookups', desc: 'Material grades, brands, subcategories, bins & QC policies', badge: 'Lookups', icon: 'sliders-horizontal', action: "navigateToList('lookups')" }
         ]
       },
       {
@@ -659,7 +661,7 @@ const ALL_ERP_VIEWS = [
   'entry-employee', 'entry-contra',
   'entry-challan', 'entry-invoice', 'entry-pr', 'entry-stock-transfer', 'entry-bank',
   'entry-asset', 'entry-bom', 'payroll-batch', 'audit-trail',
-  'list-accounts', 'list-customers', 'list-vendors', 'list-products', 'list-plants', 'list-depots', 'entry-depot', 'list-warehouses', 'list-uoms', 'entry-uom',
+  'list-accounts', 'list-customers', 'list-vendors', 'list-products', 'list-product-classes', 'entry-product-class', 'list-lookups', 'entry-lookup', 'list-plants', 'list-depots', 'entry-depot', 'list-warehouses', 'list-uoms', 'entry-uom',
   'list-transfers', 'list-adjustments', 'entry-adjustment', 'list-grn',
   'list-employees', 'list-banks', 'list-assets', 'list-boms', 'list-sales-orders', 'view-record', 'user-profile'
 ];
@@ -674,6 +676,8 @@ const PARENT_VIEW_MAP = {
   'entry-customer': 'list-customers',
   'entry-vendor': 'list-vendors',
   'entry-product': 'list-products',
+  'entry-product-class': 'list-product-classes',
+  'entry-lookup': 'list-lookups',
   'entry-depot': 'list-depots',
   'entry-plant': 'list-plants',
   'entry-warehouse': 'list-warehouses',
@@ -690,6 +694,8 @@ const PARENT_VIEW_MAP = {
   'list-customers': 'module-accounts-receivable',
   'list-vendors': 'module-accounts-payable',
   'list-products': 'module-inventory',
+  'list-product-classes': 'module-inventory',
+  'list-lookups': 'module-inventory',
   'list-plants': 'module-inventory',
   'list-depots': 'module-inventory',
   'list-warehouses': 'module-inventory',
@@ -730,11 +736,13 @@ const PARENT_VIEW_MAP = {
 };
 
 function navigateBackFrom(viewId) {
-  let key = viewId;
+  let key = viewId || ERP_STATE.activeStudio || (ERP_STATE.activeEntryForm ? `entry-${ERP_STATE.activeEntryForm}` : '');
   if (!PARENT_VIEW_MAP[key] && PARENT_VIEW_MAP[`entry-${key}`]) {
     key = `entry-${key}`;
   }
-  let target = PARENT_VIEW_MAP[key] || 'dashboard';
+
+  // Resolve dynamic target from PARENT_VIEW_MAP, or fall back to tracked entryOriginView
+  let target = PARENT_VIEW_MAP[key] || ERP_STATE.entryOriginView || 'dashboard';
   if ((key === 'entry-depot' || key === 'depot') && ERP_STATE.lastFacilityEntryOrigin) {
     target = `list-${ERP_STATE.lastFacilityEntryOrigin}`;
   }
@@ -792,6 +800,10 @@ function getParentModuleForStudio(viewOrStudioId) {
     'grn': 'sourcing',
     'products': 'inventory',
     'entry-product': 'inventory',
+    'product-classes': 'inventory',
+    'entry-product-class': 'inventory',
+    'lookups': 'inventory',
+    'entry-lookup': 'inventory',
     'stock': 'inventory',
     'plants': 'inventory',
     'depots': 'inventory',
@@ -824,6 +836,35 @@ function handleHashRouting() {
 
   if (!getAuthToken()) {
     showLoginScreen();
+    return;
+  }
+
+  // If form is dirty and user clicked browser Back/Forward to a different route, prompt unsaved changes modal
+  if (ERP_STATE.isDirty && ERP_STATE.activeStudio && rawHash !== ERP_STATE.activeStudio) {
+    const targetHash = rawHash || 'dashboard';
+    // Restore hash to current active studio until user confirms discard
+    isRouterNavigating = true;
+    window.location.hash = ERP_STATE.activeStudio;
+    isRouterNavigating = false;
+
+    ERP_STATE.pendingNavigation = () => {
+      if (ERP_STATE.activeEntryForm) {
+        resetEntryForm(ERP_STATE.activeEntryForm);
+      }
+      if (!targetHash || targetHash === 'dashboard') {
+        executeNavigateToStudio('dashboard', true);
+      } else if (targetHash.startsWith('module-')) {
+        executeNavigateToModuleWorkspace(targetHash.replace('module-', ''), true);
+      } else if (targetHash === 'sales-orders' || targetHash === 'list-sales-orders') {
+        executeNavigateToList('sales-orders', true);
+      } else if (targetHash.startsWith('list-')) {
+        executeNavigateToList(targetHash.replace('list-', ''), true);
+      } else {
+        executeNavigateToStudio(targetHash, true);
+      }
+    };
+    const unsavedModal = document.getElementById('unsaved-changes-modal');
+    if (unsavedModal) unsavedModal.classList.add('active');
     return;
   }
 
@@ -874,6 +915,9 @@ function navigateToStudio(studioId) {
 }
 
 function executeNavigateToStudio(studioId, updateHash = true) {
+  if (studioId.startsWith('entry-') && ERP_STATE.activeStudio && !ERP_STATE.activeStudio.startsWith('entry-')) {
+    ERP_STATE.entryOriginView = ERP_STATE.activeStudio;
+  }
   clearFormDirty();
   ERP_STATE.activeStudio = studioId;
 
@@ -1249,6 +1293,8 @@ const GROUP_TO_MODULE_SLUG = {
 
 const ENTITY_VIEW_METADATA = {
   product: { group: 'Inventory Control', modSlug: 'inventory', listStudio: 'list-products', listLabel: 'Product' },
+  'product-class': { group: 'Inventory Control', modSlug: 'inventory', listStudio: 'list-product-classes', listLabel: 'Product Classes & GL Integration' },
+  lookup: { group: 'Inventory Control', modSlug: 'inventory', listStudio: 'list-lookups', listLabel: 'Configurable Master Data Lookups' },
   customer: { group: 'Accounts Receivable', modSlug: 'accounts-receivable', listStudio: 'list-customers', listLabel: 'Customer Master Directory' },
   vendor: { group: 'Accounts Payable', modSlug: 'accounts-payable', listStudio: 'list-vendors', listLabel: 'Vendor & Supplier Directory' },
   account: { group: 'General Ledger', modSlug: 'general-ledger', listStudio: 'list-accounts', listLabel: 'Chart of Accounts Registry' },
@@ -1332,6 +1378,8 @@ function updateBreadcrumbs(studioId) {
     'entry-customer': { group: 'Accounts Receivable', page: 'Customer Master Account Registration' },
     'entry-vendor': { group: 'Accounts Payable', page: 'Vendor & Supplier Master Registration' },
     'entry-product': { group: 'Inventory Control', page: 'Product Specification' },
+    'entry-product-class': { group: 'Inventory Control', page: 'Product Class & GL Mapping' },
+    'entry-lookup': { group: 'Inventory Control', page: 'Configurable Master Lookup Definition' },
     'entry-account': { group: 'General Ledger', page: 'GL Chart of Accounts Ledger Setup' },
     'entry-depot': { group: 'Inventory Control', page: 'Depot & Plant Registration' },
     'entry-warehouse': { group: 'Inventory Control', page: 'Warehouse Store Registration' },
@@ -1351,6 +1399,8 @@ function updateBreadcrumbs(studioId) {
     'list-customers': { group: 'Accounts Receivable', page: 'Customer Master Directory' },
     'list-vendors': { group: 'Accounts Payable', page: 'Vendor & Supplier Directory' },
     'list-products': { group: 'Inventory Control', page: 'Product' },
+    'list-product-classes': { group: 'Inventory Control', page: 'Product Classes & GL Integration' },
+    'list-lookups': { group: 'Inventory Control', page: 'Configurable Master Data Lookups' },
     'list-plants': { group: 'Inventory Control', page: 'Manufacturing Plants Registry' },
     'list-depots': { group: 'Inventory Control', page: 'Regional Depots Registry' },
     'list-warehouses': { group: 'Inventory Control', page: 'Warehouses' },
@@ -1761,6 +1811,9 @@ const DIRTY_BADGE_MAP = {
   'customer': 'cust-dirty-badge',
   'vendor': 'vend-dirty-badge',
   'product': 'prod-dirty-badge',
+  'product-class': 'pclass-dirty-badge',
+  'lookup': 'lookup-dirty-badge',
+  'uom': 'uom-dirty-badge',
   'account': 'acc-dirty-badge',
   'depot': 'depot-dirty-badge',
   'warehouse': 'wh-dirty-badge',
@@ -1795,26 +1848,35 @@ function clearFormDirty(entityType) {
 }
 
 function confirmDiscardChanges(entityType) {
+  const resolvedEntity = entityType || ERP_STATE.activeEntryForm || (ERP_STATE.activeStudio ? ERP_STATE.activeStudio.replace(/^entry-/, '') : '');
+  const targetViewId = resolvedEntity ? `entry-${resolvedEntity}` : ERP_STATE.activeStudio;
   if (ERP_STATE.isDirty) {
     ERP_STATE.pendingNavigation = () => {
-      resetEntryForm(entityType);
-      navigateBackFrom(`entry-${entityType}`);
+      if (resolvedEntity) resetEntryForm(resolvedEntity);
+      navigateBackFrom(targetViewId);
     };
     const modal = document.getElementById('unsaved-changes-modal');
     if (modal) modal.classList.add('active');
   } else {
-    resetEntryForm(entityType);
-    navigateBackFrom(`entry-${entityType}`);
+    if (resolvedEntity) resetEntryForm(resolvedEntity);
+    navigateBackFrom(targetViewId);
   }
 }
 
 function confirmDiscardAndNavigate() {
+  // Capture pendingNavigation and current studio context BEFORE closeUnsavedModal() / clearFormDirty() clear them!
+  const nav = ERP_STATE.pendingNavigation;
+  const fallbackViewId = ERP_STATE.activeStudio || (ERP_STATE.activeEntryForm ? `entry-${ERP_STATE.activeEntryForm}` : null);
+  const activeEntity = ERP_STATE.activeEntryForm;
+
   clearFormDirty();
   closeUnsavedModal();
-  if (ERP_STATE.pendingNavigation) {
-    const nav = ERP_STATE.pendingNavigation;
-    ERP_STATE.pendingNavigation = null;
+
+  if (typeof nav === 'function') {
     nav();
+  } else if (fallbackViewId) {
+    if (activeEntity) resetEntryForm(activeEntity);
+    navigateBackFrom(fallbackViewId);
   } else {
     executeNavigateToStudio('dashboard');
   }
@@ -1952,36 +2014,118 @@ function resetEntryForm(entityType) {
     const vdsEl = document.getElementById('vend-vds-rate');
     if (vdsEl) vdsEl.selectedIndex = 0;
   } else if (entityType === 'product') {
+    const section = document.getElementById('studio-entry-product');
+    if (section) section.setAttribute('data-editing-id', '');
     const codeEl = document.getElementById('prod-code');
     if (codeEl) { codeEl.value = '[Auto-Generated on Save]'; codeEl.readOnly = true; }
     const catEl = document.getElementById('prod-category');
     if (catEl) catEl.selectedIndex = 0;
+    const subcatEl = document.getElementById('prod-subcategory');
+    if (subcatEl) subcatEl.selectedIndex = 0;
+    const brandEl = document.getElementById('prod-brand');
+    if (brandEl) brandEl.selectedIndex = 0;
     const nameEl = document.getElementById('prod-name');
     if (nameEl) nameEl.value = '';
+    const descEl = document.getElementById('prod-description');
+    if (descEl) descEl.value = '';
     const gradeEl = document.getElementById('prod-grade');
-    if (gradeEl) gradeEl.value = '';
+    if (gradeEl) gradeEl.selectedIndex = 0;
+    const statusEl = document.getElementById('prod-lifecycle-status');
+    if (statusEl) statusEl.value = 'Active';
+    const barcodeEl = document.getElementById('prod-barcode');
+    if (barcodeEl) barcodeEl.value = '';
     const uomEl = document.getElementById('prod-uom');
-    if (uomEl) uomEl.selectedIndex = 0;
+    if (uomEl) { uomEl.selectedIndex = 0; uomEl.disabled = false; }
+    const packEl = document.getElementById('prod-pack-size');
+    if (packEl) packEl.selectedIndex = 0;
+    const secUomEl = document.getElementById('prod-sec-uom');
+    if (secUomEl) secUomEl.selectedIndex = 0;
+    const uomFactorEl = document.getElementById('prod-uom-factor');
+    if (uomFactorEl) uomFactorEl.value = '';
     const reorderEl = document.getElementById('prod-reorder');
     if (reorderEl) reorderEl.value = '50';
     const safeEl = document.getElementById('prod-safety');
     if (safeEl) safeEl.value = '20';
     const leadEl = document.getElementById('prod-leadtime');
     if (leadEl) leadEl.value = '14';
+    const trackEl = document.getElementById('prod-tracking-policy');
+    if (trackEl) trackEl.value = '1';
     const costEl = document.getElementById('prod-cost');
     if (costEl) costEl.value = '6800';
+    const currCostEl = document.getElementById('prod-current-cost-display');
+    if (currCostEl) currCostEl.textContent = '৳6,800';
     const wsEl = document.getElementById('prod-wholesale');
     if (wsEl) wsEl.value = '8500';
     const retEl = document.getElementById('prod-retail');
     if (retEl) retEl.value = '9200';
     const vatEl = document.getElementById('prod-vat-rate');
     if (vatEl) vatEl.selectedIndex = 0;
+    const cmEl = document.getElementById('prod-costing-method');
+    if (cmEl) { cmEl.value = 'MovingAverage'; cmEl.disabled = false; }
+    const hsEl = document.getElementById('prod-hs-code');
+    if (hsEl) hsEl.value = '';
     const whEl = document.getElementById('prod-warehouse');
     if (whEl) whEl.selectedIndex = 0;
     const binEl = document.getElementById('prod-bin');
-    if (binEl) binEl.value = '';
+    if (binEl) binEl.selectedIndex = 0;
     const qcEl = document.getElementById('prod-qc-toggle');
     if (qcEl) qcEl.selectedIndex = 0;
+    const canBuyEl = document.getElementById('prod-is-purchasable');
+    if (canBuyEl) canBuyEl.checked = true;
+    const canSellEl = document.getElementById('prod-is-sellable');
+    if (canSellEl) canSellEl.checked = true;
+    const canMakeEl = document.getElementById('prod-is-manufactured');
+    if (canMakeEl) canMakeEl.checked = true;
+    const netWtEl = document.getElementById('prod-net-weight');
+    if (netWtEl) netWtEl.value = '0';
+    const grossWtEl = document.getElementById('prod-gross-weight');
+    if (grossWtEl) grossWtEl.value = '0';
+    const lenEl = document.getElementById('prod-length');
+    if (lenEl) lenEl.value = '0';
+    const widEl = document.getElementById('prod-width');
+    if (widEl) widEl.value = '0';
+    const hgtEl = document.getElementById('prod-height');
+    if (hgtEl) hgtEl.value = '0';
+    const cbmEl = document.getElementById('prod-volume-cbm');
+    if (cbmEl) cbmEl.value = '0';
+  } else if (entityType === 'product-class') {
+    const sec = document.getElementById('studio-entry-product-class');
+    if (sec) sec.setAttribute('data-editing-id', '');
+    const codeEl = document.getElementById('pclass-code');
+    if (codeEl) { codeEl.value = ''; codeEl.readOnly = false; }
+    const nameEl = document.getElementById('pclass-name');
+    if (nameEl) nameEl.value = '';
+    const typeEl = document.getElementById('pclass-type');
+    if (typeEl) typeEl.value = '1';
+    const glInvEl = document.getElementById('pclass-gl-inv');
+    if (glInvEl) glInvEl.selectedIndex = 0;
+    const glCogsEl = document.getElementById('pclass-gl-cogs');
+    if (glCogsEl) glCogsEl.selectedIndex = 0;
+    const glRevEl = document.getElementById('pclass-gl-rev');
+    if (glRevEl) glRevEl.selectedIndex = 0;
+  } else if (entityType === 'lookup') {
+    const sec = document.getElementById('studio-entry-lookup');
+    if (sec) sec.setAttribute('data-editing-id', '');
+    const typeEl = document.getElementById('lookup-type');
+    if (typeEl) {
+      const filterVal = document.getElementById('filter-lookup-type')?.value;
+      typeEl.value = (filterVal && filterVal !== 'ALL') ? filterVal : 'MATERIAL_GRADE';
+      typeEl.disabled = false;
+    }
+    const codeEl = document.getElementById('lookup-code');
+    if (codeEl) { codeEl.value = ''; codeEl.readOnly = false; }
+    const nameEl = document.getElementById('lookup-name');
+    if (nameEl) nameEl.value = '';
+    const numEl = document.getElementById('lookup-numeric');
+    if (numEl) numEl.value = '';
+    const sortEl = document.getElementById('lookup-sort');
+    if (sortEl) sortEl.value = '10';
+    const scopeEl = document.getElementById('lookup-scope');
+    if (scopeEl) scopeEl.value = 'true';
+    const descEl = document.getElementById('lookup-desc');
+    if (descEl) descEl.value = '';
+    const statusEl = document.getElementById('lookup-status');
+    if (statusEl) statusEl.value = 'true';
   } else if (entityType === 'account') {
     const codeEl = document.getElementById('acc-code');
     if (codeEl) codeEl.value = `1060-0${ERP_STATE.jvLines.length + 1}`;
@@ -2334,12 +2478,51 @@ async function saveVendorEntry() {
 
 async function saveProductEntry() {
   clearAllFieldErrors('product');
+  const section = document.getElementById('studio-entry-product');
+  const editingId = section ? parseInt(section.getAttribute('data-editing-id')) || 0 : 0;
+
   const code = document.getElementById('prod-code')?.value.trim();
-  const category = document.getElementById('prod-category')?.value;
+  const categoryVal = document.getElementById('prod-category')?.value;
+  const subcatVal = document.getElementById('prod-subcategory')?.value;
+  const brandVal = document.getElementById('prod-brand')?.value;
   const name = document.getElementById('prod-name')?.value.trim();
-  const grade = document.getElementById('prod-grade')?.value.trim();
-  const hsCode = document.getElementById('prod-hs-code')?.value.trim();
-  const netWeight = parseFloat(document.getElementById('prod-net-weight')?.value) || 0;
+  const description = document.getElementById('prod-description')?.value.trim() || null;
+  const grade = document.getElementById('prod-grade')?.value?.trim() || null;
+  const lifecycleStatus = document.getElementById('prod-lifecycle-status')?.value || 'Active';
+  const barcodeGtin = document.getElementById('prod-barcode')?.value.trim() || null;
+
+  const uomVal = document.getElementById('prod-uom')?.value;
+  const packSize = document.getElementById('prod-pack-size')?.value?.trim() || null;
+  const secUomVal = document.getElementById('prod-sec-uom')?.value;
+  const uomFactor = parseFloat(document.getElementById('prod-uom-factor')?.value) || null;
+  const reorder = parseFloat(document.getElementById('prod-reorder')?.value) || 0;
+  const safety = parseFloat(document.getElementById('prod-safety')?.value) || 0;
+  const leadtime = parseInt(document.getElementById('prod-leadtime')?.value) || 14;
+  const trackingPolicy = parseInt(document.getElementById('prod-tracking-policy')?.value) || 1;
+
+  const cost = parseFloat(document.getElementById('prod-cost')?.value) || 0;
+  const wholesale = parseFloat(document.getElementById('prod-wholesale')?.value) || 0;
+  const retailRaw = document.getElementById('prod-retail')?.value;
+  const retail = retailRaw !== '' && retailRaw != null ? parseFloat(retailRaw) : null;
+
+  const vatSelect = document.getElementById('prod-vat-rate');
+  const vatRateVal = parseFloat(vatSelect?.value);
+  const taxRatePercent = !isNaN(vatRateVal) ? (vatRateVal <= 1 && vatRateVal > 0 ? vatRateVal * 100 : vatRateVal) : 15;
+  const selectedVatOpt = vatSelect?.options?.[vatSelect.selectedIndex];
+  const taxScheduleCode = selectedVatOpt?.getAttribute('data-code') || 'VAT-STD-15';
+
+  const costingMethod = document.getElementById('prod-costing-method')?.value || 'MovingAverage';
+  const hsCode = document.getElementById('prod-hs-code')?.value.trim() || null;
+
+  const whVal = document.getElementById('prod-warehouse')?.value;
+  const bin = document.getElementById('prod-bin')?.value?.trim() || null;
+  const qc = document.getElementById('prod-qc-toggle')?.value || 'MANDATORY_QC';
+
+  const isPurchasable = document.getElementById('prod-is-purchasable') ? document.getElementById('prod-is-purchasable').checked : true;
+  const isSellable = document.getElementById('prod-is-sellable') ? document.getElementById('prod-is-sellable').checked : true;
+  const isManufactured = document.getElementById('prod-is-manufactured') ? document.getElementById('prod-is-manufactured').checked : false;
+
+  const netWeight = parseFloat(document.getElementById('prod-net-weight')?.value) || null;
   const grossWeight = parseFloat(document.getElementById('prod-gross-weight')?.value) || netWeight;
   const weightUom = document.getElementById('prod-weight-uom')?.value || 'KG';
   const length = parseFloat(document.getElementById('prod-length')?.value) || null;
@@ -2347,18 +2530,6 @@ async function saveProductEntry() {
   const height = parseFloat(document.getElementById('prod-height')?.value) || null;
   const dimUom = document.getElementById('prod-dim-uom')?.value || 'MM';
   const volumeCbm = parseFloat(document.getElementById('prod-volume-cbm')?.value) || null;
-  const trackingPolicy = parseInt(document.getElementById('prod-tracking-policy')?.value) || 1;
-  const costingMethod = document.getElementById('prod-costing-method')?.value || 'MovingAverage';
-  const uom = document.getElementById('prod-uom')?.value || 'MT';
-  const reorder = parseFloat(document.getElementById('prod-reorder')?.value) || 0;
-  const safety = parseFloat(document.getElementById('prod-safety')?.value) || 0;
-  const leadtime = parseInt(document.getElementById('prod-leadtime')?.value) || 14;
-  const cost = parseFloat(document.getElementById('prod-cost')?.value) || 0;
-  const wholesale = parseFloat(document.getElementById('prod-wholesale')?.value) || 0;
-  const vatRate = parseFloat(document.getElementById('prod-vat-rate')?.value) || 0.15;
-  const warehouse = document.getElementById('prod-warehouse')?.value;
-  const bin = document.getElementById('prod-bin')?.value.trim();
-  const qc = document.getElementById('prod-qc-toggle')?.value;
 
   let hasError = false;
   if (!code || (code !== '[Auto-Generated on Save]' && code.length < 3)) {
@@ -2373,12 +2544,20 @@ async function saveProductEntry() {
     setFieldError('prod-reorder', 'Reorder level must be 0 or a positive number.');
     hasError = true;
   }
+  if (safety > reorder && reorder > 0) {
+    setFieldError('prod-safety', 'Safety stock floor should not exceed Reorder level threshold.');
+    hasError = true;
+  }
   if (isNaN(cost) || cost <= 0) {
     setFieldError('prod-cost', 'Standard procurement/production cost must be greater than 0.');
     hasError = true;
   }
-  if (isNaN(wholesale) || wholesale < cost) {
+  if (isSellable && (isNaN(wholesale) || wholesale < cost)) {
     setFieldError('prod-wholesale', 'Wholesale selling price should be at least standard cost.');
+    hasError = true;
+  }
+  if (retail != null && !isNaN(retail) && retail > 0 && retail < wholesale) {
+    setFieldError('prod-retail', 'Minimum Retail List Price (MRP) must be greater than or equal to Wholesale Rate.');
     hasError = true;
   }
 
@@ -2386,6 +2565,31 @@ async function saveProductEntry() {
     showToast('Please correct the highlighted validation errors.', 'warning');
     return;
   }
+
+  // Resolve ProductClassId, PrimaryUomId, DefaultWarehouseId dynamically from value or lookup by name/code
+  let productClassId = parseInt(categoryVal) || 0;
+  if (!productClassId && ERP_STATE.productClasses) {
+    const foundCls = ERP_STATE.productClasses.find(c => c.className === categoryVal || c.classCode === categoryVal);
+    if (foundCls) productClassId = foundCls.id;
+  }
+  if (!productClassId) productClassId = 1;
+
+  let primaryUomId = parseInt(uomVal) || 0;
+  if (!primaryUomId && ERP_STATE.unitsOfMeasure) {
+    const foundUom = ERP_STATE.unitsOfMeasure.find(u => u.uomCode === uomVal || u.uomName === uomVal);
+    if (foundUom) primaryUomId = foundUom.id;
+  }
+  if (!primaryUomId) primaryUomId = 1;
+
+  let secondaryUomId = parseInt(secUomVal) || null;
+  let defaultWarehouseId = parseInt(whVal) || null;
+  if (!defaultWarehouseId && whVal && ERP_STATE.warehouses) {
+    const foundWh = ERP_STATE.warehouses.find(w => w.warehouseName === whVal || w.warehouseCode === whVal);
+    if (foundWh) defaultWarehouseId = foundWh.id;
+  }
+
+  const subcategoryId = parseInt(subcatVal) || null;
+  const brandId = parseInt(brandVal) || null;
 
   const saveBtn = document.getElementById('btn-save-product');
   const saveText = document.getElementById('txt-save-product');
@@ -2397,14 +2601,36 @@ async function saveProductEntry() {
     const payload = {
       productCode: isAutoCode ? null : code,
       productName: name,
-      productClassId: 1,
-      primaryUomId: 1,
-      packSize: grade || 'Standard Spec',
+      description: description,
+      productClassId: productClassId,
+      subcategoryId: subcategoryId,
+      brandId: brandId,
+      primaryUomId: primaryUomId,
+      secondaryUomId: secondaryUomId,
+      uomConversionFactor: uomFactor,
+      materialGrade: grade,
+      packSize: packSize || grade || 'Standard Spec',
+      barcodeGtin: barcodeGtin,
+      lifecycleStatus: lifecycleStatus,
       standardCost: cost,
       currentCost: cost,
       sellingPrice: wholesale,
+      minimumRetailPrice: retail,
       reorderLevel: reorder,
-      hsCode: hsCode || null,
+      safetyStock: safety,
+      leadTimeDays: leadtime,
+      trackingPolicy: trackingPolicy,
+      costingMethod: costingMethod,
+      taxScheduleCode: taxScheduleCode,
+      taxRatePercent: taxRatePercent,
+      hsCode: hsCode,
+      defaultWarehouseId: defaultWarehouseId,
+      defaultStorageBin: bin,
+      qcPolicy: qc,
+      isStockTracked: true,
+      isPurchasable: isPurchasable,
+      isSellable: isSellable,
+      isManufactured: isManufactured,
       netWeight: netWeight,
       grossWeight: grossWeight,
       weightUom: weightUom,
@@ -2413,35 +2639,43 @@ async function saveProductEntry() {
       height: height,
       dimensionUom: dimUom,
       volumeCbm: volumeCbm,
-      trackingPolicy: trackingPolicy,
-      safetyStock: safety,
-      leadTimeDays: leadtime,
-      costingMethod: costingMethod,
-      taxRatePercent: vatRate * 100
+      isActive: lifecycleStatus !== 'Discontinued'
     };
 
-    const res = await apiFetch('/api/inv/products', {
-      method: 'POST',
+    const url = editingId > 0 ? `/api/inv/products/${editingId}` : '/api/inv/products';
+    const method = editingId > 0 ? 'PUT' : 'POST';
+
+    const res = await apiFetch(url, {
+      method: method,
       body: JSON.stringify(payload)
     });
 
-    const savedCode = res?.data?.productCode || (isAutoCode ? 'PRD-000001' : code);
+    if (!res.ok) {
+      let errMsg = 'Failed to save product specification.';
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.message) errMsg = errJson.message;
+      } catch (_) {}
+      showToast(errMsg, 'error');
+      return;
+    }
+
+    let resJson = null;
+    try { resJson = await res.json(); } catch (_) {}
+
+    const savedCode = resJson?.data?.productCode || (isAutoCode ? 'PRD-000001' : code);
     const prodCodeInput = document.getElementById('prod-code');
     if (prodCodeInput) {
       prodCodeInput.value = savedCode;
       prodCodeInput.readOnly = true;
     }
 
-    ERP_STATE.products.push({
-      code: savedCode,
-      name: name,
-      stock: 250,
-      rate: wholesale
-    });
-
+    await loadProductListData();
     renderOrderItems();
     clearFormDirty('product');
-    showToast(`Product '${savedCode} - ${name}' recorded into Inventory Catalog`, 'success');
+    showToast(editingId > 0
+      ? `Product '${savedCode} - ${name}' updated successfully`
+      : `Product '${savedCode} - ${name}' recorded into Inventory Catalog`, 'success');
     navigateToList('products');
   } catch (err) {
     console.error('Product save error:', err);
@@ -5828,6 +6062,8 @@ function loadListData(entity) {
     case 'customers': loadCustomerListData(); break;
     case 'vendors': loadVendorListData(); break;
     case 'products': loadProductListData(); break;
+    case 'product-classes': loadProductClassListData(); break;
+    case 'lookups': loadMasterLookupListData(); break;
     case 'plants': loadPlantListData(); break;
     case 'depots': loadDepotListData(); break;
     case 'warehouses': loadWarehouseListData(); break;
@@ -6448,7 +6684,202 @@ function filterProductListTable() {
   renderProductListTable(filtered);
 }
 
-function openNewProductForm() {
+async function loadProductFormMasterData() {
+  try {
+    const [classesRes, uomsRes, whRes, lookupsRes] = await Promise.all([
+      apiFetch('/api/inv/products/classes'),
+      apiFetch('/api/inv/products/uoms'),
+      apiFetch('/api/inv/products/warehouses'),
+      apiFetch('/api/inv/products/lookups')
+    ]);
+
+    if (classesRes && classesRes.ok) {
+      const cj = await classesRes.json();
+      if (cj?.data) ERP_STATE.productClasses = cj.data;
+    }
+    if (uomsRes && uomsRes.ok) {
+      const uj = await uomsRes.json();
+      if (uj?.data) ERP_STATE.unitsOfMeasure = uj.data;
+    }
+    if (whRes && whRes.ok) {
+      const wj = await whRes.json();
+      if (wj?.data) ERP_STATE.warehouses = wj.data;
+    }
+    if (lookupsRes && lookupsRes.ok) {
+      const lj = await lookupsRes.json();
+      if (lj?.data) ERP_STATE.masterLookups = lj.data;
+    }
+  } catch (err) {
+    console.warn('Product master reference data hydration notice:', err);
+  }
+
+  if (!ERP_STATE.productClasses || ERP_STATE.productClasses.length === 0) {
+    ERP_STATE.productClasses = typeof DEFAULT_PRODUCT_CLASSES_SEED !== 'undefined' ? DEFAULT_PRODUCT_CLASSES_SEED.map(x => ({ ...x })) : [];
+  }
+  if (!ERP_STATE.masterLookups || ERP_STATE.masterLookups.length === 0) {
+    ERP_STATE.masterLookups = typeof DEFAULT_MASTER_LOOKUPS_SEED !== 'undefined' ? DEFAULT_MASTER_LOOKUPS_SEED.map(x => ({ ...x })) : [];
+  }
+
+  // Hydrate #prod-category
+  const catSel = document.getElementById('prod-category');
+  if (catSel && ERP_STATE.productClasses && ERP_STATE.productClasses.length > 0) {
+    const prev = catSel.value;
+    catSel.innerHTML = ERP_STATE.productClasses
+      .filter(c => c.isActive !== false)
+      .map(c => `<option value="${c.id}" data-category-type="${c.categoryType || 1}">${c.className} (${c.classCode})</option>`)
+      .join('');
+    if (prev && Array.from(catSel.options).some(o => o.value === String(prev))) catSel.value = String(prev);
+  }
+
+  // Hydrate #prod-uom and #prod-sec-uom
+  const uomSel = document.getElementById('prod-uom');
+  const secUomSel = document.getElementById('prod-sec-uom');
+  if (ERP_STATE.unitsOfMeasure && ERP_STATE.unitsOfMeasure.length > 0) {
+    const activeUoms = ERP_STATE.unitsOfMeasure.filter(u => u.isActive !== false);
+    if (uomSel) {
+      const prev = uomSel.value;
+      uomSel.innerHTML = activeUoms.map(u => `<option value="${u.id}">${u.uomCode} - ${u.uomName}</option>`).join('');
+      if (prev && Array.from(uomSel.options).some(o => o.value === String(prev))) uomSel.value = String(prev);
+    }
+    if (secUomSel) {
+      const prev = secUomSel.value;
+      secUomSel.innerHTML = '<option value="">None (Single UOM)</option>' +
+        activeUoms.map(u => `<option value="${u.id}">${u.uomCode} - ${u.uomName}</option>`).join('');
+      if (prev && Array.from(secUomSel.options).some(o => o.value === String(prev))) secUomSel.value = String(prev);
+    }
+  }
+
+  // Hydrate #prod-warehouse
+  const whSel = document.getElementById('prod-warehouse');
+  if (whSel && ERP_STATE.warehouses && ERP_STATE.warehouses.length > 0) {
+    const prev = whSel.value;
+    whSel.innerHTML = '<option value="">Select Default Warehouse</option>' +
+      ERP_STATE.warehouses.filter(w => w.isActive !== false)
+        .map(w => `<option value="${w.id}">${w.warehouseCode} - ${w.warehouseName}</option>`)
+        .join('');
+    if (prev && Array.from(whSel.options).some(o => o.value === String(prev))) whSel.value = String(prev);
+    else if (whSel.options.length > 1) whSel.selectedIndex = 1;
+  }
+
+  // Hydrate MasterLookup dropdowns
+  const lookups = (ERP_STATE.masterLookups || []).filter(l => l.isActive !== false);
+  const byType = (t) => lookups.filter(l => l.lookupType === t);
+
+  const subcatSel = document.getElementById('prod-subcategory');
+  if (subcatSel && byType('PRODUCT_SUBCATEGORY').length > 0) {
+    const prev = subcatSel.value;
+    subcatSel.innerHTML = '<option value="">Select Subcategory</option>' +
+      byType('PRODUCT_SUBCATEGORY').map(l => `<option value="${l.id}">${l.lookupName}</option>`).join('');
+    if (prev) subcatSel.value = String(prev);
+  }
+
+  const brandSel = document.getElementById('prod-brand');
+  if (brandSel && byType('PRODUCT_BRAND').length > 0) {
+    const prev = brandSel.value;
+    brandSel.innerHTML = '<option value="">Select Brand / Origin</option>' +
+      byType('PRODUCT_BRAND').map(l => `<option value="${l.id}">${l.lookupName}</option>`).join('');
+    if (prev) brandSel.value = String(prev);
+  }
+
+  const gradeSel = document.getElementById('prod-grade');
+  if (gradeSel && byType('MATERIAL_GRADE').length > 0) {
+    const prev = gradeSel.value;
+    gradeSel.innerHTML = '<option value="">Select Material Grade / Standard</option>' +
+      byType('MATERIAL_GRADE').map(l => `<option value="${l.lookupName}">${l.lookupName}</option>`).join('');
+    if (prev) gradeSel.value = String(prev);
+  }
+
+  const packSel = document.getElementById('prod-pack-size');
+  if (packSel && byType('PACKAGING_TYPE').length > 0) {
+    const prev = packSel.value;
+    packSel.innerHTML = byType('PACKAGING_TYPE').map(l => `<option value="${l.lookupName}">${l.lookupName}</option>`).join('');
+    if (prev) packSel.value = String(prev);
+  }
+
+  const vatSel = document.getElementById('prod-vat-rate');
+  if (vatSel && byType('TAX_SCHEDULE').length > 0) {
+    const prev = vatSel.value;
+    vatSel.innerHTML = byType('TAX_SCHEDULE').map(l => {
+      const rateFrac = l.numericValue != null ? (Number(l.numericValue) / 100) : 0.15;
+      return `<option value="${rateFrac}" data-code="${l.lookupCode}">${l.lookupName}</option>`;
+    }).join('');
+    if (prev) vatSel.value = String(prev);
+  }
+
+  const binSel = document.getElementById('prod-bin');
+  if (binSel && byType('STORAGE_BIN').length > 0) {
+    const prev = binSel.value;
+    binSel.innerHTML = '<option value="">Select Storage Bay / Bin</option>' +
+      byType('STORAGE_BIN').map(l => `<option value="${l.lookupCode}">${l.lookupCode} (${l.lookupName})</option>`).join('');
+    if (prev) binSel.value = String(prev);
+  }
+
+  const qcSel = document.getElementById('prod-qc-toggle');
+  if (qcSel && byType('QC_POLICY').length > 0) {
+    const prev = qcSel.value;
+    qcSel.innerHTML = byType('QC_POLICY').map(l => `<option value="${l.lookupCode}">${l.lookupName}</option>`).join('');
+    if (prev) qcSel.value = String(prev);
+  }
+}
+
+function onProductClassChange() {
+  const catSel = document.getElementById('prod-category');
+  if (!catSel) return;
+  const opt = catSel.options[catSel.selectedIndex];
+  const catType = parseInt(opt?.getAttribute('data-category-type')) || 1;
+
+  const canBuy = document.getElementById('prod-is-purchasable');
+  const canSell = document.getElementById('prod-is-sellable');
+  const canMake = document.getElementById('prod-is-manufactured');
+
+  // CategoryType: 1=FinishedGood, 2=RawMaterial, 3=SemiFinished, 4=SparePart, 5=Service
+  if (catType === 1) {
+    if (canBuy) canBuy.checked = false;
+    if (canSell) canSell.checked = true;
+    if (canMake) canMake.checked = true;
+  } else if (catType === 2) {
+    if (canBuy) canBuy.checked = true;
+    if (canSell) canSell.checked = false;
+    if (canMake) canMake.checked = false;
+  } else if (catType === 3) {
+    if (canBuy) canBuy.checked = true;
+    if (canSell) canSell.checked = false;
+    if (canMake) canMake.checked = true;
+  } else if (catType === 4) {
+    if (canBuy) canBuy.checked = true;
+    if (canSell) canSell.checked = false;
+    if (canMake) canMake.checked = false;
+  } else if (catType === 5) {
+    if (canBuy) canBuy.checked = true;
+    if (canSell) canSell.checked = true;
+    if (canMake) canMake.checked = false;
+  }
+}
+
+function recalcProductVolumeCbm() {
+  const l = parseFloat(document.getElementById('prod-length')?.value) || 0;
+  const w = parseFloat(document.getElementById('prod-width')?.value) || 0;
+  const h = parseFloat(document.getElementById('prod-height')?.value) || 0;
+  const unit = document.getElementById('prod-dim-uom')?.value || 'MM';
+  const cbmEl = document.getElementById('prod-volume-cbm');
+  if (!cbmEl) return;
+
+  if (l <= 0 || w <= 0 || h <= 0) {
+    return;
+  }
+
+  let factor = 1e-9; // MM to m3
+  if (unit === 'CM') factor = 1e-6;
+  else if (unit === 'M') factor = 1;
+  else if (unit === 'INCH') factor = 0.000016387064;
+  else if (unit === 'FT') factor = 0.0283168466;
+
+  const cbm = l * w * h * factor;
+  cbmEl.value = cbm.toFixed(4);
+}
+
+async function openNewProductForm() {
+  await loadProductFormMasterData();
   resetEntryForm('product');
   const codeEl = document.getElementById('prod-code');
   if (codeEl) { codeEl.value = '[Auto-Generated on Save]'; codeEl.readOnly = true; }
@@ -6457,16 +6888,111 @@ function openNewProductForm() {
   navigateToStudio('entry-product');
 }
 
-function editProductRecord(code, name, cost, price, uom) {
+async function editProductRecord(code, name, cost, price, uom) {
+  await loadProductFormMasterData();
+  resetEntryForm('product');
   navigateToStudio('entry-product');
+
+  let item = (ERP_STATE.products || []).find(p => (p.productCode || p.code) === code);
+  try {
+    const res = await apiFetch(`/api/inv/products/by-code/${encodeURIComponent(code)}`);
+    if (res && res.ok) {
+      const j = await res.json();
+      if (j && j.data) item = j.data;
+    }
+  } catch (err) {
+    console.warn('Product detail lookup notice:', err);
+  }
+
+  const section = document.getElementById('studio-entry-product');
+  if (section && item?.id) {
+    section.setAttribute('data-editing-id', String(item.id));
+  }
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.value = String(val);
+  };
+
+  setVal('prod-code', item?.productCode || code);
   const codeEl = document.getElementById('prod-code');
-  if (codeEl) { codeEl.value = code; codeEl.readOnly = true; }
-  const nameEl = document.getElementById('prod-name');
-  if (nameEl) nameEl.value = unescape(name);
-  const costEl = document.getElementById('prod-cost');
-  if (costEl) costEl.value = cost;
-  const wsEl = document.getElementById('prod-wholesale');
-  if (wsEl) wsEl.value = price;
+  if (codeEl) codeEl.readOnly = true;
+
+  setVal('prod-name', item?.productName || (name ? unescape(name) : ''));
+  setVal('prod-description', item?.description || '');
+  if (item?.productClassId) setVal('prod-category', item.productClassId);
+  if (item?.subcategoryId) setVal('prod-subcategory', item.subcategoryId);
+  if (item?.brandId) setVal('prod-brand', item.brandId);
+  if (item?.materialGrade) setVal('prod-grade', item.materialGrade);
+  setVal('prod-lifecycle-status', item?.lifecycleStatus || (item?.isActive === false ? 'Inactive' : 'Active'));
+  setVal('prod-barcode', item?.barcodeGtin || '');
+
+  if (item?.primaryUomId) setVal('prod-uom', item.primaryUomId);
+  if (item?.packSize) setVal('prod-pack-size', item.packSize);
+  if (item?.secondaryUomId) setVal('prod-sec-uom', item.secondaryUomId);
+  setVal('prod-uom-factor', item?.uomConversionFactor ?? '');
+  setVal('prod-reorder', item?.reorderLevel ?? 50);
+  setVal('prod-safety', item?.safetyStock ?? 20);
+  setVal('prod-leadtime', item?.leadTimeDays ?? 14);
+  setVal('prod-tracking-policy', item?.trackingPolicy ?? 1);
+
+  setVal('prod-cost', item?.standardCost ?? cost ?? 0);
+  const currCostDisp = document.getElementById('prod-current-cost-display');
+  if (currCostDisp) {
+    currCostDisp.textContent = '৳' + Number(item?.currentCost ?? item?.standardCost ?? cost ?? 0).toLocaleString();
+  }
+  setVal('prod-wholesale', item?.sellingPrice ?? price ?? 0);
+  setVal('prod-retail', item?.minimumRetailPrice ?? ((item?.sellingPrice ?? price ?? 0) * 1.1));
+  setVal('prod-costing-method', item?.costingMethod || 'MovingAverage');
+  setVal('prod-hs-code', item?.hsCode || '');
+
+  if (item?.taxRatePercent != null) {
+    const vatEl = document.getElementById('prod-vat-rate');
+    const pct = Number(item.taxRatePercent);
+    const frac = pct / 100;
+    if (vatEl) {
+      if (Array.from(vatEl.options).some(o => Number(o.value) === frac)) vatEl.value = String(frac);
+      else if (Array.from(vatEl.options).some(o => Number(o.value) === pct)) vatEl.value = String(pct);
+    }
+  }
+
+  if (item?.defaultWarehouseId) setVal('prod-warehouse', item.defaultWarehouseId);
+  if (item?.defaultStorageBin) setVal('prod-bin', item.defaultStorageBin);
+  if (item?.qcPolicy) setVal('prod-qc-toggle', item.qcPolicy);
+
+  const canBuyEl = document.getElementById('prod-is-purchasable');
+  if (canBuyEl) canBuyEl.checked = item?.isPurchasable !== undefined ? !!item.isPurchasable : (item?.canPurchase !== undefined ? !!item.canPurchase : true);
+  const canSellEl = document.getElementById('prod-is-sellable');
+  if (canSellEl) canSellEl.checked = item?.isSellable !== undefined ? !!item.isSellable : (item?.canSell !== undefined ? !!item.canSell : true);
+  const canMakeEl = document.getElementById('prod-is-manufactured');
+  if (canMakeEl) canMakeEl.checked = item?.isManufactured !== undefined ? !!item.isManufactured : (item?.canManufacture !== undefined ? !!item.canManufacture : false);
+
+  setVal('prod-net-weight', item?.netWeight ?? '');
+  setVal('prod-gross-weight', item?.grossWeight ?? '');
+  setVal('prod-weight-uom', item?.weightUom || 'KG');
+  setVal('prod-length', item?.length ?? '');
+  setVal('prod-width', item?.width ?? '');
+  setVal('prod-height', item?.height ?? '');
+  setVal('prod-dim-uom', item?.dimensionUom || 'MM');
+  setVal('prod-volume-cbm', item?.volumeCbm ?? '');
+
+  // Structural field lock if product has posted stock transactions
+  const uomEl = document.getElementById('prod-uom');
+  const cmEl = document.getElementById('prod-costing-method');
+  if (item?.hasTransactions) {
+    if (uomEl) {
+      uomEl.disabled = true;
+      uomEl.title = 'Locked: Product has posted inventory ledger movements.';
+    }
+    if (cmEl) {
+      cmEl.disabled = true;
+      cmEl.title = 'Locked: Costing method cannot be changed after transactions exist.';
+    }
+  } else {
+    if (uomEl) { uomEl.disabled = false; uomEl.title = ''; }
+    if (cmEl) { cmEl.disabled = false; cmEl.title = ''; }
+  }
+
   const txt = document.getElementById('txt-save-product');
   if (txt) txt.textContent = 'Save';
   markFormDirty('product');
@@ -7628,6 +8154,8 @@ function filterUomListTable() {
 
 function openNewUomForm() {
   resetEntryForm('uom');
+  const sec = document.getElementById('studio-entry-uom');
+  if (sec) sec.setAttribute('data-editing-id', '');
   const txt = document.getElementById('txt-save-uom');
   if (txt) txt.textContent = 'Save';
   navigateToStudio('entry-uom');
@@ -7635,12 +8163,15 @@ function openNewUomForm() {
 
 function editUomRecord(code, name, category) {
   navigateToStudio('entry-uom');
+  const uomItem = (ERP_STATE.unitsOfMeasure || []).find(u => u.uomCode === code);
+  const sec = document.getElementById('studio-entry-uom');
+  if (sec) sec.setAttribute('data-editing-id', uomItem?.id ? String(uomItem.id) : '');
   const codeEl = document.getElementById('uom-code');
   if (codeEl) { codeEl.value = code; codeEl.readOnly = true; }
   const nameEl = document.getElementById('uom-name');
   if (nameEl) nameEl.value = unescape(name);
   const catEl = document.getElementById('uom-category');
-  if (catEl && category) catEl.value = category;
+  if (catEl && (uomItem?.uomCategory || category)) catEl.value = uomItem?.uomCategory || category;
   const txt = document.getElementById('txt-save-uom');
   if (txt) txt.textContent = 'Save';
   markFormDirty('uom');
@@ -7648,8 +8179,14 @@ function editUomRecord(code, name, category) {
 
 async function saveUomEntry() {
   clearAllFieldErrors('uom');
+  const sec = document.getElementById('studio-entry-uom');
+  const editingId = sec ? parseInt(sec.getAttribute('data-editing-id')) || 0 : 0;
   const code = document.getElementById('uom-code')?.value.trim().toUpperCase();
   const name = document.getElementById('uom-name')?.value.trim();
+  const category = document.getElementById('uom-category')?.value || 'Quantity';
+  const precision = parseInt(document.getElementById('uom-precision')?.value) || 2;
+  const isBase = (document.getElementById('uom-is-base')?.value || 'true') === 'true';
+  const factor = parseFloat(document.getElementById('uom-factor')?.value) || 1.0;
 
   let hasError = false;
   if (!code || code.length < 1) {
@@ -7669,16 +8206,24 @@ async function saveUomEntry() {
   const btn = document.getElementById('btn-save-uom');
   const txt = document.getElementById('txt-save-uom');
   if (btn) btn.disabled = true;
-  if (txt) txt.textContent = 'Saving...';
+  if (txt) txt.textContent = 'Saving';
 
   try {
     const payload = {
       uomCode: code,
-      uomName: name
+      uomName: name,
+      uomCategory: category,
+      decimalPlaces: precision,
+      isBaseUnit: isBase,
+      conversionFactor: factor,
+      isActive: true
     };
 
-    const res = await apiFetch('/api/inv/products/uoms', {
-      method: 'POST',
+    const url = editingId > 0 ? `/api/inv/products/uoms/${editingId}` : '/api/inv/products/uoms';
+    const method = editingId > 0 ? 'PUT' : 'POST';
+
+    const res = await apiFetch(url, {
+      method: method,
       body: JSON.stringify(payload)
     });
 
@@ -7698,6 +8243,732 @@ async function saveUomEntry() {
   } catch (err) {
     console.warn('UOM save error:', err);
     showToast('Network error while saving UOM.', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (txt) txt.textContent = 'Save';
+    initLucide();
+  }
+}
+
+// --------------------------------------------------------------------------
+// 17.5E PRODUCT CLASSES & GL VALUATION MAPPING STUDIO
+// --------------------------------------------------------------------------
+const DEFAULT_PRODUCT_CLASSES_SEED = [
+  { id: 1, classCode: 'FG-STEEL', className: 'PEB Fabricated Structural Steel Members', categoryType: 1, valuationMethod: 1, glInventoryAccountId: 1, glCogsAccountId: 2, glRevenueAccountId: 3, isActive: true },
+  { id: 2, classCode: 'FG-ROOF', className: 'Color Coated Roofing & Cladding Profiles', categoryType: 1, valuationMethod: 1, glInventoryAccountId: 1, glCogsAccountId: 2, glRevenueAccountId: 3, isActive: true },
+  { id: 3, classCode: 'RM-COIL', className: 'HR / CR / GI Steel Coils & Plates (Raw Material)', categoryType: 2, valuationMethod: 1, glInventoryAccountId: 2, glCogsAccountId: 5, glRevenueAccountId: 3, isActive: true },
+  { id: 4, classCode: 'FG-FURN', className: 'Engineered Wood & Industrial Office Furniture', categoryType: 1, valuationMethod: 1, glInventoryAccountId: 1, glCogsAccountId: 2, glRevenueAccountId: 3, isActive: true },
+  { id: 5, classCode: 'MRO-SPARE', className: 'Welding Consumables, Fasteners & Spares', categoryType: 4, valuationMethod: 1, glInventoryAccountId: 4, glCogsAccountId: 6, glRevenueAccountId: 3, isActive: true },
+  { id: 6, classCode: 'SRV-ERECT', className: 'Site Erection, Testing & Crane Services', categoryType: 5, valuationMethod: 1, glInventoryAccountId: 1, glCogsAccountId: 2, glRevenueAccountId: 8, isActive: true }
+];
+
+async function loadProductClassListData() {
+  const tbody = document.getElementById('tbody-list-product-classes');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-amber-400"></i><span>Loading product classes...</span></td></tr>';
+  initLucide();
+
+  try {
+    const res = await apiFetch('/api/inv/products/classes');
+    if (res && res.ok) {
+      const json = await res.json();
+      if (json && json.data && json.data.length > 0) {
+        ERP_STATE.productClasses = json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('Product classes fetch notice:', err);
+  }
+
+  if (!ERP_STATE.productClasses || ERP_STATE.productClasses.length === 0) {
+    ERP_STATE.productClasses = DEFAULT_PRODUCT_CLASSES_SEED.map(x => ({ ...x }));
+  }
+
+  renderProductClassListTable(ERP_STATE.productClasses || []);
+}
+
+function renderProductClassListTable(list) {
+  const tbody = document.getElementById('tbody-list-product-classes');
+  const emptyState = document.getElementById('empty-list-product-classes');
+  if (!tbody) return;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = '';
+    const pag = document.getElementById('pagination-list-product-classes');
+    if (pag) pag.innerHTML = '';
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  if (emptyState) emptyState.classList.add('hidden');
+
+  const typeNames = {
+    1: 'Finished Goods',
+    2: 'Raw Material',
+    3: 'Semi-Finished / WIP',
+    4: 'Spare Parts & MRO',
+    5: 'Services / Non-Stock',
+    6: 'Fixed Asset / Capital'
+  };
+
+  const glAccountLabels = {
+    1: '1040-01 — Inventory Asset Control',
+    2: '5010-01 — Cost of Goods Sold (COGS)',
+    3: '4010-01 — Commercial Sales Revenue',
+    4: '1040-04 — Spares & Consumables Asset',
+    5: '5010-02 — Direct Material Consumption',
+    6: '5020-01 — Factory Maintenance Expense',
+    7: '4010-02 — Export Sales Revenue',
+    8: '4020-01 — Erection Service Revenue'
+  };
+
+  const rowRenderer = (item) => {
+    const code = item.classCode || '';
+    const name = item.className || '';
+    const catType = typeNames[item.categoryType] || 'Finished Goods';
+    const glInv = glAccountLabels[item.glInventoryAccountId] || '1040-01 — Inventory Asset Control';
+    const glCogs = glAccountLabels[item.glCogsAccountId] || '5010-01 — Cost of Goods Sold (COGS)';
+    const glRev = glAccountLabels[item.glRevenueAccountId] || '4010-01 — Commercial Sales Revenue';
+    const statusBadge = item.isActive !== false
+      ? '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Active</span>'
+      : '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-500/15 text-slate-400 border border-white/10">Inactive</span>';
+
+    return `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-mono font-bold text-amber-400">
+          <a href="javascript:void(0)" onclick="editProductClassRecord(${item.id}, '${code}', '${escape(name)}', ${item.categoryType || 1}, ${item.valuationMethod || 1})" class="clickable-code hover:underline" title="Edit ${code}">${code}</a>
+        </td>
+        <td class="py-3 px-4 font-medium text-slate-100">${name}</td>
+        <td class="py-3 px-4 text-slate-300">${catType}</td>
+        <td class="py-3 px-4 font-mono text-xs text-emerald-400">${glInv}</td>
+        <td class="py-3 px-4 font-mono text-xs text-slate-300">${glCogs}</td>
+        <td class="py-3 px-4 font-mono text-xs text-blue-400">${glRev}</td>
+        <td class="py-3 px-4">${statusBadge}</td>
+        <td class="py-3 px-4 text-right">
+          <div class="inline-flex items-center gap-1.5 justify-end">
+            <button
+              type="button"
+              onclick="editProductClassRecord(${item.id}, '${code}', '${escape(name)}', ${item.categoryType || 1}, ${item.valuationMethod || 1})"
+              class="erp-row-action-btn btn-edit"
+              title="Edit Class"
+              aria-label="Edit"
+            >
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button
+              type="button"
+              onclick="confirmSoftDelete('product-class', '${code}', '${escape(name)}', ${item.id || 0})"
+              class="erp-row-action-btn btn-delete"
+              title="Delete Class"
+              aria-label="Delete"
+            >
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  };
+
+  if (!window.ERP_PAGINATION['tbody-list-product-classes']) {
+    new ErpAdaptiveTablePagination({
+      tableId: 'table-list-product-classes',
+      tbodyId: 'tbody-list-product-classes',
+      paginationId: 'pagination-list-product-classes',
+      initialPageSize: 10,
+      renderRow: rowRenderer,
+      data: list
+    });
+  } else {
+    window.ERP_PAGINATION['tbody-list-product-classes'].renderRow = rowRenderer;
+    window.ERP_PAGINATION['tbody-list-product-classes'].setData(list);
+  }
+  initLucide();
+}
+
+function filterProductClassListTable() {
+  const query = (document.getElementById('search-list-product-classes')?.value || '').toLowerCase();
+  const filtered = (ERP_STATE.productClasses || []).filter(c =>
+    (c.classCode || '').toLowerCase().includes(query) ||
+    (c.className || '').toLowerCase().includes(query)
+  );
+  renderProductClassListTable(filtered);
+}
+
+function openNewProductClassForm() {
+  resetEntryForm('product-class');
+  const txt = document.getElementById('txt-save-product-class');
+  if (txt) txt.textContent = 'Save';
+  navigateToStudio('entry-product-class');
+}
+
+function editProductClassRecord(id, code, name, categoryType, valuationMethod) {
+  resetEntryForm('product-class');
+  navigateToStudio('entry-product-class');
+  const item = (ERP_STATE.productClasses || []).find(c => c.id === id || c.classCode === code);
+  const sec = document.getElementById('studio-entry-product-class');
+  if (sec) sec.setAttribute('data-editing-id', String(id || item?.id || ''));
+  const codeEl = document.getElementById('pclass-code');
+  if (codeEl) { codeEl.value = code || item?.classCode || ''; codeEl.readOnly = true; }
+  const nameEl = document.getElementById('pclass-name');
+  if (nameEl) nameEl.value = name ? unescape(name) : (item?.className || '');
+  const typeEl = document.getElementById('pclass-type');
+  if (typeEl && (categoryType || item?.categoryType)) typeEl.value = String(categoryType || item?.categoryType);
+  const glInvEl = document.getElementById('pclass-gl-inv');
+  if (glInvEl && item?.glInventoryAccountId) glInvEl.value = String(item.glInventoryAccountId);
+  const glCogsEl = document.getElementById('pclass-gl-cogs');
+  if (glCogsEl && item?.glCogsAccountId) glCogsEl.value = String(item.glCogsAccountId);
+  const glRevEl = document.getElementById('pclass-gl-rev');
+  if (glRevEl && item?.glRevenueAccountId) glRevEl.value = String(item.glRevenueAccountId);
+  const txt = document.getElementById('txt-save-product-class');
+  if (txt) txt.textContent = 'Save';
+  clearFormDirty('product-class');
+}
+
+async function saveProductClassEntry() {
+  clearAllFieldErrors('product-class');
+  const sec = document.getElementById('studio-entry-product-class');
+  const editingId = sec ? parseInt(sec.getAttribute('data-editing-id')) || 0 : 0;
+  const code = document.getElementById('pclass-code')?.value.trim().toUpperCase();
+  const name = document.getElementById('pclass-name')?.value.trim();
+  const categoryType = parseInt(document.getElementById('pclass-type')?.value) || 1;
+  const glInvId = parseInt(document.getElementById('pclass-gl-inv')?.value) || 1;
+  const glCogsId = parseInt(document.getElementById('pclass-gl-cogs')?.value) || 2;
+  const glRevId = parseInt(document.getElementById('pclass-gl-rev')?.value) || 3;
+
+  let hasError = false;
+  if (!code || code.length < 2) {
+    setFieldError('pclass-code', 'Class Code is required (min 2 chars).');
+    hasError = true;
+  }
+  if (!name || name.length < 3) {
+    setFieldError('pclass-name', 'Class Name is required (min 3 chars).');
+    hasError = true;
+  }
+  if (hasError) {
+    showToast('Please correct highlighted validation errors.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-product-class');
+  const txt = document.getElementById('txt-save-product-class');
+  if (btn) btn.disabled = true;
+  if (txt) txt.textContent = 'Saving';
+
+  try {
+    const payload = {
+      classCode: code,
+      className: name,
+      categoryType: categoryType,
+      valuationMethod: 1,
+      glInventoryAccountId: glInvId,
+      glCogsAccountId: glCogsId,
+      glRevenueAccountId: glRevId,
+      isActive: true
+    };
+    const url = editingId > 0 ? `/api/inv/products/classes/${editingId}` : '/api/inv/products/classes';
+    const method = editingId > 0 ? 'PUT' : 'POST';
+    const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+    if (res && res.ok) {
+      showToast(`Product Class ${code} (${name}) saved successfully!`, 'success');
+      clearFormDirty('product-class');
+      await loadProductClassListData();
+      navigateToList('product-classes');
+    } else {
+      // Fallback local state update if server needs restart or returns error
+      let msg = 'Failed to save Product Class.';
+      try { const j = await res.json(); if (j.message) msg = j.message; } catch (_) {}
+      if (res && res.status === 404) {
+        if (!ERP_STATE.productClasses) ERP_STATE.productClasses = [];
+        if (editingId > 0) {
+          const idx = ERP_STATE.productClasses.findIndex(c => c.id === editingId || c.classCode === code);
+          if (idx >= 0) ERP_STATE.productClasses[idx] = { ...ERP_STATE.productClasses[idx], ...payload };
+        } else {
+          ERP_STATE.productClasses.push({ id: Date.now(), ...payload });
+        }
+        showToast(`Product Class ${code} (${name}) saved!`, 'success');
+        clearFormDirty('product-class');
+        navigateToList('product-classes');
+        return;
+      }
+      showToast(msg, 'error');
+    }
+  } catch (err) {
+    console.warn('Product Class save error:', err);
+    showToast('Network error while saving Product Class.', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (txt) txt.textContent = 'Save';
+    initLucide();
+  }
+}
+
+// --------------------------------------------------------------------------
+// 17.5F MASTER LOOKUPS REGISTRY STUDIO (Grades, Brands, Subcategories, Bins, QC, Tax)
+// --------------------------------------------------------------------------
+const DEFAULT_MASTER_LOOKUPS_SEED = [
+  { id: 1, lookupType: 'PRODUCT_SUBCATEGORY', lookupCode: 'SUB-PEB-COL', lookupName: 'PEB Columns & Rafters', description: 'Built-up tapered I-section columns and rafters', numericValue: null, sortOrder: 10, isGlobal: true, isActive: true },
+  { id: 2, lookupType: 'PRODUCT_SUBCATEGORY', lookupCode: 'SUB-PURLIN', lookupName: 'Cold-Formed Z & C Purlins', description: 'Galvanized high-tensile secondary framing members', numericValue: null, sortOrder: 20, isGlobal: true, isActive: true },
+  { id: 3, lookupType: 'PRODUCT_SUBCATEGORY', lookupCode: 'SUB-DECKING', lookupName: 'Profiled Roof & Wall Cladding Sheets', description: 'Color-coated Aluzinc trapezoidal profiles', numericValue: null, sortOrder: 30, isGlobal: true, isActive: true },
+  { id: 4, lookupType: 'PRODUCT_SUBCATEGORY', lookupCode: 'SUB-HR-COIL', lookupName: 'Hot Rolled (HR) Steel Coils & Plates', description: 'Structural grade prime steel coils', numericValue: null, sortOrder: 40, isGlobal: true, isActive: true },
+  { id: 5, lookupType: 'MATERIAL_GRADE', lookupCode: 'ASTM-A572-50', lookupName: 'ASTM A572 Grade 50 (345 MPa High-Tensile)', description: 'High-strength low-alloy structural steel (Min Yield 345 MPa)', numericValue: 345, sortOrder: 10, isGlobal: true, isActive: true },
+  { id: 6, lookupType: 'MATERIAL_GRADE', lookupCode: 'ASTM-A36', lookupName: 'ASTM A36 Mild Structural Steel (250 MPa)', description: 'Standard carbon structural steel plate & section grade', numericValue: 250, sortOrder: 20, isGlobal: true, isActive: true },
+  { id: 7, lookupType: 'MATERIAL_GRADE', lookupCode: 'JIS-G3302-SGCC', lookupName: 'JIS G3302 SGCC / AZ150 Galvalume', description: 'Hot-dip zinc/aluminum coated structural sheet', numericValue: 550, sortOrder: 30, isGlobal: true, isActive: true },
+  { id: 8, lookupType: 'PRODUCT_BRAND', lookupCode: 'BRAND-HATIM-PEB', lookupName: 'HATIM Steel Structure (In-House Manufactured)', description: 'ISO 9001 certified PEB fabrication division', numericValue: null, sortOrder: 10, isGlobal: true, isActive: true },
+  { id: 9, lookupType: 'PRODUCT_BRAND', lookupCode: 'BRAND-BSRM', lookupName: 'BSRM Steels Ltd', description: 'Domestic high-strength steel supplier', numericValue: null, sortOrder: 20, isGlobal: true, isActive: true },
+  { id: 10, lookupType: 'PRODUCT_BRAND', lookupCode: 'BRAND-NIPPON', lookupName: 'Nippon Steel / JFE Japan (Imported)', description: 'Imported prime mill structural coils', numericValue: null, sortOrder: 30, isGlobal: true, isActive: true },
+  { id: 11, lookupType: 'PACKAGING_TYPE', lookupCode: 'PKG-LOOSE-BUNDLE', lookupName: 'Steel Strapped Heavy Mill Bundle (2.5–5.0 MT)', description: 'Standard crane-liftable export strapping', numericValue: null, sortOrder: 10, isGlobal: true, isActive: true },
+  { id: 12, lookupType: 'PACKAGING_TYPE', lookupCode: 'PKG-COIL-EYE', lookupName: 'Slit / Mother Coil on Wooden Skid', description: 'Moisture-barrier VCI wrapped coil packaging', numericValue: null, sortOrder: 20, isGlobal: true, isActive: true },
+  { id: 13, lookupType: 'TAX_SCHEDULE', lookupCode: 'VAT_STD_15', lookupName: '15.0% — Standard VAT Schedule (Mushak 6.3)', description: 'NBR Standard Value Added Tax Rate', numericValue: 15.0, sortOrder: 10, isGlobal: true, isActive: true },
+  { id: 14, lookupType: 'TAX_SCHEDULE', lookupCode: 'VAT_TRADE_7_5', lookupName: '7.5% — Manufacturing / Trade VAT', description: 'Reduced statutory tariff rate', numericValue: 7.5, sortOrder: 20, isGlobal: true, isActive: true },
+  { id: 15, lookupType: 'TAX_SCHEDULE', lookupCode: 'VAT_ZERO_0', lookupName: '0.0% — Zero-Rated Direct / Deemed Export', description: 'EPZ / Bonded warehouse export supply', numericValue: 0.0, sortOrder: 30, isGlobal: true, isActive: true },
+  { id: 16, lookupType: 'QC_POLICY', lookupCode: 'Mandatory QC', lookupName: 'Mandatory Lab & Dimensional QC Inspection', description: 'Requires Ultrasonic / Mill Test Certificate & caliper check prior to GRN posting', numericValue: null, sortOrder: 10, isGlobal: true, isActive: true },
+  { id: 17, lookupType: 'QC_POLICY', lookupCode: 'Mill Cert Check', lookupName: 'Mill Test Certificate (MTC) Verification', description: 'Verify heat number and chemical composition certificate on arrival', numericValue: null, sortOrder: 20, isGlobal: true, isActive: true },
+  { id: 18, lookupType: 'STORAGE_BIN', lookupCode: 'A-01-R1', lookupName: 'Bay A-01 / Rack R1 (Heavy Coil Yard)', description: '25T EOT Gantry Crane Bay A', numericValue: null, sortOrder: 10, isGlobal: false, isActive: true },
+  { id: 19, lookupType: 'STORAGE_BIN', lookupCode: 'B-01-FG', lookupName: 'Zone B-01 (Finished Goods Dispatch Yard)', description: 'Open trailer loading bay for fabricated members', numericValue: null, sortOrder: 20, isGlobal: false, isActive: true }
+];
+
+async function loadMasterLookupListData() {
+  const tbody = document.getElementById('tbody-list-lookups');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-cyan-400"></i><span>Loading configurable master lookups...</span></td></tr>';
+  initLucide();
+
+  const rawTypeFilter = document.getElementById('filter-lookup-type')?.value || '';
+  const apiTypeFilter = (rawTypeFilter && rawTypeFilter !== 'ALL') ? rawTypeFilter : '';
+  try {
+    const url = apiTypeFilter ? `/api/inv/products/lookups?type=${encodeURIComponent(apiTypeFilter)}` : '/api/inv/products/lookups';
+    const res = await apiFetch(url);
+    if (res && res.ok) {
+      const json = await res.json();
+      if (json && json.data && json.data.length > 0) {
+        if (!apiTypeFilter) {
+          ERP_STATE.masterLookups = json.data;
+        } else {
+          // Merge filtered results into masterLookups cache
+          const otherTypes = (ERP_STATE.masterLookups || []).filter(l => l.lookupType !== apiTypeFilter);
+          ERP_STATE.masterLookups = [...otherTypes, ...json.data];
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Master lookups fetch notice:', err);
+  }
+
+  if (!ERP_STATE.masterLookups || ERP_STATE.masterLookups.length === 0) {
+    ERP_STATE.masterLookups = DEFAULT_MASTER_LOOKUPS_SEED.map(x => ({ ...x }));
+  }
+
+  filterMasterLookupListTable();
+}
+
+function renderMasterLookupListTable(list) {
+  const tbody = document.getElementById('tbody-list-lookups');
+  const emptyState = document.getElementById('empty-list-lookups');
+  if (!tbody) return;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = '';
+    const pag = document.getElementById('pagination-list-lookups');
+    if (pag) pag.innerHTML = '';
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  if (emptyState) emptyState.classList.add('hidden');
+
+  const categoryLabels = {
+    'PRODUCT_SUBCATEGORY': 'Item Subcategory',
+    'MATERIAL_GRADE': 'Material Grade',
+    'PRODUCT_BRAND': 'Brand / Origin',
+    'PACKAGING_TYPE': 'Packaging Type',
+    'TAX_SCHEDULE': 'VAT / Tax Schedule',
+    'QC_POLICY': 'QC Inspection Policy',
+    'STORAGE_BIN': 'Storage Bay / Bin'
+  };
+
+  const rowRenderer = (item) => {
+    const code = item.lookupCode || '';
+    const name = item.lookupName || '';
+    const lType = item.lookupType || '';
+    const catLabel = categoryLabels[lType] || lType;
+    const desc = item.description || '-';
+    const rateVal = item.numericValue != null
+      ? (lType === 'TAX_SCHEDULE' ? `${Number(item.numericValue).toFixed(1)}%` : String(item.numericValue))
+      : '—';
+    const scopeBadge = item.isGlobal !== false && !item.companyId
+      ? '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">Global</span>'
+      : '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">Subsidiary</span>';
+    const statusBadge = item.isActive !== false
+      ? '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Active</span>'
+      : '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-500/15 text-slate-400 border border-white/10">Inactive</span>';
+
+    return `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-mono text-xs text-cyan-400 font-bold">${catLabel}</td>
+        <td class="py-3 px-4 font-mono font-bold text-amber-400">
+          <a href="javascript:void(0)" onclick="editMasterLookupRecord(${item.id})" class="clickable-code hover:underline" title="Edit ${code}">${code}</a>
+        </td>
+        <td class="py-3 px-4 font-medium text-slate-100">${name}</td>
+        <td class="py-3 px-4 text-slate-400 text-xs">${desc}</td>
+        <td class="py-3 px-4 text-right font-mono text-xs text-emerald-400 font-bold">${rateVal}</td>
+        <td class="py-3 px-4">${scopeBadge}</td>
+        <td class="py-3 px-4">${statusBadge}</td>
+        <td class="py-3 px-4 text-right">
+          <div class="inline-flex items-center gap-1.5 justify-end">
+            <button
+              type="button"
+              onclick="editMasterLookupRecord(${item.id})"
+              class="erp-row-action-btn btn-edit"
+              title="Edit Lookup"
+              aria-label="Edit"
+            >
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button
+              type="button"
+              onclick="confirmSoftDelete('lookup', '${code}', '${escape(name)}', ${item.id || 0})"
+              class="erp-row-action-btn btn-delete"
+              title="Delete Lookup"
+              aria-label="Delete"
+            >
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  };
+
+  if (!window.ERP_PAGINATION['tbody-list-lookups']) {
+    new ErpAdaptiveTablePagination({
+      tableId: 'table-list-lookups',
+      tbodyId: 'tbody-list-lookups',
+      paginationId: 'pagination-list-lookups',
+      initialPageSize: 10,
+      renderRow: rowRenderer,
+      data: list
+    });
+  } else {
+    window.ERP_PAGINATION['tbody-list-lookups'].renderRow = rowRenderer;
+    window.ERP_PAGINATION['tbody-list-lookups'].setData(list);
+  }
+  initLucide();
+}
+
+function filterMasterLookupListTable() {
+  const query = (document.getElementById('search-list-lookups')?.value || '').toLowerCase();
+  const rawTypeFilter = document.getElementById('filter-lookup-type')?.value || '';
+  const typeFilter = (rawTypeFilter && rawTypeFilter !== 'ALL') ? rawTypeFilter : '';
+  const filtered = (ERP_STATE.masterLookups || []).filter(l => {
+    const matchType = !typeFilter || l.lookupType === typeFilter;
+    const matchQuery = !query ||
+      (l.lookupCode || '').toLowerCase().includes(query) ||
+      (l.lookupName || '').toLowerCase().includes(query) ||
+      (l.lookupType || '').toLowerCase().includes(query) ||
+      (l.description || '').toLowerCase().includes(query);
+    return matchType && matchQuery;
+  });
+  renderMasterLookupListTable(filtered);
+}
+
+function openNewMasterLookupForm() {
+  resetEntryForm('lookup');
+  const txt = document.getElementById('txt-save-lookup');
+  if (txt) txt.textContent = 'Save';
+  navigateToStudio('entry-lookup');
+}
+
+function editMasterLookupRecord(id) {
+  const item = (ERP_STATE.masterLookups || []).find(l => l.id === id);
+  resetEntryForm('lookup');
+  navigateToStudio('entry-lookup');
+  if (!item) return;
+
+  const sec = document.getElementById('studio-entry-lookup');
+  if (sec) sec.setAttribute('data-editing-id', String(item.id || ''));
+
+  const typeEl = document.getElementById('lookup-type');
+  if (typeEl) {
+    typeEl.value = item.lookupType || 'MATERIAL_GRADE';
+    typeEl.disabled = true;
+  }
+  const codeEl = document.getElementById('lookup-code');
+  if (codeEl) {
+    codeEl.value = item.lookupCode || '';
+    codeEl.readOnly = true;
+  }
+  const nameEl = document.getElementById('lookup-name');
+  if (nameEl) nameEl.value = item.lookupName || '';
+  const numEl = document.getElementById('lookup-numeric');
+  if (numEl) numEl.value = item.numericValue != null ? String(item.numericValue) : '';
+  const sortEl = document.getElementById('lookup-sort');
+  if (sortEl) sortEl.value = item.sortOrder != null ? String(item.sortOrder) : '10';
+  const scopeEl = document.getElementById('lookup-scope');
+  if (scopeEl) scopeEl.value = (item.isGlobal !== false && !item.companyId) ? 'true' : 'false';
+  const descEl = document.getElementById('lookup-desc');
+  if (descEl) descEl.value = item.description || '';
+  const statusEl = document.getElementById('lookup-status');
+  if (statusEl) statusEl.value = item.isActive !== false ? 'true' : 'false';
+
+  const txt = document.getElementById('txt-save-lookup');
+  if (txt) txt.textContent = 'Save';
+  clearFormDirty('lookup');
+}
+
+async function saveMasterLookupEntry() {
+  clearAllFieldErrors('lookup');
+  const sec = document.getElementById('studio-entry-lookup');
+  const editingId = sec ? parseInt(sec.getAttribute('data-editing-id')) || 0 : 0;
+
+  const lookupType = document.getElementById('lookup-type')?.value || 'MATERIAL_GRADE';
+  const code = document.getElementById('lookup-code')?.value.trim().toUpperCase();
+  const name = document.getElementById('lookup-name')?.value.trim();
+  const numRaw = document.getElementById('lookup-numeric')?.value;
+  const numericValue = (numRaw !== '' && numRaw != null && !isNaN(parseFloat(numRaw))) ? parseFloat(numRaw) : null;
+  const sortOrder = parseInt(document.getElementById('lookup-sort')?.value) || 10;
+  const isGlobal = document.getElementById('lookup-scope')?.value !== 'false';
+  const description = document.getElementById('lookup-desc')?.value.trim() || null;
+  const isActive = document.getElementById('lookup-status')?.value !== 'false';
+
+  let hasError = false;
+  if (!code || code.length < 2) {
+    setFieldError('lookup-code', 'Lookup Code is required (min 2 chars).');
+    hasError = true;
+  }
+  if (!name || name.length < 2) {
+    setFieldError('lookup-name', 'Display Value / Official Name is required (min 2 chars).');
+    hasError = true;
+  }
+  if (hasError) {
+    showToast('Please correct the highlighted validation errors.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-lookup');
+  const txt = document.getElementById('txt-save-lookup');
+  if (btn) btn.disabled = true;
+  if (txt) txt.textContent = 'Saving';
+
+  try {
+    const payload = {
+      lookupType,
+      lookupCode: code,
+      lookupName: name,
+      description,
+      numericValue,
+      sortOrder,
+      isGlobal,
+      isActive
+    };
+
+    const url = editingId > 0 ? `/api/inv/products/lookups/${editingId}` : '/api/inv/products/lookups';
+    const method = editingId > 0 ? 'PUT' : 'POST';
+    const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+
+    if (res && res.ok) {
+      showToast(`Master Lookup '${code} — ${name}' saved successfully!`, 'success');
+      clearFormDirty('lookup');
+      await loadMasterLookupListData();
+      navigateToList('lookups');
+    } else {
+      let msg = 'Failed to save Master Lookup.';
+      try { const j = await res.json(); if (j.message) msg = j.message; } catch (_) {}
+      if (res && res.status === 404) {
+        if (!ERP_STATE.masterLookups) ERP_STATE.masterLookups = [];
+        if (editingId > 0) {
+          const idx = ERP_STATE.masterLookups.findIndex(l => l.id === editingId);
+          if (idx >= 0) ERP_STATE.masterLookups[idx] = { ...ERP_STATE.masterLookups[idx], ...payload };
+        } else {
+          ERP_STATE.masterLookups.push({ id: Date.now(), ...payload });
+        }
+        showToast(`Master Lookup '${code} — ${name}' saved!`, 'success');
+        clearFormDirty('lookup');
+        navigateToList('lookups');
+        return;
+      }
+      showToast(msg, 'error');
+    }
+  } catch (err) {
+    console.warn('Master Lookup save error:', err);
+    showToast('Network error while saving Master Lookup.', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (txt) txt.textContent = 'Save';
+    initLucide();
+  }
+}
+
+// --------------------------------------------------------------------------
+// 17.5G INLINE QUICK-ADD MASTER DATA MODAL CONTROLLER
+// --------------------------------------------------------------------------
+function openMasterQuickAddModal(lookupType, targetSelectId, editingLookup = null) {
+  const modal = document.getElementById('erp-quick-add-master-modal');
+  if (!modal) return;
+
+  const filterVal = document.getElementById('filter-lookup-type')?.value;
+  const resolvedType = (lookupType && lookupType !== 'ALL')
+    ? lookupType
+    : ((filterVal && filterVal !== 'ALL') ? filterVal : 'MATERIAL_GRADE');
+
+  const typeEl = document.getElementById('qa-lookup-type');
+  if (typeEl) typeEl.value = resolvedType;
+  const targetEl = document.getElementById('qa-target-select-id');
+  if (targetEl) targetEl.value = targetSelectId || '';
+  const editIdEl = document.getElementById('qa-editing-id');
+  if (editIdEl) editIdEl.value = editingLookup?.id ? String(editingLookup.id) : '';
+  modal.setAttribute('data-editing-id', editingLookup?.id ? String(editingLookup.id) : '');
+
+  const titleMap = {
+    'PRODUCT_CLASS': 'Quick-Add Item Category / Class',
+    'UOM': 'Quick-Add Unit of Measure (UOM)',
+    'WAREHOUSE': 'Quick-Add Receiving Warehouse',
+    'PRODUCT_SUBCATEGORY': 'Quick-Add Product Subcategory',
+    'PRODUCT_BRAND': 'Quick-Add Brand / Origin',
+    'MATERIAL_GRADE': 'Quick-Add Material Grade / Spec',
+    'PACKAGING_TYPE': 'Quick-Add Packaging Type',
+    'TAX_SCHEDULE': 'Quick-Add VAT / Tax Schedule',
+    'STORAGE_BIN': 'Quick-Add Storage Bay / Bin',
+    'QC_POLICY': 'Quick-Add Quality Control Policy'
+  };
+
+  const titleEl = document.getElementById('qa-modal-title');
+  if (titleEl) titleEl.textContent = editingLookup ? `Edit ${resolvedType}` : (titleMap[resolvedType] || `Quick-Add ${resolvedType}`);
+
+  const codeEl = document.getElementById('qa-input-code');
+  const nameEl = document.getElementById('qa-input-name');
+  const catWrap = document.getElementById('qa-wrap-category');
+  const catEl = document.getElementById('qa-input-category');
+  const numWrap = document.getElementById('qa-wrap-numeric');
+  const numEl = document.getElementById('qa-input-numeric');
+  const descEl = document.getElementById('qa-input-desc');
+  const errEl = document.getElementById('qa-error-alert');
+
+  if (codeEl) codeEl.value = editingLookup?.lookupCode || '';
+  if (nameEl) nameEl.value = editingLookup?.lookupName || '';
+  if (catEl) catEl.value = '1';
+  if (numEl) numEl.value = editingLookup?.numericValue ?? '15';
+  if (descEl) descEl.value = editingLookup?.description || '';
+  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+
+  if (catWrap) {
+    if (resolvedType === 'PRODUCT_CLASS') catWrap.classList.remove('hidden');
+    else catWrap.classList.add('hidden');
+  }
+
+  if (numWrap) {
+    if (resolvedType === 'TAX_SCHEDULE') numWrap.classList.remove('hidden');
+    else numWrap.classList.add('hidden');
+  }
+
+  modal.classList.add('active');
+  setTimeout(() => { if (codeEl) codeEl.focus(); }, 60);
+  initLucide();
+}
+
+function closeMasterQuickAddModal() {
+  const modal = document.getElementById('erp-quick-add-master-modal');
+  if (!modal) return;
+  modal.classList.remove('active');
+}
+
+async function submitMasterQuickAddModal() {
+  const modal = document.getElementById('erp-quick-add-master-modal');
+  const editingId = parseInt(document.getElementById('qa-editing-id')?.value || modal?.getAttribute('data-editing-id')) || 0;
+  const lookupType = document.getElementById('qa-lookup-type')?.value || 'MATERIAL_GRADE';
+  const targetSelectId = document.getElementById('qa-target-select-id')?.value || '';
+  const code = document.getElementById('qa-input-code')?.value.trim().toUpperCase();
+  const name = document.getElementById('qa-input-name')?.value.trim();
+  const catType = parseInt(document.getElementById('qa-input-category')?.value) || 1;
+  const numVal = parseFloat(document.getElementById('qa-input-numeric')?.value);
+  const desc = document.getElementById('qa-input-desc')?.value.trim() || null;
+  const errEl = document.getElementById('qa-error-alert');
+
+  if (!code || !name) {
+    if (errEl) {
+      errEl.textContent = 'Both Code and Display Name are required.';
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const btn = document.getElementById('btn-qa-save');
+  const txt = document.getElementById('txt-qa-save');
+  if (btn) btn.disabled = true;
+  if (txt) txt.textContent = 'Saving';
+
+  try {
+    let url = '/api/inv/products/lookups';
+    let method = editingId > 0 ? 'PUT' : 'POST';
+    let payload = {};
+
+    if (lookupType === 'PRODUCT_CLASS') {
+      url = '/api/inv/products/classes';
+      payload = { classCode: code, className: name, categoryType: catType, valuationMethod: 1, glInventoryAccountId: 1, glCogsAccountId: 2, glRevenueAccountId: 3, isActive: true };
+    } else if (lookupType === 'UOM') {
+      url = '/api/inv/products/uoms';
+      payload = { uomCode: code, uomName: name, uomCategory: 'Quantity', decimalPlaces: 2, isBaseUnit: true, conversionFactor: 1.0, isActive: true };
+    } else if (lookupType === 'WAREHOUSE') {
+      url = '/api/inv/products/warehouses';
+      payload = { warehouseCode: code, warehouseName: name, location: desc || 'Central Industrial Zone' };
+    } else {
+      if (editingId > 0) url = `/api/inv/products/lookups/${editingId}`;
+      payload = {
+        lookupType: lookupType,
+        lookupCode: code,
+        lookupName: name,
+        description: desc,
+        numericValue: !isNaN(numVal) ? numVal : null,
+        sortOrder: 10,
+        isGlobal: true,
+        isActive: true
+      };
+    }
+
+    const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+    if (!res.ok) {
+      let msg = 'Failed to save master record.';
+      try { const j = await res.json(); if (j.message) msg = j.message; } catch (_) {}
+      if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+      return;
+    }
+
+    const resJson = await res.json();
+    const created = resJson?.data;
+
+    closeMasterQuickAddModal();
+    showToast(`${name} (${code}) saved and activated!`, 'success');
+
+    // Refresh form master dropdowns without losing current unsaved inputs
+    await loadProductFormMasterData();
+
+    if (targetSelectId) {
+      const sel = document.getElementById(targetSelectId);
+      if (sel && created) {
+        if (lookupType === 'PRODUCT_CLASS' || lookupType === 'UOM' || lookupType === 'WAREHOUSE' || lookupType === 'PRODUCT_SUBCATEGORY' || lookupType === 'PRODUCT_BRAND') {
+          sel.value = String(created.id);
+        } else if (lookupType === 'MATERIAL_GRADE' || lookupType === 'PACKAGING_TYPE') {
+          sel.value = created.lookupName || name;
+        } else if (lookupType === 'TAX_SCHEDULE') {
+          const pct = created.numericValue != null ? Number(created.numericValue) : 15;
+          const frac = pct / 100;
+          if (Array.from(sel.options).some(o => Number(o.value) === frac)) sel.value = String(frac);
+          else if (Array.from(sel.options).some(o => Number(o.value) === pct)) sel.value = String(pct);
+        } else {
+          sel.value = created.lookupCode || code;
+        }
+      }
+    }
+
+    if (ERP_STATE.activeStudio === 'list-lookups') {
+      await loadMasterLookupListData();
+    }
+  } catch (err) {
+    console.error('Quick-Add error:', err);
+    if (errEl) {
+      errEl.textContent = 'Network error while saving record.';
+      errEl.classList.remove('hidden');
+    }
   } finally {
     if (btn) btn.disabled = false;
     if (txt) txt.textContent = 'Save';
@@ -8703,12 +9974,15 @@ function renderViewRecord(entityType, item) {
       { label: 'Product Item Code', value: code, mono: true, highlight: true },
       { label: 'Product Item Name', value: item.productName || item.name || 'Structural Steel Beam HEB-300' },
       { label: 'Category / Class', value: item.className || item.category || item.categoryName || 'Heavy Structural Profiles' },
+      { label: 'Subcategory & Brand', value: [item.subcategoryName, item.brandName].filter(Boolean).join(' • ') || 'Standard Enterprise Line' },
       { label: 'HS / Tariff Code (Customs)', value: item.hsCode || '7214.20.00 (Standard)', mono: true },
-      
       { label: 'Primary Inventory UOM', value: uom, mono: true },
-      { label: 'Specification / Material Grade', value: item.packSize || 'Grade 50B / ASTM A36' },
+      { label: 'Material Grade / Spec', value: item.materialGrade || item.packSize || 'Grade 50B / ASTM A36' },
+      { label: 'Packaging / Form Factor', value: item.packSize || 'Loose / Standard' },
       { label: 'Net Weight', value: netWt, mono: true },
       { label: 'Gross Shipping Weight', value: grossWt, mono: true },
+      { label: 'Minimum Retail Price (MRP)', value: item.minimumRetailPrice != null ? `৳${Number(item.minimumRetailPrice).toLocaleString()}` : 'N/A', mono: true },
+      { label: 'Designated Storage Bin & QC', value: `${item.defaultStorageBin || 'BAY-A1-01'} (${item.qcPolicy || 'MANDATORY_QC'})`, mono: true },
 
       { label: 'Dimensions (L × W × H)', value: dimText, mono: true },
       { label: 'Logistics Volume (CBM)', value: cbmText, mono: true },
@@ -8910,7 +10184,7 @@ function editRecordFromView() {
   const t = rec.entityType;
 
   if (t === 'product') {
-    editProductRecord(item.productCode || item.code, escape(item.productName || item.name || ''), item.category || 'Finished Goods', item.primaryUomName || item.unitOfMeasure || 'MT', item.standardCost || item.cost || 0, item.sellingPrice || item.rate || 0, item.openingBalance || 0);
+    editProductRecord(item.productCode || item.code, escape(item.productName || item.name || ''), item.standardCost || item.cost || 0, item.sellingPrice || item.rate || 0, item.uomCode || item.primaryUomName || 'MT');
   } else if (t === 'customer') {
     editCustomerRecord(item.customerCode || item.code, escape(item.customerName || item.name || ''), escape(item.address || item.city || ''), item.phone || '', item.creditLimit || 0);
   } else if (t === 'vendor') {
@@ -9039,6 +10313,12 @@ async function executePendingDelete() {
         }
       }
       url = `/api/ar/customers/${id || 0}`;
+    } else if (del.entityType === 'product-class' && del.id) {
+      url = `/api/inv/products/classes/${del.id}`;
+    } else if (del.entityType === 'uom' && del.id) {
+      url = `/api/inv/products/uoms/${del.id}`;
+    } else if (del.entityType === 'lookup' && del.id) {
+      url = `/api/inv/products/lookups/${del.id}`;
     }
 
     if (url) {
@@ -9096,6 +10376,12 @@ async function executePendingDelete() {
     } else if (del.entityType === 'bom' && ERP_STATE.boms) {
       ERP_STATE.boms = ERP_STATE.boms.filter(b => b.bomCode !== del.code);
       renderBomListTable(ERP_STATE.boms);
+    } else if (del.entityType === 'product-class' && ERP_STATE.productClasses) {
+      ERP_STATE.productClasses = ERP_STATE.productClasses.filter(c => c.classCode !== del.code && c.id !== del.id);
+      renderProductClassListTable(ERP_STATE.productClasses);
+    } else if (del.entityType === 'lookup' && ERP_STATE.masterLookups) {
+      ERP_STATE.masterLookups = ERP_STATE.masterLookups.filter(l => l.id !== del.id);
+      filterMasterLookupListTable();
     }
 
     closeDeleteModal();
@@ -9455,6 +10741,22 @@ window.openNewWarehouseForm = openNewWarehouseForm;
 window.editWarehouseRecord = editWarehouseRecord;
 window.saveWarehouseEntry = saveWarehouseEntry;
 window.saveUomEntry = saveUomEntry;
+window.loadProductFormMasterData = loadProductFormMasterData;
+window.onProductClassChange = onProductClassChange;
+window.recalcProductVolumeCbm = recalcProductVolumeCbm;
+window.loadProductClassListData = loadProductClassListData;
+window.renderProductClassListTable = renderProductClassListTable;
+window.filterProductClassListTable = filterProductClassListTable;
+window.openNewProductClassForm = openNewProductClassForm;
+window.editProductClassRecord = editProductClassRecord;
+window.saveProductClassEntry = saveProductClassEntry;
+window.loadMasterLookupListData = loadMasterLookupListData;
+window.renderMasterLookupListTable = renderMasterLookupListTable;
+window.filterMasterLookupListTable = filterMasterLookupListTable;
+window.editMasterLookupRecord = editMasterLookupRecord;
+window.openMasterQuickAddModal = openMasterQuickAddModal;
+window.closeMasterQuickAddModal = closeMasterQuickAddModal;
+window.submitMasterQuickAddModal = submitMasterQuickAddModal;
 
 
 
