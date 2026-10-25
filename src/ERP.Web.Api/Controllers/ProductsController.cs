@@ -139,9 +139,9 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet("depots")]
-    public async Task<IActionResult> GetDepots(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDepots([FromQuery] int? type, CancellationToken cancellationToken)
     {
-        var depots = await _inventoryService.GetDepotsAsync(cancellationToken);
+        var depots = await _inventoryService.GetDepotsAsync(type, cancellationToken);
         return Ok(new { success = true, data = depots });
     }
 

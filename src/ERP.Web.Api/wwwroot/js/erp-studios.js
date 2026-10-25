@@ -659,7 +659,7 @@ const ALL_ERP_VIEWS = [
   'entry-employee', 'entry-contra',
   'entry-challan', 'entry-invoice', 'entry-pr', 'entry-stock-transfer', 'entry-bank',
   'entry-asset', 'entry-bom', 'payroll-batch', 'audit-trail',
-  'list-accounts', 'list-customers', 'list-vendors', 'list-products', 'list-depots', 'entry-depot', 'list-warehouses', 'list-uoms', 'entry-uom',
+  'list-accounts', 'list-customers', 'list-vendors', 'list-products', 'list-plants', 'list-depots', 'entry-depot', 'list-warehouses', 'list-uoms', 'entry-uom',
   'list-transfers', 'list-adjustments', 'entry-adjustment', 'list-grn',
   'list-employees', 'list-banks', 'list-assets', 'list-boms', 'list-sales-orders', 'view-record', 'user-profile'
 ];
@@ -689,6 +689,7 @@ const PARENT_VIEW_MAP = {
   'list-customers': 'module-accounts-receivable',
   'list-vendors': 'module-accounts-payable',
   'list-products': 'module-inventory',
+  'list-plants': 'module-inventory',
   'list-depots': 'module-inventory',
   'list-warehouses': 'module-inventory',
   'list-uoms': 'module-inventory',
@@ -788,6 +789,8 @@ function getParentModuleForStudio(viewOrStudioId) {
     'products': 'inventory',
     'entry-product': 'inventory',
     'stock': 'inventory',
+    'plants': 'inventory',
+    'depots': 'inventory',
     'warehouses': 'inventory',
     'entry-warehouse': 'inventory',
     'entry-stock-transfer': 'inventory',
@@ -1343,7 +1346,8 @@ function updateBreadcrumbs(studioId) {
     'list-customers': { group: 'Accounts Receivable', page: 'Customer Master Directory' },
     'list-vendors': { group: 'Accounts Payable', page: 'Vendor & Supplier Directory' },
     'list-products': { group: 'Inventory Control', page: 'Product' },
-    'list-depots': { group: 'Inventory Control', page: 'Depots & Plants Registry' },
+    'list-plants': { group: 'Inventory Control', page: 'Manufacturing Plants Registry' },
+    'list-depots': { group: 'Inventory Control', page: 'Regional Depots Registry' },
     'list-warehouses': { group: 'Inventory Control', page: 'Warehouses' },
     'list-uoms': { group: 'Inventory Control', page: 'Units of Measure (UOM) Registry' },
     'list-employees': { group: 'HRIS & Payroll', page: 'Employee Master Directory' },
@@ -5804,6 +5808,8 @@ function loadListData(entity) {
     case 'customers': loadCustomerListData(); break;
     case 'vendors': loadVendorListData(); break;
     case 'products': loadProductListData(); break;
+    case 'plants': loadPlantListData(); break;
+    case 'depots': loadDepotListData(); break;
     case 'warehouses': loadWarehouseListData(); break;
     case 'transfers': loadTransfersListData(); break;
     case 'adjustments': loadAdjustmentsListData(); break;
@@ -6446,8 +6452,150 @@ function editProductRecord(code, name, cost, price, uom) {
   markFormDirty('product');
 }
 
+
 // --------------------------------------------------------------------------
-// 17.5A DEPOTS & PLANTS REGISTRY
+// 17.5A MANUFACTURING PLANTS REGISTRY (Type 1: ManufacturingPlant)
+// --------------------------------------------------------------------------
+async function loadPlantListData() {
+  const tbody = document.getElementById('tbody-list-plants');
+  const countBadge = document.getElementById('badge-count-plants');
+  const emptyState = document.getElementById('empty-list-plants');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-amber-400"></i><span>Loading manufacturing plants...</span></td></tr>';
+  initLucide();
+
+  try {
+    const res = await apiFetch('/api/inv/products/depots?type=1');
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.data) {
+        ERP_STATE.plants = json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('Plants API fetch notice:', err);
+  }
+
+  if (!ERP_STATE.plants || ERP_STATE.plants.length === 0) {
+    ERP_STATE.plants = [
+      { id: 1, depotCode: 'PLANT-TG-01', depotName: 'Tongi PEB Heavy Structural Fabrication Plant', depotTypeName: 'Manufacturing Plant', city: 'Gazipur', warehouseCount: 3, isActive: true },
+      { id: 4, depotCode: 'PLANT-GZP-02', depotName: 'Gazipur Polymer & Cold Roll Forming Mill', depotTypeName: 'Manufacturing Plant', city: 'Gazipur', warehouseCount: 2, isActive: true }
+    ];
+  }
+
+  if (countBadge) countBadge.textContent = `${ERP_STATE.plants.length} Plants`;
+  renderPlantListTable(ERP_STATE.plants);
+}
+
+function renderPlantListTable(list) {
+  const tbody = document.getElementById('tbody-list-plants');
+  const countBadge = document.getElementById('badge-count-plants');
+  const emptyState = document.getElementById('empty-list-plants');
+  if (!tbody) return;
+
+  if (countBadge) countBadge.textContent = `${list.length} Plants`;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    const pag = document.getElementById('pagination-list-plants');
+    if (pag) pag.innerHTML = '';
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+  if (emptyState) emptyState.classList.add('hidden');
+
+  const rowRenderer = (item) => {
+    const code = item.depotCode || item.code || '';
+    const name = item.depotName || item.name || '';
+    const type = item.depotTypeName || 'Manufacturing Plant';
+    const city = item.city || item.address || 'Gazipur Industrial Zone';
+    const whCount = item.warehouseCount ?? 0;
+    const statusBadge = item.isActive !== false
+      ? '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Operational</span>'
+      : '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-500/15 text-slate-400 border border-slate-500/20">Inactive</span>';
+
+    return `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-mono font-bold text-amber-400">
+          <a href="javascript:void(0)" onclick="viewRecord('depot', '${code}')" class="clickable-code hover:underline" title="View details for ${code}" aria-label="View ${code}">${code}</a>
+        </td>
+        <td class="py-3 px-4 font-medium text-slate-100 flex items-center gap-2">
+          <i data-lucide="factory" class="w-3.5 h-3.5 text-amber-400/80 shrink-0"></i>
+          <span>${name}</span>
+        </td>
+        <td class="py-3 px-4 text-xs font-semibold text-slate-300">
+          <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px]">${type}</span>
+        </td>
+        <td class="py-3 px-4 text-slate-300 font-medium">${city}</td>
+        <td class="py-3 px-4 text-center font-mono font-bold text-slate-200">${whCount} Stores</td>
+        <td class="py-3 px-4">${statusBadge}</td>
+        <td class="py-3 px-4 text-right">
+          <div class="inline-flex items-center gap-1.5 justify-end">
+            <button 
+              type="button" 
+              onclick="viewRecord('depot', '${code}')" 
+              class="erp-row-action-btn btn-view"
+              title="View Plant"
+              aria-label="View"
+            >
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            </button>
+            <button 
+              type="button" 
+              onclick="editDepotRecord('${code}', '${escape(name)}', '${escape(city)}')" 
+              class="erp-row-action-btn btn-edit"
+              title="Edit Plant"
+              aria-label="Edit"
+            >
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button 
+              type="button" 
+              onclick="confirmSoftDelete('depot', '${code}', '${escape(name)}', ${item.id || 0})" 
+              class="erp-row-action-btn btn-delete"
+              title="Delete Plant"
+              aria-label="Delete"
+            >
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  };
+
+  if (!window.ERP_PAGINATION['tbody-list-plants']) {
+    new ErpAdaptiveTablePagination({
+      tableId: 'table-list-plants',
+      tbodyId: 'tbody-list-plants',
+      paginationId: 'pagination-list-plants',
+      renderRow: rowRenderer,
+      data: list
+    });
+  } else {
+    window.ERP_PAGINATION['tbody-list-plants'].renderRow = rowRenderer;
+    window.ERP_PAGINATION['tbody-list-plants'].setData(list);
+  }
+}
+
+function filterPlantListTable() {
+  const query = (document.getElementById('search-list-plants')?.value || '').toLowerCase();
+  const filtered = (ERP_STATE.plants || []).filter(item => {
+    const code = (item.depotCode || '').toLowerCase();
+    const name = (item.depotName || '').toLowerCase();
+    const city = (item.city || '').toLowerCase();
+    return !query || code.includes(query) || name.includes(query) || city.includes(query);
+  });
+  renderPlantListTable(filtered);
+}
+
+function openNewPlantForm() {
+  openNewDepotForm(1);
+}
+
+// --------------------------------------------------------------------------
+// 17.5B REGIONAL DEPOTS REGISTRY (Types 2 & 3: Logistics & Distribution)
 // --------------------------------------------------------------------------
 async function loadDepotListData() {
   const tbody = document.getElementById('tbody-list-depots');
@@ -6462,7 +6610,7 @@ async function loadDepotListData() {
     if (res.ok) {
       const json = await res.json();
       if (json && json.data && json.data.length > 0) {
-        ERP_STATE.depots = json.data;
+        ERP_STATE.depots = json.data.filter(d => d.depotType !== 1);
       }
     }
   } catch (err) {
@@ -9252,6 +9400,10 @@ window.openNewUomForm = openNewUomForm;
 window.editUomRecord = editUomRecord;
 
 // Depot & Plant Registry functions
+window.loadPlantListData = loadPlantListData;
+window.renderPlantListTable = renderPlantListTable;
+window.filterPlantListTable = filterPlantListTable;
+window.openNewPlantForm = openNewPlantForm;
 window.loadDepotListData = loadDepotListData;
 window.renderDepotListTable = renderDepotListTable;
 window.filterDepotListTable = filterDepotListTable;

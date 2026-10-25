@@ -482,8 +482,11 @@
                   <a href="#list-products" onclick="navigateToList('products')" data-list="products" class="tree-sub-item" title="Products">
                     <span class="truncate">Products</span>
                   </a>
-                  <a href="#list-depots" onclick="navigateToList('depots')" data-list="depots" class="tree-sub-item" title="Depots &amp; Plants">
-                    <span class="truncate">Depots &amp; Plants</span>
+                  <a href="#list-plants" onclick="navigateToList('plants')" data-list="plants" class="tree-sub-item" title="Manufacturing Plants">
+                    <span class="truncate">Plants</span>
+                  </a>
+                  <a href="#list-depots" onclick="navigateToList('depots')" data-list="depots" class="tree-sub-item" title="Regional Depots &amp; Distribution Hubs">
+                    <span class="truncate">Depots</span>
                   </a>
                   <a href="#list-warehouses" onclick="navigateToList('warehouses')" data-list="warehouses" class="tree-sub-item" title="Warehouses">
                     <span class="truncate">Warehouses</span>
@@ -3670,6 +3673,173 @@
       </section>
 
       <!-- LIST PAGE 5: WAREHOUSES & DEPOTS REGISTRY -->
+
+      <!-- LIST PAGE: MANUFACTURING PLANTS REGISTRY -->
+      <section id="studio-list-plants" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="navigateBackFrom('list-plants')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Return to Inventory Control"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <i data-lucide="factory" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Manufacturing Plants Registry</h2>
+                
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="search-list-plants" 
+                oninput="filterPlantListTable()" 
+                placeholder="Search plant code, name, city..." 
+                class="h-9 pl-9 pr-3 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-400 focus:outline-none focus:border-amber-500/50 w-48 sm:w-60"
+              />
+            </div>
+            <button 
+              type="button" 
+              onclick="loadPlantListData()" 
+              class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Refresh Plants List"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openNewPlantForm()" 
+              class="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Add New Manufacturing Plant"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table id="table-list-plants" class="w-full text-xs text-left border-collapse erp-table-compact">
+              <thead class="bg-white/[0.04] text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-white/10">
+                <tr>
+                  <th class="py-3 px-4">Plant Code</th>
+                  <th class="py-3 px-4">Factory / Plant Legal Name</th>
+                  <th class="py-3 px-4">Operational Type</th>
+                  <th class="py-3 px-4">Industrial Zone / City</th>
+                  <th class="py-3 px-4 text-center">Associated Stores</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-list-plants" class="divide-y divide-white/5 text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-list-plants" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="factory" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+            <p class="text-xs">No manufacturing plants recorded for this subsidiary.</p>
+          </div>
+          <div id="pagination-list-plants" class="erp-pagination-bar"></div>
+        </div>
+      </section>
+
+      <!-- LIST PAGE: REGIONAL DEPOTS REGISTRY -->
+      <section id="studio-list-depots" class="space-y-4 hidden">
+        <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="navigateBackFrom('list-depots')" 
+              class="btn-action-back h-9 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Return to Inventory Control"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Back</span>
+            </button>
+            <div class="h-6 w-px bg-white/10 shrink-0"></div>
+            <div class="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/20">
+              <i data-lucide="building" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Regional Depots Registry</h2>
+                
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="search-list-depots" 
+                oninput="filterDepotListTable()" 
+                placeholder="Search depot code, name, city..." 
+                class="h-9 pl-9 pr-3 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-400 focus:outline-none focus:border-sky-500/50 w-48 sm:w-60"
+              />
+            </div>
+            <button 
+              type="button" 
+              onclick="loadDepotListData()" 
+              class="h-9 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold" 
+              title="Refresh Depots List"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openNewDepotForm()" 
+              class="h-9 px-3.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
+              title="Add New Regional Depot"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table id="table-list-depots" class="w-full text-xs text-left border-collapse erp-table-compact">
+              <thead class="bg-white/[0.04] text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-white/10">
+                <tr>
+                  <th class="py-3 px-4">Depot Code</th>
+                  <th class="py-3 px-4">Regional Depot Legal Name</th>
+                  <th class="py-3 px-4">Facility Type</th>
+                  <th class="py-3 px-4">Distribution City / Region</th>
+                  <th class="py-3 px-4 text-center">Associated Stores</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-list-depots" class="divide-y divide-white/5 text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-list-depots" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="building" class="w-8 h-8 mx-auto mb-2 text-slate-500"></i>
+            <p class="text-xs">No regional depots recorded for this subsidiary.</p>
+          </div>
+          <div id="pagination-list-depots" class="erp-pagination-bar"></div>
+        </div>
+      </section>
+
       <section id="studio-list-warehouses" class="space-y-4 hidden">
         <div class="glass-card rounded-2xl px-5 py-3 border border-white/10 flex items-center justify-between gap-4 flex-wrap shadow-sm">
           <div class="flex items-center gap-3.5 min-w-0">

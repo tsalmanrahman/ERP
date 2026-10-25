@@ -21,7 +21,7 @@ public interface IInventoryService
     Task<UnitOfMeasureDto> CreateUnitOfMeasureAsync(CreateUnitOfMeasureRequest request, CancellationToken cancellationToken = default);
 
     // Depots & Facilities
-    Task<List<DepotDto>> GetDepotsAsync(CancellationToken cancellationToken = default);
+    Task<List<DepotDto>> GetDepotsAsync(int? depotType = null, CancellationToken cancellationToken = default);
     Task<DepotDto> CreateDepotAsync(CreateDepotRequest request, CancellationToken cancellationToken = default);
 
     // Warehouses

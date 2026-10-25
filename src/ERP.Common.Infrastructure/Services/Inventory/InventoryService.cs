@@ -412,11 +412,15 @@ public class InventoryService : IInventoryService
 
     // --- Depots & Facilities ---
 
-    public async Task<List<DepotDto>> GetDepotsAsync(CancellationToken cancellationToken = default)
+    public async Task<List<DepotDto>> GetDepotsAsync(int? depotType = null, CancellationToken cancellationToken = default)
     {
         var companyId = GetCompanyId();
-        return await _dbContext.Depots.AsNoTracking()
-            .Where(d => d.CompanyId == companyId)
+        var query = _dbContext.Depots.AsNoTracking().Where(d => d.CompanyId == companyId);
+        if (depotType.HasValue)
+        {
+            query = query.Where(d => (int)d.DepotType == depotType.Value);
+        }
+        return await query
             .OrderBy(d => d.DepotCode)
             .Select(d => new DepotDto
             {

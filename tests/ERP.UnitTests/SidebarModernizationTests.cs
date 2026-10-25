@@ -121,6 +121,7 @@ public class SidebarModernizationTests
         Assert.Contains("data-studio=\"grn\"", indexHtml);
 
         Assert.Contains("data-list=\"products\"", indexHtml);
+        Assert.Contains("data-list=\"plants\"", indexHtml);
         Assert.Contains("data-list=\"depots\"", indexHtml);
         Assert.Contains("data-list=\"warehouses\"", indexHtml);
         Assert.Contains("data-list=\"transfers\"", indexHtml);
