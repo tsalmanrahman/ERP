@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -127,8 +127,9 @@ public class SecurityAndTenancyTests
         var contextAccessor = new Microsoft.AspNetCore.Http.HttpContextAccessor { HttpContext = httpContext };
         var userContext = new CurrentUserContext(contextAccessor);
 
-        // Security assertion: spoofed tenant must be rejected and fallback to token's company 1
-        Assert.Equal(1, userContext.CompanyId);
+        // Security assertion: spoofed tenant header must be rejected (fail-closed null, not silently executing against another tenant)
+        Assert.Null(userContext.CompanyId);
+        Assert.Throws<InvalidOperationException>(() => userContext.GetRequiredCompanyId());
         Assert.False(userContext.HasAccessToCompany(99));
         Assert.True(userContext.HasAccessToCompany(1));
     }

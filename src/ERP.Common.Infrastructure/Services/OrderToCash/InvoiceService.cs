@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.OrderToCash;
@@ -29,7 +29,7 @@ public class InvoiceService : IInvoiceService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<InvoiceDto>> GetInvoicesAsync(int? customerId = null, CancellationToken cancellationToken = default)
     {
@@ -189,10 +189,30 @@ public class InvoiceService : IInvoiceService
             throw new InvalidOperationException("At least one line item is required for a Sales Invoice.");
         }
 
+        if (request.SalesOrderId.HasValue && request.SalesOrderId.Value > 0)
+        {
+            var soExists = await _dbContext.SalesOrders.AnyAsync(o => o.CompanyId == companyId && o.Id == request.SalesOrderId.Value, cancellationToken);
+            if (!soExists)
+            {
+                throw new InvalidOperationException($"Sales Order with ID {request.SalesOrderId.Value} was not found in the active company.");
+            }
+        }
+
+        if (request.DeliveryChallanId.HasValue && request.DeliveryChallanId.Value > 0)
+        {
+            var dcExists = await _dbContext.DeliveryChallans.AnyAsync(d => d.CompanyId == companyId && d.Id == request.DeliveryChallanId.Value, cancellationToken);
+            if (!dcExists)
+            {
+                throw new InvalidOperationException($"Delivery Challan with ID {request.DeliveryChallanId.Value} was not found in the active company.");
+            }
+        }
+
         // Default Revenue account: 4100 General Sales Revenue
         var defaultRevenueAccount = await _dbContext.Accounts
-            .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "4100", cancellationToken);
-        int defaultRevenueAccountId = defaultRevenueAccount?.Id ?? 16;
+            .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "4100", cancellationToken)
+            ?? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId, cancellationToken)
+            ?? throw new InvalidOperationException("Sales Revenue Account (4100) was not found for the active company.");
+        int defaultRevenueAccountId = defaultRevenueAccount.Id;
 
         var prefix = $"INV-{_dateTimeProvider.UtcNow:yyyyMM}-";
         var countThisMonth = await _dbContext.Invoices
@@ -275,23 +295,22 @@ public class InvoiceService : IInvoiceService
 
         // 1. Determine Accounts
         // Debit: Customer Control Account (e.g. 1130 Trade AR)
-        var arAccountId = customer.GlControlAccountId;
-        if (arAccountId == 0)
-        {
-            var defaultAr = await _dbContext.Accounts
-                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1130", cancellationToken);
-            arAccountId = defaultAr?.Id ?? 5;
-        }
+        var arAccount = await _dbContext.Accounts
+            .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Id == customer.GlControlAccountId, cancellationToken)
+            ?? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1130", cancellationToken)
+            ?? throw new InvalidOperationException("Trade Accounts Receivable Control account (1130) was not found for the active company.");
+        var arAccountId = arAccount.Id;
 
         // Credit: Revenue Account(s)
         var defaultRevenue = await _dbContext.Accounts
-            .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "4100", cancellationToken);
-        int defaultRevenueAccountId = defaultRevenue?.Id ?? 16;
+            .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "4100", cancellationToken)
+            ?? throw new InvalidOperationException("Sales Revenue account (4100) was not found for the active company.");
+        int defaultRevenueAccountId = defaultRevenue.Id;
 
         // Credit: Tax Account (2130 VAT & Tax Withholding Payable)
         var taxAccount = await _dbContext.Accounts
             .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "2130", cancellationToken);
-        int taxAccountId = taxAccount?.Id ?? 13;
+        int taxAccountId = taxAccount?.Id ?? defaultRevenueAccountId;
 
         // Group revenue credits by RevenueAccountId
         var revenueCredits = invoice.Lines

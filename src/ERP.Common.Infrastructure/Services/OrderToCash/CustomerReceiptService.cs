@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.OrderToCash;
@@ -28,7 +28,7 @@ public class CustomerReceiptService : ICustomerReceiptService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<CustomerReceiptDto>> GetCustomerReceiptsAsync(int? customerId = null, CancellationToken cancellationToken = default)
     {
@@ -161,13 +161,11 @@ public class CustomerReceiptService : ICustomerReceiptService
 
         // 1. Determine GL Accounts
         // Credit: Customer Control Account (1130 Trade AR)
-        int arAccountId = customer.GlControlAccountId;
-        if (arAccountId == 0)
-        {
-            var defaultAr = await _dbContext.Accounts
-                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1130", cancellationToken);
-            arAccountId = defaultAr?.Id ?? 5;
-        }
+        var arAccount = await _dbContext.Accounts
+            .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Id == customer.GlControlAccountId, cancellationToken)
+            ?? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1130", cancellationToken)
+            ?? throw new InvalidOperationException("Trade Accounts Receivable Control account (1130) was not found for the active company.");
+        int arAccountId = arAccount.Id;
 
         // Debit: Bank or Cash Account
         int receivingGlAccountId;
@@ -176,16 +174,19 @@ public class CustomerReceiptService : ICustomerReceiptService
         if (request.PaymentMethod == ReceiptPaymentMethod.Cash)
         {
             var defaultCash = await _dbContext.Accounts
-                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1111", cancellationToken);
-            receivingGlAccountId = defaultCash?.Id ?? 1;
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1111", cancellationToken)
+                ?? throw new InvalidOperationException("Cash in Hand account (1111) was not found for the active company.");
+            receivingGlAccountId = defaultCash.Id;
             paymentSourceDesc = "Cash in Hand (1111)";
         }
         else // BankTransfer or Cheque
         {
             var defaultBank = await _dbContext.Accounts
-                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1120", cancellationToken);
-            receivingGlAccountId = defaultBank?.Id ?? 3;
-            paymentSourceDesc = "Prime Bank Current Account (1120)";
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1120", cancellationToken)
+                ?? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1121", cancellationToken)
+                ?? throw new InvalidOperationException("Bank GL Account (1120/1121) was not found for the active company.");
+            receivingGlAccountId = defaultBank.Id;
+            paymentSourceDesc = defaultBank.AccountName;
         }
 
         // 2. Generate Receipt Number

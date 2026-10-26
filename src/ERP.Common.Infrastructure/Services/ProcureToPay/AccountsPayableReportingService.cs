@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Data;
 using ERP.Common.Application.Abstractions.ProcureToPay;
@@ -22,7 +22,7 @@ public class AccountsPayableReportingService : IAccountsPayableReportingService
         _dateTimeProvider = dateTimeProvider;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<VendorAgingReport> GetVendorAgingReportAsync(
         DateOnly? asOfDate = null,

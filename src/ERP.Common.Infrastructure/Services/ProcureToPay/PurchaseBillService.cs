@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.ProcureToPay;
@@ -27,7 +27,7 @@ public class PurchaseBillService : IPurchaseBillService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<List<PurchaseBillDto>> GetPurchaseBillsAsync(int? vendorId = null, CancellationToken cancellationToken = default)
     {
@@ -146,8 +146,28 @@ public class PurchaseBillService : IPurchaseBillService
             throw new InvalidOperationException($"Vendor with ID {request.VendorId} was not found.");
         }
 
-        var defaultExpAcct = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "5110", cancellationToken);
-        int fallbackExpId = defaultExpAcct?.Id ?? 18;
+        if (request.PoId.HasValue && request.PoId.Value > 0)
+        {
+            var poExists = await _dbContext.PurchaseOrders.AnyAsync(p => p.CompanyId == companyId && p.Id == request.PoId.Value, cancellationToken);
+            if (!poExists)
+            {
+                throw new InvalidOperationException($"Purchase Order with ID {request.PoId.Value} was not found in the active company.");
+            }
+        }
+
+        if (request.GrnId.HasValue && request.GrnId.Value > 0)
+        {
+            var grnExists = await _dbContext.GoodsReceiptNotes.AnyAsync(g => g.CompanyId == companyId && g.Id == request.GrnId.Value, cancellationToken);
+            if (!grnExists)
+            {
+                throw new InvalidOperationException($"GRN with ID {request.GrnId.Value} was not found in the active company.");
+            }
+        }
+
+        var defaultExpAcct = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "5110", cancellationToken)
+            ?? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId, cancellationToken)
+            ?? throw new InvalidOperationException("No Expense Account (5110) found for the active company.");
+        int fallbackExpId = defaultExpAcct.Id;
 
         var billNumber = await GenerateNextBillNumberAsync(companyId, request.BillDate, cancellationToken);
         decimal subTotal = 0m;

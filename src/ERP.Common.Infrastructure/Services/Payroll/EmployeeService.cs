@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Payroll;
 using ERP.Common.Application.Models.Payroll;
@@ -18,7 +18,7 @@ public class EmployeeService : IEmployeeService
         _currentUserContext = currentUserContext;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<DepartmentDto>> GetDepartmentsAsync(CancellationToken cancellationToken = default)
     {
@@ -176,6 +176,24 @@ public class EmployeeService : IEmployeeService
             throw new InvalidOperationException($"Employee with code '{code}' already exists.");
         }
 
+        if (request.DepartmentId > 0)
+        {
+            var deptExists = await _dbContext.Departments.AnyAsync(d => d.CompanyId == companyId && d.Id == request.DepartmentId, cancellationToken);
+            if (!deptExists)
+            {
+                throw new InvalidOperationException($"Department with ID {request.DepartmentId} was not found in the active company.");
+            }
+        }
+
+        if (request.DesignationId > 0)
+        {
+            var desigExists = await _dbContext.Designations.AnyAsync(d => d.CompanyId == companyId && d.Id == request.DesignationId, cancellationToken);
+            if (!desigExists)
+            {
+                throw new InvalidOperationException($"Designation with ID {request.DesignationId} was not found in the active company.");
+            }
+        }
+
         var gross = request.BasicSalary + request.HouseRent + request.MedicalAllowance + request.ConveyanceAllowance + request.OtherAllowance;
 
         var employee = new Employee
@@ -216,6 +234,24 @@ public class EmployeeService : IEmployeeService
         if (employee == null)
         {
             throw new InvalidOperationException($"Employee with ID {id} was not found.");
+        }
+
+        if (request.DepartmentId > 0)
+        {
+            var deptExists = await _dbContext.Departments.AnyAsync(d => d.CompanyId == companyId && d.Id == request.DepartmentId, cancellationToken);
+            if (!deptExists)
+            {
+                throw new InvalidOperationException($"Department with ID {request.DepartmentId} was not found in the active company.");
+            }
+        }
+
+        if (request.DesignationId > 0)
+        {
+            var desigExists = await _dbContext.Designations.AnyAsync(d => d.CompanyId == companyId && d.Id == request.DesignationId, cancellationToken);
+            if (!desigExists)
+            {
+                throw new InvalidOperationException($"Designation with ID {request.DesignationId} was not found in the active company.");
+            }
         }
 
         var gross = request.BasicSalary + request.HouseRent + request.MedicalAllowance + request.ConveyanceAllowance + request.OtherAllowance;

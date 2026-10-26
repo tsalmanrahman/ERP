@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.Specialized;
@@ -25,7 +25,7 @@ public class RealEstateService : IRealEstateService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<ProjectDto>> GetProjectsAsync(CancellationToken cancellationToken = default)
     {
@@ -215,6 +215,12 @@ public class RealEstateService : IRealEstateService
         if (unit == null)
         {
             throw new InvalidOperationException($"Property Unit with ID {request.PropertyUnitId} was not found.");
+        }
+
+        var project = await _dbContext.Projects.FirstOrDefaultAsync(p => p.CompanyId == companyId && p.Id == request.ProjectId, cancellationToken);
+        if (project == null || unit.ProjectId != project.Id)
+        {
+            throw new InvalidOperationException($"Project with ID {request.ProjectId} was not found or does not match the property unit.");
         }
 
         if (unit.Status != "Available")

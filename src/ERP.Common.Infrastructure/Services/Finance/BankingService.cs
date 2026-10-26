@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Data;
 using ERP.Common.Application.Abstractions.Finance;
@@ -25,7 +25,7 @@ public class BankingService : IBankingService
 
     public async Task<Result<List<BankAccountDto>>> GetBankAccountsAsync(CancellationToken cancellationToken = default)
     {
-        var companyId = _currentUserContext.CompanyId ?? 1;
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         using var connection = _sqlConnectionFactory.CreateConnection();
 
         const string sql = @"
@@ -56,7 +56,7 @@ public class BankingService : IBankingService
 
     public async Task<Result<List<CashBookDto>>> GetCashBooksAsync(CancellationToken cancellationToken = default)
     {
-        var companyId = _currentUserContext.CompanyId ?? 1;
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         using var connection = _sqlConnectionFactory.CreateConnection();
 
         const string sql = @"
@@ -81,7 +81,7 @@ public class BankingService : IBankingService
 
     public async Task<Result<JournalVoucherDto>> ProcessContraTransferAsync(ContraTransferRequest request, CancellationToken cancellationToken = default)
     {
-        var companyId = _currentUserContext.CompanyId ?? 1;
+        var companyId = _currentUserContext.GetRequiredCompanyId();
 
         if (request.Amount <= 0)
         {

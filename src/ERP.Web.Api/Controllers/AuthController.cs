@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Identity;
 using ERP.Common.Application.Models.Auth;
 
@@ -12,11 +13,16 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ITokenRevocationService _tokenRevocationService;
+    private readonly ICurrentUserContext _currentUserContext;
 
-    public AuthController(IAuthService _authService, ITokenRevocationService _tokenRevocationService)
+    public AuthController(
+        IAuthService authService,
+        ITokenRevocationService tokenRevocationService,
+        ICurrentUserContext currentUserContext)
     {
-        this._authService = _authService;
-        this._tokenRevocationService = _tokenRevocationService;
+        _authService = authService;
+        _tokenRevocationService = tokenRevocationService;
+        _currentUserContext = currentUserContext;
     }
 
     [HttpPost("login")]
@@ -61,8 +67,8 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
 
-        int? activeCompanyId = null;
-        if (int.TryParse(User.FindFirst("company_id")?.Value, out var compId))
+        int? activeCompanyId = _currentUserContext.CompanyId;
+        if (!activeCompanyId.HasValue && int.TryParse(User.FindFirst("company_id")?.Value, out var compId))
         {
             activeCompanyId = compId;
         }

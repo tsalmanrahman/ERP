@@ -20,7 +20,7 @@ public class VendorService : IVendorService
         _sequenceService = sequenceService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<List<VendorDto>> GetVendorsAsync(CancellationToken cancellationToken = default)
     {
@@ -172,11 +172,31 @@ public class VendorService : IVendorService
             throw new InvalidOperationException($"Vendor with code '{vendorCode}' already exists.");
         }
 
-        int glAccountId = request.GlControlAccountId ?? 0;
-        if (glAccountId == 0)
+        if (request.VendorGroupId > 0)
         {
-            var defaultAp = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "2110", cancellationToken);
-            glAccountId = defaultAp?.Id ?? 11;
+            var vgExists = await _dbContext.Set<VendorGroup>()
+                .AnyAsync(vg => vg.CompanyId == companyId && vg.Id == request.VendorGroupId, cancellationToken);
+            if (!vgExists)
+            {
+                throw new InvalidOperationException("The selected Vendor Group does not belong to the active company.");
+            }
+        }
+
+        int glAccountId;
+        if (request.GlControlAccountId.HasValue && request.GlControlAccountId.Value > 0)
+        {
+            var ctrlAcct = await _dbContext.Accounts
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Id == request.GlControlAccountId.Value, cancellationToken)
+                ?? throw new InvalidOperationException("The selected GL Control Account does not belong to the active company.");
+            glAccountId = ctrlAcct.Id;
+        }
+        else
+        {
+            var defaultAp = await _dbContext.Accounts
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "2110", cancellationToken)
+                ?? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId, cancellationToken)
+                ?? throw new InvalidOperationException("No AP Control Account (2110) found for the active company.");
+            glAccountId = defaultAp.Id;
         }
 
         var vendor = new Vendor

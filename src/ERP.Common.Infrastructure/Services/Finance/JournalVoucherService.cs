@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Models.Finance;
@@ -29,7 +29,7 @@ public class JournalVoucherService : IJournalVoucherService
 
     public async Task<Result<JournalVoucherDto>> CreateVoucherAsync(CreateJournalVoucherRequest request, CancellationToken cancellationToken = default)
     {
-        var companyId = _currentUserContext.CompanyId ?? 1;
+        var companyId = _currentUserContext.GetRequiredCompanyId();
 
         if (request.Lines == null || request.Lines.Count < 2)
         {
@@ -163,9 +163,10 @@ public class JournalVoucherService : IJournalVoucherService
 
     public async Task<Result<JournalVoucherDto>> PostVoucherAsync(int voucherId, CancellationToken cancellationToken = default)
     {
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         var voucher = await _dbContext.JournalVouchers
             .Include(v => v.Lines)
-            .FirstOrDefaultAsync(v => v.Id == voucherId, cancellationToken);
+            .FirstOrDefaultAsync(v => v.Id == voucherId && v.CompanyId == companyId, cancellationToken);
 
         if (voucher == null)
         {
@@ -213,7 +214,10 @@ public class JournalVoucherService : IJournalVoucherService
 
     public async Task<Result<List<JournalVoucherSummaryDto>>> GetVouchersAsync(int? fiscalPeriodId, bool? isPosted, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.JournalVouchers.AsNoTracking();
+        var companyId = _currentUserContext.GetRequiredCompanyId();
+        var query = _dbContext.JournalVouchers
+            .AsNoTracking()
+            .Where(v => v.CompanyId == companyId);
 
         if (fiscalPeriodId.HasValue)
         {
@@ -246,10 +250,11 @@ public class JournalVoucherService : IJournalVoucherService
 
     public async Task<Result<JournalVoucherDto>> GetVoucherByIdAsync(int voucherId, CancellationToken cancellationToken = default)
     {
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         var voucher = await _dbContext.JournalVouchers
             .Include(v => v.Lines)
             .ThenInclude(l => l.Account)
-            .FirstOrDefaultAsync(v => v.Id == voucherId, cancellationToken);
+            .FirstOrDefaultAsync(v => v.Id == voucherId && v.CompanyId == companyId, cancellationToken);
 
         if (voucher == null)
         {

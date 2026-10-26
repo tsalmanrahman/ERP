@@ -1,4 +1,4 @@
-﻿namespace ERP.Common.Application.Models.Finance;
+namespace ERP.Common.Application.Models.Finance;
 
 public record AccountDto(
     int Id,
@@ -23,7 +23,7 @@ public class CreateAccountRequest
 {
     public string AccountCode { get; set; } = string.Empty;
     public string AccountName { get; set; } = string.Empty;
-    public int AccountGroupId { get; set; } = 1;
+    public int AccountGroupId { get; set; }
     public int AccountType { get; set; } = 2; // 1=Header, 2=Posting
     public bool IsReconcilable { get; set; }
     public bool IsActive { get; set; } = true;

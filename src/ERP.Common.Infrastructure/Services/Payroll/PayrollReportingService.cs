@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Data;
 using ERP.Common.Application.Abstractions.Payroll;
@@ -19,7 +19,7 @@ public class PayrollReportingService : IPayrollReportingService
         _currentUserContext = currentUserContext;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<PaySlipDto?> GetPaySlipAsync(int salarySheetId, int employeeId, CancellationToken cancellationToken = default)
     {

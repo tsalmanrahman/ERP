@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.Specialized;
@@ -25,7 +25,7 @@ public class FixedAssetService : IFixedAssetService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<AssetGroupDto>> GetAssetGroupsAsync(CancellationToken cancellationToken = default)
     {
@@ -58,6 +58,13 @@ public class FixedAssetService : IFixedAssetService
         if (exists)
         {
             throw new InvalidOperationException($"Asset group with code '{code}' already exists.");
+        }
+
+        var glIds = new[] { request.GlAssetAccountId, request.GlAccumDeprAccountId, request.GlDeprExpenseAccountId }.Distinct().ToArray();
+        var validGlCount = await _dbContext.Accounts.CountAsync(a => a.CompanyId == companyId && glIds.Contains(a.Id), cancellationToken);
+        if (validGlCount != glIds.Length)
+        {
+            throw new InvalidOperationException("One or more GL accounts specified for the Asset Group do not belong to the active company.");
         }
 
         var group = new AssetGroup
@@ -323,9 +330,14 @@ public class FixedAssetService : IFixedAssetService
         var gainLossAbs = Math.Abs(gainLoss);
 
         // Bank / Cash Account (default Prime Bank: 1120)
-        var depositAccountId = request.ProceedsDepositAccountId ?? 3; // Account 1120 Prime Bank
-        var depositAccount = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && (a.Id == depositAccountId || a.AccountCode == "1120"), cancellationToken);
-        int finalDepositAcctId = depositAccount?.Id ?? depositAccountId;
+        var depositAccount = request.ProceedsDepositAccountId.HasValue
+            ? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Id == request.ProceedsDepositAccountId.Value, cancellationToken)
+            : await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1120", cancellationToken);
+        if (depositAccount == null && proceeds > 0)
+        {
+            throw new InvalidOperationException("Proceeds deposit bank/cash account was not found in the active company's Chart of Accounts.");
+        }
+        int finalDepositAcctId = depositAccount?.Id ?? 0;
 
         // GL Gain / Loss Account:
         // Gain: 4200 (Other Operating Income)
@@ -333,8 +345,16 @@ public class FixedAssetService : IFixedAssetService
         var gainAccount = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "4200", cancellationToken);
         var lossAccount = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "5120", cancellationToken);
 
-        int gainAccountId = gainAccount?.Id ?? 17;
-        int lossAccountId = lossAccount?.Id ?? 26;
+        if (isGain && gainLossAbs > 0 && gainAccount == null)
+        {
+            throw new InvalidOperationException("Gain on Disposal account (4200) was not found in the active company's Chart of Accounts.");
+        }
+        if (!isGain && gainLossAbs > 0 && lossAccount == null)
+        {
+            throw new InvalidOperationException("Loss on Disposal account (5120) was not found in the active company's Chart of Accounts.");
+        }
+        int gainAccountId = gainAccount?.Id ?? 0;
+        int lossAccountId = lossAccount?.Id ?? 0;
 
         // Double-entry GL Posting:
         // Dr: Bank (Proceeds)

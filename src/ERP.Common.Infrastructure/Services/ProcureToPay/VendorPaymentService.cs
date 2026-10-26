@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.ProcureToPay;
@@ -25,7 +25,7 @@ public class VendorPaymentService : IVendorPaymentService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<List<VendorPaymentDto>> GetVendorPaymentsAsync(int? vendorId = null, CancellationToken cancellationToken = default)
     {
@@ -131,18 +131,20 @@ public class VendorPaymentService : IVendorPaymentService
 
         if (request.PaymentMethod == PaymentMethod.Cash)
         {
-            var defaultCash = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1111", cancellationToken);
-            disbursingGlAccountId = defaultCash?.Id ?? 1;
+            var defaultCash = await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1111", cancellationToken)
+                ?? throw new InvalidOperationException("Cash in Hand account (1111) was not found for the active company.");
+            disbursingGlAccountId = defaultCash.Id;
             sourceName = "Cash in Hand";
         }
         else // BankTransfer or Cheque
         {
-            int baId = request.BankAccountId ?? 1;
-            var bankAccount = await _dbContext.Set<ERP.Common.Domain.Entities.GeneralLedger.Account>()
-                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1120", cancellationToken);
+            var bankAccount = await _dbContext.Accounts
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1120", cancellationToken)
+                ?? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1121", cancellationToken)
+                ?? throw new InvalidOperationException("Bank GL Account (1120/1121) was not found for the active company.");
             
-            disbursingGlAccountId = bankAccount?.Id ?? 3;
-            sourceName = "Prime Bank Current Account";
+            disbursingGlAccountId = bankAccount.Id;
+            sourceName = bankAccount.AccountName;
         }
 
         // 2. Resolve Vendor AP Control Account

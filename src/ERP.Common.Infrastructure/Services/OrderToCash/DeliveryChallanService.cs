@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.OrderToCash;
@@ -29,7 +29,7 @@ public class DeliveryChallanService : IDeliveryChallanService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<DeliveryChallanDto>> GetDeliveryChallansAsync(int? salesOrderId = null, CancellationToken cancellationToken = default)
     {

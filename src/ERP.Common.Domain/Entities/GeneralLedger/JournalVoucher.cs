@@ -1,8 +1,8 @@
-﻿using ERP.Common.Domain.Common;
+using ERP.Common.Domain.Common;
 
 namespace ERP.Common.Domain.Entities.GeneralLedger;
 
-public class JournalVoucher : AggregateRoot<int>, IAuditableEntity, ISoftDeletable
+public class JournalVoucher : AggregateRoot<int>, IAuditableEntity, ISoftDeletable, IMultiTenant
 {
     public int BatchId { get; set; }
     public int CompanyId { get; set; }

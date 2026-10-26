@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>ERP.UnitTests</AssemblyName>
@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\ERP.Common.Domain\ERP.Common.Domain.csproj" />
     <ProjectReference Include="..\..\src\ERP.Common.Application\ERP.Common.Application.csproj" />
     <ProjectReference Include="..\..\src\ERP.Common.Infrastructure\ERP.Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\ERP.Web.Api\ERP.Web.Api.csproj" />
   </ItemGroup>
 
 </Project>

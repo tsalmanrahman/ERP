@@ -130,6 +130,7 @@ if (!app.Environment.IsEnvironment("Testing"))
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<CompanyContextEnforcementMiddleware>();
 
 // Health Check Endpoints
 app.MapHealthChecks("/health");

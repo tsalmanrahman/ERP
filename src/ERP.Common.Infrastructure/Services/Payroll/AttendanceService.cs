@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Payroll;
 using ERP.Common.Application.Models.Payroll;
@@ -19,7 +19,7 @@ public class AttendanceService : IAttendanceService
         _currentUserContext = currentUserContext;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<bool> LogPunchAsync(AttendancePunchRequest request, CancellationToken cancellationToken = default)
     {

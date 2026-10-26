@@ -5406,24 +5406,6 @@
           <div class="flex items-center gap-2 shrink-0">
             <button 
               type="button" 
-              onclick="resetEntryForm('product')" 
-              class="h-9 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
-              title="Reset Form Fields"
-            >
-              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
-              <span>Reset</span>
-            </button>
-            <button 
-              type="button" 
-              onclick="confirmDiscardChanges('product')" 
-              class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-              title="Cancel Changes"
-            >
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
-              <span>Cancel</span>
-            </button>
-            <button 
-              type="button" 
               id="btn-save-product" 
               onclick="saveProductEntry()" 
               class="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
@@ -5463,7 +5445,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-category" onchange="onProductClassChange(); markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                <select id="prod-category" onchange="onProductClassChange(); handleFormFieldInput('product')" class="mac-input w-full text-xs font-bold">
                   <option value="1">FG-PEB — Finished Goods (PEB Structural Steel)</option>
                 </select>
               </div>
@@ -5476,7 +5458,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-subcategory" onchange="markFormDirty('product')" class="mac-input w-full text-xs">
+                <select id="prod-subcategory" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs">
                   <option value="">-- Select Subcategory --</option>
                 </select>
               </div>
@@ -5489,20 +5471,20 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-brand" onchange="markFormDirty('product')" class="mac-input w-full text-xs">
+                <select id="prod-brand" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs">
                   <option value="">-- Select Brand / OEM --</option>
                 </select>
               </div>
 
               <div class="sm:col-span-2">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Product Title / Description *</label>
-                <input type="text" id="prod-name" placeholder="e.g. High-Yield Structural Steel Beam (UB 203x133)" oninput="markFormDirty('product')" class="mac-input w-full font-bold text-xs">
+                <input type="text" id="prod-name" placeholder="e.g. High-Yield Structural Steel Beam (UB 203x133)" oninput="handleFormFieldInput('product')" class="mac-input w-full font-bold text-xs">
                 <span id="err-prod-name" class="field-error hidden"></span>
               </div>
 
               <div class="sm:col-span-2">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Technical Specification Summary</label>
-                <input type="text" id="prod-description" placeholder="Optional engineering dimensions, coating, or tolerance notes..." oninput="markFormDirty('product')" class="mac-input w-full text-xs">
+                <input type="text" id="prod-description" placeholder="Optional engineering dimensions, coating, or tolerance notes..." oninput="handleFormFieldInput('product')" class="mac-input w-full text-xs">
               </div>
 
               <div id="wrap-prod-grade">
@@ -5513,7 +5495,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-grade" onchange="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <select id="prod-grade" onchange="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
                   <option value="ASTM A572 Grade 50">ASTM A572 Grade 50</option>
                   <option value="ASTM A36 Mild Steel">ASTM A36 Mild Steel</option>
                   <option value="Standard Commercial Spec">Standard Commercial Spec</option>
@@ -5522,7 +5504,7 @@
 
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Lifecycle Status</label>
-                <select id="prod-lifecycle-status" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                <select id="prod-lifecycle-status" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs font-bold">
                   <option value="Active">Active (Released for Transactions)</option>
                   <option value="Draft">Draft (Specification Under Review)</option>
                   <option value="Inactive">Inactive (Temporarily On Hold)</option>
@@ -5532,7 +5514,7 @@
 
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Barcode / GS1 GTIN</label>
-                <input type="text" id="prod-barcode" placeholder="e.g. 8941100240119" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="text" id="prod-barcode" placeholder="e.g. 8941100240119" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
 
               <div>
@@ -5558,7 +5540,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-uom" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                <select id="prod-uom" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs font-bold">
                   <option value="1">MT - Metric Ton</option>
                   <option value="2">KG - Kilogram</option>
                   <option value="3">PCS - Pieces</option>
@@ -5573,7 +5555,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-pack-size" onchange="markFormDirty('product')" class="mac-input w-full text-xs">
+                <select id="prod-pack-size" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs">
                   <option value="Loose / Unpacked Bulk">Loose / Unpacked Bulk</option>
                   <option value="Steel Master Coil (3-5 MT)">Steel Master Coil (3-5 MT)</option>
                   <option value="25 KG Woven Sack / Bag">25 KG Woven Sack / Bag</option>
@@ -5582,35 +5564,35 @@
 
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Secondary / Alt UOM</label>
-                <select id="prod-sec-uom" onchange="markFormDirty('product')" class="mac-input w-full text-xs">
+                <select id="prod-sec-uom" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs">
                   <option value="">-- Single UOM Only --</option>
                 </select>
               </div>
 
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Conversion Factor (Alt to Base)</label>
-                <input type="number" id="prod-uom-factor" value="1" min="0.0001" step="0.0001" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs" placeholder="e.g. 1000 (1 MT = 1000 KG)">
+                <input type="number" id="prod-uom-factor" value="1" min="0.0001" step="0.0001" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs" placeholder="e.g. 1000 (1 MT = 1000 KG)">
               </div>
 
               <div id="wrap-prod-reorder">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Reorder Level Threshold *</label>
-                <input type="number" id="prod-reorder" value="50" min="0" oninput="markFormDirty('product')" class="mac-input w-full font-mono font-bold text-amber-400 text-xs">
+                <input type="number" id="prod-reorder" value="50" min="0" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono font-bold text-amber-400 text-xs">
                 <span id="err-prod-reorder" class="field-error hidden"></span>
               </div>
 
               <div id="wrap-prod-safety">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Safety Stock Floor Level</label>
-                <input type="number" id="prod-safety" value="20" min="0" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-safety" value="20" min="0" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
 
               <div id="wrap-prod-leadtime">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Standard Procurement Lead Time (Days)</label>
-                <input type="number" id="prod-leadtime" value="14" min="0" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-leadtime" value="14" min="0" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
 
               <div id="wrap-prod-tracking">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Traceability / Tracking Policy</label>
-                <select id="prod-tracking-policy" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                <select id="prod-tracking-policy" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs font-bold">
                   <option value="1">Standard (Quantity Only)</option>
                   <option value="2">Batch / Lot / Heat Number Tracked</option>
                   <option value="3">Unique Serial Number Tracked</option>
@@ -5632,17 +5614,17 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Standard Production Cost (BDT ৳) *</label>
-                <input type="number" id="prod-cost" value="6800" min="0" step="10" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs font-bold text-slate-200">
+                <input type="number" id="prod-cost" value="6800" min="0" step="10" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs font-bold text-slate-200">
                 <span id="err-prod-cost" class="field-error hidden"></span>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Base Wholesale Rate (BDT ৳) *</label>
-                <input type="number" id="prod-wholesale" value="8500" min="0" step="10" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs font-bold text-emerald-400">
+                <input type="number" id="prod-wholesale" value="8500" min="0" step="10" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs font-bold text-emerald-400">
                 <span id="err-prod-wholesale" class="field-error hidden"></span>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Minimum Retail List Price (BDT ৳)</label>
-                <input type="number" id="prod-retail" value="9200" min="0" step="10" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-retail" value="9200" min="0" step="10" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
               <div>
                 <div class="flex items-center justify-between mb-1">
@@ -5652,7 +5634,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-vat-rate" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                <select id="prod-vat-rate" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs font-bold">
                   <option value="15" data-code="VAT_STD_15">15.0% — Standard VAT Schedule</option>
                   <option value="7.5" data-code="VAT_TRADE_7_5">7.5% — Manufacturing / Trade VAT</option>
                   <option value="5" data-code="VAT_RED_5">5.0% — Reduced Commercial VAT</option>
@@ -5661,7 +5643,7 @@
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Inventory Valuation Method (IAS 2)</label>
-                <select id="prod-costing-method" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                <select id="prod-costing-method" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs font-bold">
                   <option value="MovingAverage">Weighted Moving Average (IAS 2)</option>
                   <option value="FIFO">First-In, First-Out (FIFO)</option>
                   <option value="StandardCost">Standard Cost Valuation</option>
@@ -5669,7 +5651,7 @@
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">HS / Customs Tariff Code</label>
-                <input type="text" id="prod-hs-code" value="7214.20.00" placeholder="e.g. 7214.20.00" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="text" id="prod-hs-code" value="7214.20.00" placeholder="e.g. 7214.20.00" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
             </div>
           </div>
@@ -5690,7 +5672,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-warehouse" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                <select id="prod-warehouse" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs font-bold">
                   <option value="1">Central Finished Goods Hub (Dhaka)</option>
                 </select>
               </div>
@@ -5702,7 +5684,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-bin" onchange="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <select id="prod-bin" onchange="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
                   <option value="A-01-R1">A-01-R1 — Bay A-01 / Rack R1 (Heavy Coil Yard)</option>
                   <option value="B-01-FG">B-01-FG — Zone B-01 (Finished Goods Dispatch Yard)</option>
                 </select>
@@ -5715,7 +5697,7 @@
                     <span>New</span>
                   </button>
                 </div>
-                <select id="prod-qc-toggle" onchange="markFormDirty('product')" class="mac-input w-full text-xs font-bold">
+                <select id="prod-qc-toggle" onchange="handleFormFieldInput('product')" class="mac-input w-full text-xs font-bold">
                   <option value="Mandatory QC">Mandatory Lab &amp; Dimensional QC</option>
                   <option value="Mill Cert Check">Mill Test Certificate (MTC) Verification</option>
                   <option value="Visual Inspection">Standard Visual Inspection</option>
@@ -5725,15 +5707,15 @@
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Operational Eligibility</label>
                 <div class="flex items-center gap-3 h-9 px-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs">
                   <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" id="prod-is-purchasable" checked onchange="markFormDirty('product')" class="rounded border-white/20">
+                    <input type="checkbox" id="prod-is-purchasable" checked onchange="handleFormFieldInput('product')" class="rounded border-white/20">
                     <span>Buy</span>
                   </label>
                   <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" id="prod-is-sellable" checked onchange="markFormDirty('product')" class="rounded border-white/20">
+                    <input type="checkbox" id="prod-is-sellable" checked onchange="handleFormFieldInput('product')" class="rounded border-white/20">
                     <span>Sell</span>
                   </label>
                   <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" id="prod-is-manufactured" onchange="markFormDirty('product')" class="rounded border-white/20">
+                    <input type="checkbox" id="prod-is-manufactured" onchange="handleFormFieldInput('product')" class="rounded border-white/20">
                     <span>Make</span>
                   </label>
                 </div>
@@ -5754,15 +5736,15 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Net Weight</label>
-                <input type="number" id="prod-net-weight" value="0" min="0" step="0.01" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-net-weight" value="0" min="0" step="0.01" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Gross Weight</label>
-                <input type="number" id="prod-gross-weight" value="0" min="0" step="0.01" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-gross-weight" value="0" min="0" step="0.01" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Weight UOM</label>
-                <select id="prod-weight-uom" onchange="markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <select id="prod-weight-uom" onchange="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
                   <option value="KG">KG</option>
                   <option value="MT">MT</option>
                   <option value="GM">GM</option>
@@ -5770,19 +5752,19 @@
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Length</label>
-                <input type="number" id="prod-length" value="0" min="0" step="1" oninput="recalcProductVolumeCbm(); markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-length" value="0" min="0" step="1" oninput="recalcProductVolumeCbm(); handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Width</label>
-                <input type="number" id="prod-width" value="0" min="0" step="1" oninput="recalcProductVolumeCbm(); markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-width" value="0" min="0" step="1" oninput="recalcProductVolumeCbm(); handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Height / Thick</label>
-                <input type="number" id="prod-height" value="0" min="0" step="0.1" oninput="recalcProductVolumeCbm(); markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <input type="number" id="prod-height" value="0" min="0" step="0.1" oninput="recalcProductVolumeCbm(); handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Dim UOM</label>
-                <select id="prod-dim-uom" onchange="recalcProductVolumeCbm(); markFormDirty('product')" class="mac-input w-full font-mono text-xs">
+                <select id="prod-dim-uom" onchange="recalcProductVolumeCbm(); handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs">
                   <option value="MM">MM</option>
                   <option value="CM">CM</option>
                   <option value="M">M</option>
@@ -5790,7 +5772,7 @@
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Volume (CBM)</label>
-                <input type="number" id="prod-volume-cbm" value="0" min="0" step="0.0001" oninput="markFormDirty('product')" class="mac-input w-full font-mono text-xs text-cyan-400 font-bold">
+                <input type="number" id="prod-volume-cbm" value="0" min="0" step="0.0001" oninput="handleFormFieldInput('product')" class="mac-input w-full font-mono text-xs text-cyan-400 font-bold">
               </div>
             </div>
           </div>
@@ -6134,7 +6116,7 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Target Subsidiary Tenant</label>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Company Name</label>
                 <input type="text" id="depot-company-display" value="HATIM STEEL STRUCTURE LTD (HSF)" disabled class="mac-input w-full text-xs bg-white/[0.02] text-slate-400 cursor-not-allowed">
               </div>
             </div>
@@ -6281,7 +6263,7 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Target Subsidiary Tenant</label>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Company Name</label>
                 <input type="text" id="wh-company-display" value="HATIM STEEL STRUCTURE LTD (HSF)" disabled class="mac-input w-full text-xs bg-white/[0.02] text-slate-400 cursor-not-allowed">
               </div>
             </div>
@@ -6560,24 +6542,6 @@
           <div class="flex items-center gap-2 shrink-0">
             <button 
               type="button" 
-              onclick="resetEntryForm('product-class')" 
-              class="h-9 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
-              title="Reset Form Fields"
-            >
-              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
-              <span>Reset</span>
-            </button>
-            <button 
-              type="button" 
-              onclick="confirmDiscardChanges('product-class')" 
-              class="btn-action-cancel h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-              title="Cancel"
-            >
-              <i data-lucide="x" class="w-3.5 h-3.5"></i>
-              <span>Cancel</span>
-            </button>
-            <button 
-              type="button" 
               id="btn-save-product-class" 
               onclick="saveProductClassEntry()" 
               class="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold flex items-center gap-1.5 cursor-pointer text-xs shadow-sm"
@@ -6598,12 +6562,12 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Class Code *</label>
-                <input type="text" id="pclass-code" placeholder="e.g. FG-STEEL, RM-COIL" oninput="markFormDirty('product-class')" class="mac-input w-full font-mono font-bold text-amber-400 text-xs uppercase">
+                <input type="text" id="pclass-code" placeholder="e.g. FG-STEEL, RM-COIL" oninput="handleFormFieldInput('product-class')" class="mac-input w-full font-mono font-bold text-amber-400 text-xs uppercase">
                 <span id="err-pclass-code" class="field-error hidden"></span>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Operational Category Type *</label>
-                <select id="pclass-type" onchange="markFormDirty('product-class')" class="mac-input w-full text-xs font-bold">
+                <select id="pclass-type" onchange="handleFormFieldInput('product-class')" class="mac-input w-full text-xs font-bold">
                   <option value="1">Finished Goods (Manufactured / Traded)</option>
                   <option value="2">Raw Materials &amp; Direct Inputs</option>
                   <option value="3">Semi-Finished Goods / WIP</option>
@@ -6614,7 +6578,7 @@
               </div>
               <div class="sm:col-span-2">
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Product Class Title *</label>
-                <input type="text" id="pclass-name" placeholder="e.g. PEB Fabricated Structural Steel Members" oninput="markFormDirty('product-class')" class="mac-input w-full font-bold text-xs">
+                <input type="text" id="pclass-name" placeholder="e.g. PEB Fabricated Structural Steel Members" oninput="handleFormFieldInput('product-class')" class="mac-input w-full font-bold text-xs">
                 <span id="err-pclass-name" class="field-error hidden"></span>
               </div>
             </div>
@@ -6628,7 +6592,7 @@
             <div class="grid grid-cols-1 gap-3.5">
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">GL Inventory Valuation Asset Account *</label>
-                <select id="pclass-gl-inv" onchange="markFormDirty('product-class')" class="mac-input w-full text-xs font-mono">
+                <select id="pclass-gl-inv" onchange="handleFormFieldInput('product-class')" class="mac-input w-full text-xs font-mono">
                   <option value="1">1040-01 — Inventory Asset Control Account</option>
                   <option value="2">1040-02 — Raw Materials &amp; Coil Stock Account</option>
                   <option value="3">1040-03 — Work-in-Progress (WIP) Inventory Account</option>
@@ -6637,7 +6601,7 @@
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">GL Cost of Goods Sold (COGS) Expense Account *</label>
-                <select id="pclass-gl-cogs" onchange="markFormDirty('product-class')" class="mac-input w-full text-xs font-mono">
+                <select id="pclass-gl-cogs" onchange="handleFormFieldInput('product-class')" class="mac-input w-full text-xs font-mono">
                   <option value="2">5010-01 — Cost of Goods Sold (COGS)</option>
                   <option value="5">5010-02 — Direct Material Consumption Expense</option>
                   <option value="6">5020-01 — Factory Maintenance &amp; Consumables Expense</option>
@@ -6645,7 +6609,7 @@
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">GL Sales Revenue Account *</label>
-                <select id="pclass-gl-rev" onchange="markFormDirty('product-class')" class="mac-input w-full text-xs font-mono">
+                <select id="pclass-gl-rev" onchange="handleFormFieldInput('product-class')" class="mac-input w-full text-xs font-mono">
                   <option value="3">4010-01 — Commercial Sales Revenue</option>
                   <option value="7">4010-02 — Export &amp; Deemed Export Revenue</option>
                   <option value="8">4020-01 — Engineering &amp; Erection Service Revenue</option>
@@ -8890,8 +8854,6 @@
             <div>
               <div class="flex items-center gap-2">
                 <h2 id="view-record-title" class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Record View</h2>
-                <span id="view-record-code-badge" class="hidden px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">REC-001</span>
-                <span id="view-record-status-badge" class="hidden px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Active</span>
               </div>
             </div>
           </div>
@@ -8923,22 +8885,6 @@
 
           <div id="view-record-fields-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Dynamically populated by renderViewRecord() -->
-          </div>
-
-          <!-- Audit Metadata Card -->
-          <div id="view-record-audit-metadata" class="hidden pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-            <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <span class="text-slate-400 block text-[11px] mb-0.5">Assigned Subsidiary:</span>
-              <span id="view-record-company" class="font-bold text-slate-200">HATIM STEEL STRUCTURE LTD (HSF)</span>
-            </div>
-            <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <span class="text-slate-400 block text-[11px] mb-0.5">System Identifier (Guid):</span>
-              <span id="view-record-guid" class="font-mono text-[11px] text-slate-300">system-assigned-identity</span>
-            </div>
-            <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <span class="text-slate-400 block text-[11px] mb-0.5">Integrity Verification:</span>
-              <span class="text-emerald-400 font-semibold flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Enforced Multi-Tenant Filter</span>
-            </div>
           </div>
         </div>
       </section>
@@ -9089,7 +9035,7 @@
       <div id="company-modal-list" class="space-y-2 mt-4">
         <!-- Entity 1: HSF -->
         <div 
-          onclick="selectCompany(1, 'HATIM STEEL STRUCTURE LTD (HSF)', 'HSF')" 
+          onclick="executeSwitchCompany(1, 'HATIM STEEL STRUCTURE LTD (HSF)', 'HSF')" 
           class="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-blue-500/30 transition cursor-pointer flex items-center justify-between group"
         >
           <div class="flex items-center gap-3">
@@ -9107,7 +9053,7 @@
 
         <!-- Entity 2: HSS -->
         <div 
-          onclick="selectCompany(2, 'HATIM STEEL STRUCTURE LTD', 'HSS')" 
+          onclick="executeSwitchCompany(2, 'HATIM STEEL STRUCTURE LTD', 'HSS')" 
           class="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-emerald-500/30 transition cursor-pointer flex items-center justify-between group"
         >
           <div class="flex items-center gap-3">
@@ -9125,7 +9071,7 @@
 
         <!-- Entity 3: HIL -->
         <div 
-          onclick="selectCompany(3, 'Hatim Industries Ltd', 'HIL')" 
+          onclick="executeSwitchCompany(3, 'Hatim Industries Ltd', 'HIL')" 
           class="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-purple-500/30 transition cursor-pointer flex items-center justify-between group"
         >
           <div class="flex items-center gap-3">
@@ -9143,7 +9089,7 @@
 
         <!-- Entity 4: HPL -->
         <div 
-          onclick="selectCompany(4, 'Hatim Polymer Ltd', 'HPL')" 
+          onclick="executeSwitchCompany(4, 'Hatim Polymer Ltd', 'HPL')" 
           class="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-amber-500/30 transition cursor-pointer flex items-center justify-between group"
         >
           <div class="flex items-center gap-3">
@@ -9297,6 +9243,6 @@
 
   <!-- Global Client App Scripts -->
   <script src="/js/ERP-core.js?v=20261025b"></script>
-  <script src="/js/erp-studios.js?v=20261025b"></script>
+  <script src="/js/erp-studios.js?v=20261026c"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using ERP.Common.Application.Abstractions.Common;
 
@@ -68,8 +68,8 @@ public class CurrentUserContext : ICurrentUserContext
                     return companyIdFromHeader;
                 }
 
-                // If unauthorized tenant switch is attempted, fall back securely to the authorized company claim
-                return companyIdFromClaim > 0 ? companyIdFromClaim : null;
+                // Do not silently fall back to another company when an explicit unauthorized X-Company-Id header is sent
+                return null;
             }
 
             // 2. JWT claim 'company_id'
@@ -80,5 +80,16 @@ public class CurrentUserContext : ICurrentUserContext
 
             return null;
         }
+    }
+
+    public int GetRequiredCompanyId()
+    {
+        var companyId = CompanyId;
+        if (companyId is > 0)
+        {
+            return companyId.Value;
+        }
+
+        throw new InvalidOperationException("An authorized active Company context is required for this operation.");
     }
 }

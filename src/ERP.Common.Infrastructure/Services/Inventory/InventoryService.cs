@@ -23,7 +23,7 @@ public class InventoryService : IInventoryService
         _documentSequenceService = documentSequenceService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     private static string GetCategoryTypeName(ProductCategoryType type) => type switch
     {
@@ -208,6 +208,56 @@ public class InventoryService : IInventoryService
             }
         }
 
+        int resolvedClassId;
+        if (request.ProductClassId > 0)
+        {
+            var pClass = await _dbContext.ProductClasses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == request.ProductClassId && c.CompanyId == companyId, cancellationToken)
+                ?? throw new InvalidOperationException("The selected Product Class does not belong to the active company.");
+            resolvedClassId = pClass.Id;
+        }
+        else
+        {
+            var defaultClass = await _dbContext.ProductClasses
+                .AsNoTracking()
+                .Where(c => c.CompanyId == companyId && c.IsActive)
+                .OrderBy(c => c.Id)
+                .FirstOrDefaultAsync(cancellationToken)
+                ?? throw new InvalidOperationException("No active Product Class exists for the active company.");
+            resolvedClassId = defaultClass.Id;
+        }
+
+        int resolvedUomId;
+        if (request.PrimaryUomId > 0)
+        {
+            var uom = await _dbContext.UnitsOfMeasure
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == request.PrimaryUomId && u.CompanyId == companyId, cancellationToken)
+                ?? throw new InvalidOperationException("The selected Base UOM does not belong to the active company.");
+            resolvedUomId = uom.Id;
+        }
+        else
+        {
+            var defaultUom = await _dbContext.UnitsOfMeasure
+                .AsNoTracking()
+                .Where(u => u.CompanyId == companyId && u.IsActive)
+                .OrderBy(u => u.Id)
+                .FirstOrDefaultAsync(cancellationToken)
+                ?? throw new InvalidOperationException("No active Unit of Measure exists for the active company.");
+            resolvedUomId = defaultUom.Id;
+        }
+
+        if (request.DefaultWarehouseId is > 0)
+        {
+            var whExists = await _dbContext.Warehouses
+                .AnyAsync(w => w.Id == request.DefaultWarehouseId.Value && w.CompanyId == companyId, cancellationToken);
+            if (!whExists)
+            {
+                throw new InvalidOperationException("The selected Default Warehouse does not belong to the active company.");
+            }
+        }
+
         var lifecycleStatus = !string.IsNullOrWhiteSpace(request.LifecycleStatus) ? request.LifecycleStatus.Trim() : "Active";
         var isActive = !string.Equals(lifecycleStatus, "Inactive", StringComparison.OrdinalIgnoreCase) &&
                        !string.Equals(lifecycleStatus, "Discontinued", StringComparison.OrdinalIgnoreCase);
@@ -219,11 +269,11 @@ public class InventoryService : IInventoryService
             ProductName = request.ProductName.Trim(),
             Description = request.Description?.Trim(),
             BarcodeGtin = request.BarcodeGtin?.Trim(),
-            ProductClassId = request.ProductClassId > 0 ? request.ProductClassId : 1,
+            ProductClassId = resolvedClassId,
             SubcategoryId = request.SubcategoryId,
             BrandId = request.BrandId,
             MaterialGrade = request.MaterialGrade?.Trim(),
-            PrimaryUomId = request.PrimaryUomId > 0 ? request.PrimaryUomId : 1,
+            PrimaryUomId = resolvedUomId,
             SecondaryUomId = request.SecondaryUomId,
             UomConversionFactor = request.UomConversionFactor,
             PackSize = request.PackSize?.Trim(),
@@ -330,14 +380,42 @@ public class InventoryService : IInventoryService
         }
 
         // Code immutability rule: product.ProductCode remains strictly unmodified!
+        if (request.ProductClassId > 0 && request.ProductClassId != product.ProductClassId)
+        {
+            var validClass = await _dbContext.ProductClasses
+                .AnyAsync(c => c.Id == request.ProductClassId && c.CompanyId == companyId, cancellationToken);
+            if (!validClass)
+            {
+                throw new InvalidOperationException("The selected Product Class does not belong to the active company.");
+            }
+            product.ProductClassId = request.ProductClassId;
+        }
+        if (request.PrimaryUomId > 0 && request.PrimaryUomId != product.PrimaryUomId)
+        {
+            var validUom = await _dbContext.UnitsOfMeasure
+                .AnyAsync(u => u.Id == request.PrimaryUomId && u.CompanyId == companyId, cancellationToken);
+            if (!validUom)
+            {
+                throw new InvalidOperationException("The selected Base UOM does not belong to the active company.");
+            }
+            product.PrimaryUomId = request.PrimaryUomId;
+        }
+        if (request.DefaultWarehouseId is > 0 && request.DefaultWarehouseId != product.DefaultWarehouseId)
+        {
+            var validWh = await _dbContext.Warehouses
+                .AnyAsync(w => w.Id == request.DefaultWarehouseId.Value && w.CompanyId == companyId, cancellationToken);
+            if (!validWh)
+            {
+                throw new InvalidOperationException("The selected Default Warehouse does not belong to the active company.");
+            }
+        }
+
         product.ProductName = request.ProductName.Trim();
         product.Description = request.Description?.Trim();
         product.BarcodeGtin = request.BarcodeGtin?.Trim();
-        if (request.ProductClassId > 0) product.ProductClassId = request.ProductClassId;
         product.SubcategoryId = request.SubcategoryId;
         product.BrandId = request.BrandId;
         if (request.MaterialGrade != null) product.MaterialGrade = request.MaterialGrade.Trim();
-        if (request.PrimaryUomId > 0) product.PrimaryUomId = request.PrimaryUomId;
         product.SecondaryUomId = request.SecondaryUomId;
         product.UomConversionFactor = request.UomConversionFactor;
         product.PackSize = request.PackSize?.Trim();
@@ -728,16 +806,16 @@ public class InventoryService : IInventoryService
         };
     }
 
-    public async Task<MasterLookupDto> UpdateMasterLookupAsync(int id, SaveMasterLookupRequest request, CancellationToken cancellationToken = default)
+        public async Task<MasterLookupDto> UpdateMasterLookupAsync(int id, SaveMasterLookupRequest request, CancellationToken cancellationToken = default)
     {
         var companyId = GetCompanyId();
         var lookup = await _dbContext.MasterLookups.FirstOrDefaultAsync(
-            m => m.Id == id && !m.IsDeleted && (m.CompanyId == 0 || m.CompanyId == companyId),
+            m => m.Id == id && !m.IsDeleted && m.CompanyId == companyId,
             cancellationToken);
 
         if (lookup == null)
         {
-            throw new KeyNotFoundException($"Master lookup with ID {id} was not found.");
+            throw new KeyNotFoundException($"Master lookup with ID {id} was not found or is a protected group-wide standard.");
         }
 
         if (!string.IsNullOrWhiteSpace(request.LookupName)) lookup.LookupName = request.LookupName.Trim();
@@ -769,7 +847,7 @@ public class InventoryService : IInventoryService
     {
         var companyId = GetCompanyId();
         var lookup = await _dbContext.MasterLookups.FirstOrDefaultAsync(
-            m => m.Id == id && !m.IsDeleted && (m.CompanyId == 0 || m.CompanyId == companyId),
+            m => m.Id == id && !m.IsDeleted && (m.CompanyId == companyId || m.CompanyId == 0),
             cancellationToken);
 
         if (lookup == null) return false;

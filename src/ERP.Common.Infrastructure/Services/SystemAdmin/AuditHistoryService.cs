@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.SystemAdmin;
 using ERP.Common.Application.Models.SystemAdmin;
@@ -25,9 +25,10 @@ public class AuditHistoryService : IAuditHistoryService
 
     public async Task<IReadOnlyList<AuditLogDto>> GetAuditHistoryByEntityGuidAsync(string entityName, Guid entitySysGuid, CancellationToken cancellationToken = default)
     {
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         return await _dbContext.AuditLogs
             .AsNoTracking()
-            .Where(a => a.EntityName == entityName && a.EntitySysGuid == entitySysGuid)
+            .Where(a => a.CompanyId == companyId && a.EntityName == entityName && a.EntitySysGuid == entitySysGuid)
             .OrderByDescending(a => a.TimestampUtc)
             .Select(a => new AuditLogDto
             {
@@ -51,7 +52,7 @@ public class AuditHistoryService : IAuditHistoryService
 
     public async Task<IReadOnlyList<AuditLogDto>> GetRecentAuditLogsAsync(int top = 50, CancellationToken cancellationToken = default)
     {
-        var companyId = _currentUserContext.CompanyId ?? 1;
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         return await _dbContext.AuditLogs
             .AsNoTracking()
             .Where(a => a.CompanyId == companyId)
@@ -79,6 +80,7 @@ public class AuditHistoryService : IAuditHistoryService
 
     public async Task<bool> RestoreEntityAsync(string entityName, Guid entitySysGuid, CancellationToken cancellationToken = default)
     {
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         var currentUser = _currentUserContext.UserName ?? "System";
         var now = _dateTimeProvider.UtcNow;
 
@@ -86,7 +88,9 @@ public class AuditHistoryService : IAuditHistoryService
         {
             case "customer":
             case "customers":
-                var customer = await _dbContext.Customers.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.SysGuid == entitySysGuid, cancellationToken);
+                var customer = await _dbContext.Customers
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(c => c.SysGuid == entitySysGuid && c.CompanyId == companyId, cancellationToken);
                 if (customer == null || !customer.IsDeleted) return false;
                 customer.IsDeleted = false;
                 customer.DeletedAtUtc = null;
@@ -97,7 +101,9 @@ public class AuditHistoryService : IAuditHistoryService
 
             case "vendor":
             case "vendors":
-                var vendor = await _dbContext.Vendors.IgnoreQueryFilters().FirstOrDefaultAsync(v => v.SysGuid == entitySysGuid, cancellationToken);
+                var vendor = await _dbContext.Vendors
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(v => v.SysGuid == entitySysGuid && v.CompanyId == companyId, cancellationToken);
                 if (vendor == null || !vendor.IsDeleted) return false;
                 vendor.IsDeleted = false;
                 vendor.DeletedAtUtc = null;
@@ -108,7 +114,9 @@ public class AuditHistoryService : IAuditHistoryService
 
             case "account":
             case "accounts":
-                var account = await _dbContext.Accounts.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.SysGuid == entitySysGuid, cancellationToken);
+                var account = await _dbContext.Accounts
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(a => a.SysGuid == entitySysGuid && a.CompanyId == companyId, cancellationToken);
                 if (account == null || !account.IsDeleted) return false;
                 account.IsDeleted = false;
                 account.DeletedAtUtc = null;
@@ -119,7 +127,9 @@ public class AuditHistoryService : IAuditHistoryService
 
             case "product":
             case "products":
-                var product = await _dbContext.Products.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.SysGuid == entitySysGuid, cancellationToken);
+                var product = await _dbContext.Products
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(p => p.SysGuid == entitySysGuid && p.CompanyId == companyId, cancellationToken);
                 if (product == null || !product.IsDeleted) return false;
                 product.IsDeleted = false;
                 product.DeletedAtUtc = null;
@@ -130,7 +140,9 @@ public class AuditHistoryService : IAuditHistoryService
 
             case "employee":
             case "employees":
-                var emp = await _dbContext.Employees.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.SysGuid == entitySysGuid, cancellationToken);
+                var emp = await _dbContext.Employees
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(e => e.SysGuid == entitySysGuid && e.CompanyId == companyId, cancellationToken);
                 if (emp == null || !emp.IsDeleted) return false;
                 emp.IsDeleted = false;
                 emp.DeletedAtUtc = null;
@@ -141,7 +153,9 @@ public class AuditHistoryService : IAuditHistoryService
 
             case "journalvoucher":
             case "journalvouchers":
-                var jv = await _dbContext.JournalVouchers.IgnoreQueryFilters().FirstOrDefaultAsync(v => v.SysGuid == entitySysGuid, cancellationToken);
+                var jv = await _dbContext.JournalVouchers
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(v => v.SysGuid == entitySysGuid && v.CompanyId == companyId, cancellationToken);
                 if (jv == null || !jv.IsDeleted) return false;
                 jv.IsDeleted = false;
                 jv.DeletedAtUtc = null;

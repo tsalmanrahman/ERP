@@ -20,7 +20,7 @@ public class CustomerService : ICustomerService
         _sequenceService = sequenceService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<CustomerDto>> GetCustomersAsync(CancellationToken cancellationToken = default)
     {
@@ -226,12 +226,31 @@ public class CustomerService : ICustomerService
             throw new InvalidOperationException($"Customer with code '{customerCode}' already exists.");
         }
 
-        int glAccountId = request.GlControlAccountId ?? 0;
-        if (glAccountId == 0)
+        if (request.CustomerGroupId > 0)
+        {
+            var cgExists = await _dbContext.CustomerGroups
+                .AnyAsync(cg => cg.CompanyId == companyId && cg.Id == request.CustomerGroupId, cancellationToken);
+            if (!cgExists)
+            {
+                throw new InvalidOperationException("The selected Customer Group does not belong to the active company.");
+            }
+        }
+
+        int glAccountId;
+        if (request.GlControlAccountId.HasValue && request.GlControlAccountId.Value > 0)
+        {
+            var ctrlAcct = await _dbContext.Accounts
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Id == request.GlControlAccountId.Value, cancellationToken)
+                ?? throw new InvalidOperationException("The selected GL Control Account does not belong to the active company.");
+            glAccountId = ctrlAcct.Id;
+        }
+        else
         {
             var defaultArAccount = await _dbContext.Accounts
-                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1130", cancellationToken);
-            glAccountId = defaultArAccount?.Id ?? 5;
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.AccountCode == "1130", cancellationToken)
+                ?? await _dbContext.Accounts.FirstOrDefaultAsync(a => a.CompanyId == companyId, cancellationToken)
+                ?? throw new InvalidOperationException("No AR Control Account (1130) found for the active company.");
+            glAccountId = defaultArAccount.Id;
         }
 
         var customer = new Customer

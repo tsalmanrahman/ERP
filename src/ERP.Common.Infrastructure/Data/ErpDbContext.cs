@@ -24,6 +24,7 @@ public class ErpDbContext : DbContext, IApplicationDbContext
     private readonly ICurrentUserContext? _currentUserContext;
 
     public int? CurrentCompanyId => _currentUserContext?.CompanyId;
+    public bool HasTenantContext => _currentUserContext != null;
 
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<User> Users => Set<User>();
@@ -175,12 +176,16 @@ public class ErpDbContext : DbContext, IApplicationDbContext
             var companyIdProp = Expression.Property(parameter, nameof(IMultiTenant.CompanyId));
             var contextExpr = Expression.Constant(this);
             var currentCompanyIdProp = Expression.Property(contextExpr, nameof(CurrentCompanyId));
+            var hasTenantContextProp = Expression.Property(contextExpr, nameof(HasTenantContext));
 
-            // currentCompanyId == null || e.CompanyId == currentCompanyId
-            var isCompanyNull = Expression.Equal(currentCompanyIdProp, Expression.Constant(null, typeof(int?)));
+            // Fail-closed when ICurrentUserContext is injected:
+            // !HasTenantContext || (CurrentCompanyId != null && e.CompanyId == CurrentCompanyId)
+            var noTenantContext = Expression.Not(hasTenantContextProp);
+            var isCompanyNotNull = Expression.NotEqual(currentCompanyIdProp, Expression.Constant(null, typeof(int?)));
             var nullableCompanyId = Expression.Convert(companyIdProp, typeof(int?));
             var isSameCompany = Expression.Equal(nullableCompanyId, currentCompanyIdProp);
-            var tenantCondition = Expression.OrElse(isCompanyNull, isSameCompany);
+            var matchesActiveCompany = Expression.AndAlso(isCompanyNotNull, isSameCompany);
+            var tenantCondition = Expression.OrElse(noTenantContext, matchesActiveCompany);
 
             filter = filter == null ? tenantCondition : Expression.AndAlso(filter, tenantCondition);
         }
@@ -200,9 +205,34 @@ public class ErpDbContext : DbContext, IApplicationDbContext
 
         foreach (var entry in ChangeTracker.Entries<IMultiTenant>())
         {
-            if (entry.State == EntityState.Added && entry.Entity.CompanyId == 0 && currentCompany.HasValue)
+            if (entry.State == EntityState.Added)
             {
-                entry.Entity.CompanyId = currentCompany.Value;
+                if (entry.Entity.CompanyId == 0 && currentCompany.HasValue)
+                {
+                    entry.Entity.CompanyId = currentCompany.Value;
+                }
+                else if (currentCompany.HasValue && entry.Entity.CompanyId != 0 && entry.Entity.CompanyId != currentCompany.Value)
+                {
+                    throw new UnauthorizedAccessException(
+                        $"Cross-company write rejected: cannot create {entry.Entity.GetType().Name} for Company {entry.Entity.CompanyId} while active Company is {currentCompany.Value}.");
+                }
+            }
+            else if (entry.State == EntityState.Modified || entry.State == EntityState.Deleted)
+            {
+                var companyProp = entry.Property(nameof(IMultiTenant.CompanyId));
+                var originalCompanyId = companyProp.OriginalValue is int orig ? orig : entry.Entity.CompanyId;
+
+                if (companyProp.IsModified && originalCompanyId != 0 && entry.Entity.CompanyId != originalCompanyId)
+                {
+                    throw new UnauthorizedAccessException(
+                        $"Cross-company mutation rejected: cannot reassign {entry.Entity.GetType().Name} from Company {originalCompanyId} to Company {entry.Entity.CompanyId}.");
+                }
+
+                if (currentCompany.HasValue && originalCompanyId != 0 && originalCompanyId != currentCompany.Value)
+                {
+                    throw new UnauthorizedAccessException(
+                        $"Cross-company write rejected: cannot modify or delete {entry.Entity.GetType().Name} belonging to Company {originalCompanyId} while active Company is {currentCompany.Value}.");
+                }
             }
         }
 
@@ -245,7 +275,7 @@ public class ErpDbContext : DbContext, IApplicationDbContext
         var auditLogs = new List<AuditLog>();
         var now = _dateTimeProvider?.UtcNow ?? DateTime.UtcNow;
         var currentUser = _currentUserContext?.UserName ?? "System";
-        var currentCompany = _currentUserContext?.CompanyId ?? 1;
+        var currentCompany = _currentUserContext?.CompanyId ?? 0;
 
         foreach (var entry in ChangeTracker.Entries())
         {

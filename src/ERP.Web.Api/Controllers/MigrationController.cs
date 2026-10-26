@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Migration;
@@ -40,7 +40,7 @@ public class MigrationController : ControllerBase
         [FromQuery] int? companyId = null,
         CancellationToken cancellationToken = default)
     {
-        var targetCompanyId = companyId ?? _currentUserContext.CompanyId ?? 1;
+        var targetCompanyId = companyId ?? _currentUserContext.GetRequiredCompanyId();
         if (!_currentUserContext.HasAccessToCompany(targetCompanyId))
         {
             return Forbid();
@@ -57,7 +57,7 @@ public class MigrationController : ControllerBase
         [FromQuery] string? accountCode = null,
         CancellationToken cancellationToken = default)
     {
-        var targetCompanyId = companyId ?? _currentUserContext.CompanyId ?? 1;
+        var targetCompanyId = companyId ?? _currentUserContext.GetRequiredCompanyId();
         if (!_currentUserContext.HasAccessToCompany(targetCompanyId))
         {
             return Forbid();

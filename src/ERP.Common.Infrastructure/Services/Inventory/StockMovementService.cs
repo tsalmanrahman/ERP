@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.Inventory;
@@ -26,7 +26,7 @@ public class StockMovementService : IStockMovementService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     // --- Stock Adjustments ---
 
@@ -226,10 +226,14 @@ public class StockMovementService : IStockMovementService
             // GL Accounting:
             // If Stock Gain (AdjustmentQuantity > 0): Debit Inventory Account, Credit Variance
             // If Stock Loss (AdjustmentQuantity < 0): Debit Variance, Credit Inventory Account
-            int glInvAccountId = fallbackInvAccount?.Id ?? 6;
+            int glInvAccountId = fallbackInvAccount?.Id ?? 0;
             if (productClasses.TryGetValue(product.ProductClassId, out var pClass) && pClass.GlInventoryAccountId > 0)
             {
                 glInvAccountId = pClass.GlInventoryAccountId;
+            }
+            if (glInvAccountId <= 0)
+            {
+                throw new InvalidOperationException($"No GL Inventory Account configured for product '{product.ProductCode}' in the active company.");
             }
 
             if (reqLine.AdjustmentQuantity > 0)

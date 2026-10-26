@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.OrderToCash;
 using ERP.Common.Application.Models.OrderToCash;
@@ -23,7 +23,7 @@ public class SalesOrderService : ISalesOrderService
         _dateTimeProvider = dateTimeProvider;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<SalesOrderDto>> GetSalesOrdersAsync(int? customerId = null, CancellationToken cancellationToken = default)
     {
@@ -150,6 +150,13 @@ public class SalesOrderService : ISalesOrderService
         if (request.Lines == null || !request.Lines.Any())
         {
             throw new InvalidOperationException("At least one line item is required for a Sales Order.");
+        }
+
+        var reqProductIds = request.Lines.Select(l => l.ProductId).Distinct().ToList();
+        var validProductCount = await _dbContext.Products.CountAsync(p => p.CompanyId == companyId && reqProductIds.Contains(p.Id), cancellationToken);
+        if (validProductCount != reqProductIds.Count)
+        {
+            throw new InvalidOperationException("One or more products in the Sales Order do not belong to the active company.");
         }
 
         // Calculate order total

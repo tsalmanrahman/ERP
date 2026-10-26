@@ -31,7 +31,7 @@ public class GoodsReceiptService : IGoodsReceiptService
         _documentSequenceService = documentSequenceService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<List<GrnDto>> GetGoodsReceiptNotesAsync(int? warehouseId = null, CancellationToken cancellationToken = default)
     {
@@ -355,6 +355,34 @@ public class GoodsReceiptService : IGoodsReceiptService
             {
                 throw new InvalidOperationException("Vendor must be specified for Vendor GRN.");
             }
+            var vendorExists = await _dbContext.Vendors.AnyAsync(v => v.CompanyId == companyId && v.Id == request.VendorId.Value, cancellationToken);
+            if (!vendorExists)
+            {
+                throw new InvalidOperationException($"Vendor with ID {request.VendorId.Value} was not found in the active company.");
+            }
+            if (request.PurchaseOrderId.HasValue && request.PurchaseOrderId.Value > 0)
+            {
+                var poExists = await _dbContext.PurchaseOrders.AnyAsync(p => p.CompanyId == companyId && p.Id == request.PurchaseOrderId.Value, cancellationToken);
+                if (!poExists)
+                {
+                    throw new InvalidOperationException($"Purchase Order with ID {request.PurchaseOrderId.Value} was not found in the active company.");
+                }
+            }
+        }
+        else if (request.GrnType == GrnType.Production && request.ProductionOrderId.HasValue && request.ProductionOrderId.Value > 0)
+        {
+            var moExists = await _dbContext.Set<ProductionOrder>().AnyAsync(m => m.CompanyId == companyId && m.Id == request.ProductionOrderId.Value, cancellationToken);
+            if (!moExists)
+            {
+                throw new InvalidOperationException($"Production Order with ID {request.ProductionOrderId.Value} was not found in the active company.");
+            }
+        }
+
+        var lineProductIds = request.Lines.Select(l => l.ProductId).Distinct().ToList();
+        var validProductCount = await _dbContext.Products.CountAsync(p => p.CompanyId == companyId && lineProductIds.Contains(p.Id), cancellationToken);
+        if (validProductCount != lineProductIds.Count)
+        {
+            throw new InvalidOperationException("One or more products in the GRN do not belong to the active company.");
         }
 
         var grnNumber = await GenerateNextGrnNumberAsync(companyId, request.GrnDate, cancellationToken);
@@ -505,10 +533,14 @@ public class GoodsReceiptService : IGoodsReceiptService
                 throw new InvalidOperationException($"Product with ID {line.ProductId} was not found.");
             }
 
-            int glInvAccountId = fallbackInvAccount?.Id ?? 6;
+            int glInvAccountId = fallbackInvAccount?.Id ?? 0;
             if (productClasses.TryGetValue(product.ProductClassId, out var pClass) && pClass.GlInventoryAccountId > 0)
             {
                 glInvAccountId = pClass.GlInventoryAccountId;
+            }
+            if (glInvAccountId <= 0)
+            {
+                throw new InvalidOperationException($"No GL Inventory Account configured for product '{product.ProductCode}' in the active company.");
             }
 
             if (!inventoryDebitsByAccount.ContainsKey(glInvAccountId))
@@ -872,12 +904,16 @@ public class GoodsReceiptService : IGoodsReceiptService
                 grnLine.ReturnedQuantity += line.ReturnedQuantity;
             }
 
-            int glInvAccountId = fallbackInvAccount?.Id ?? 6;
+            int glInvAccountId = fallbackInvAccount?.Id ?? 0;
             if (products.TryGetValue(line.ProductId, out var product) &&
                 productClasses.TryGetValue(product.ProductClassId, out var pClass) && 
                 pClass.GlInventoryAccountId > 0)
             {
                 glInvAccountId = pClass.GlInventoryAccountId;
+            }
+            if (glInvAccountId <= 0)
+            {
+                throw new InvalidOperationException("No GL Inventory Account configured for the active company.");
             }
 
             if (!inventoryCreditsByAccount.ContainsKey(glInvAccountId))

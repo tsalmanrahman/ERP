@@ -46,6 +46,13 @@ public class DocumentSequenceAndFormStandardizationTests
             .Options;
         var db = new ErpDbContext(options, clock, user);
         var sequenceService = new DocumentSequenceService(db);
+        db.ProductClasses.Add(new ProductClass { CompanyId = 1, ClassCode = "GEN", ClassName = "General", IsActive = true });
+        db.UnitsOfMeasure.Add(new UnitOfMeasure { CompanyId = 1, UomCode = "PCS", UomName = "Pieces", IsActive = true });
+        db.CustomerGroups.Add(new CustomerGroup { CompanyId = 1, GroupCode = "CORP", GroupName = "Corporate" });
+        db.Set<VendorGroup>().Add(new VendorGroup { CompanyId = 1, GroupCode = "DOM", GroupName = "Domestic" });
+        db.Accounts.Add(new Account { CompanyId = 1, AccountCode = "1130", AccountName = "AR Control", AccountType = 2, IsActive = true });
+        db.Accounts.Add(new Account { CompanyId = 1, AccountCode = "2110", AccountName = "AP Control", AccountType = 2, IsActive = true });
+        db.SaveChanges();
         return (db, user, sequenceService);
     }
 

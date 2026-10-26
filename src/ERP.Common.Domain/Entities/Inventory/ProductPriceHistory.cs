@@ -2,7 +2,7 @@ using ERP.Common.Domain.Common;
 
 namespace ERP.Common.Domain.Entities.Inventory;
 
-public class ProductPriceHistory : Entity<int>
+public class ProductPriceHistory : Entity<int>, IMultiTenant
 {
     public int CompanyId { get; set; }
     public int ProductId { get; set; }

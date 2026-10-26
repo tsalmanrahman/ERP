@@ -27,7 +27,7 @@ public class SequencesController : ControllerBase
         _userContext = userContext;
     }
 
-    private int GetCompanyId() => _userContext.CompanyId ?? 1;
+    private int GetCompanyId() => _userContext.GetRequiredCompanyId();
 
     [HttpGet]
     public async Task<IActionResult> GetAllConfigurations(CancellationToken cancellationToken)

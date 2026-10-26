@@ -440,7 +440,10 @@ function updateEntryCompanyDisplays(companyName) {
   });
 }
 
-function selectCompany(companyId, companyName, companyCode) {
+function selectCompany(companyId, companyName, companyCode, options = {}) {
+  const prevCompanyId = localStorage.getItem('erp_active_company_id');
+  const isSwitch = prevCompanyId && String(prevCompanyId) !== String(companyId);
+
   const nameEl = document.getElementById('header-company-name');
   const codeEl = document.getElementById('header-company-code');
   const heroNameEl = document.getElementById('hero-company-name');
@@ -457,8 +460,25 @@ function selectCompany(companyId, companyName, companyCode) {
   
   updateEntryCompanyDisplays(companyName);
   closeCompanyModal();
-  showToast(`Switched active entity to ${companyName} (${companyCode})`, 'success');
+
+  if (isSwitch && typeof purgeCompanyScopedState === 'function') {
+    purgeCompanyScopedState();
+  }
+  if (!options.silent) {
+    showToast(`Switched active entity to ${companyName} (${companyCode})`, 'success');
+  }
 }
+
+window.addEventListener('storage', (e) => {
+  if (e.key === 'erp_active_company_id' && e.newValue && e.newValue !== e.oldValue) {
+    const newName = localStorage.getItem('erp_active_company_name') || 'Active Subsidiary';
+    const newCode = localStorage.getItem('erp_active_company_code') || 'ERP';
+    selectCompany(e.newValue, newName, newCode, { silent: true });
+    if (typeof purgeCompanyScopedState === 'function') {
+      purgeCompanyScopedState();
+    }
+  }
+});
 
 function initActiveCompany() {
   const savedName = localStorage.getItem('erp_active_company_name') || 'HATIM STEEL STRUCTURE LTD (HSF)';

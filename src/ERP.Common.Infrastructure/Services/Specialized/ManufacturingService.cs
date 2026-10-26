@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Finance;
 using ERP.Common.Application.Abstractions.Specialized;
@@ -26,7 +26,7 @@ public class ManufacturingService : IManufacturingService
         _journalVoucherService = journalVoucherService;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<IReadOnlyList<BillOfMaterialsDto>> GetBomsAsync(int? finishedGoodProductId = null, CancellationToken cancellationToken = default)
     {
@@ -227,6 +227,18 @@ public class ManufacturingService : IManufacturingService
         if (bom == null)
         {
             throw new InvalidOperationException($"BOM with ID {request.BomId} was not found.");
+        }
+
+        var rawWarehouseExists = await _dbContext.Warehouses.AnyAsync(w => w.CompanyId == companyId && w.Id == request.RawMaterialWarehouseId, cancellationToken);
+        if (!rawWarehouseExists)
+        {
+            throw new InvalidOperationException($"Raw Material Warehouse with ID {request.RawMaterialWarehouseId} was not found in the active company.");
+        }
+
+        var fgWarehouseExists = await _dbContext.Warehouses.AnyAsync(w => w.CompanyId == companyId && w.Id == request.FinishedGoodWarehouseId, cancellationToken);
+        if (!fgWarehouseExists)
+        {
+            throw new InvalidOperationException($"Finished Good Warehouse with ID {request.FinishedGoodWarehouseId} was not found in the active company.");
         }
 
         var orderDate = request.OrderDate?.Date ?? DateTime.UtcNow.Date;

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
 using ERP.Common.Application.Abstractions.Common;
@@ -45,7 +45,7 @@ public class PdfReportingService : IPdfReportingService
 
     private async Task<CompanyReportHeaderModel> GetCompanyHeaderAsync(int? companyId, CancellationToken cancellationToken)
     {
-        var targetCompanyId = companyId ?? _currentUserContext.CompanyId ?? 1;
+        var targetCompanyId = companyId ?? _currentUserContext.GetRequiredCompanyId();
         var company = await _dbContext.Companies.FirstOrDefaultAsync(c => c.Id == targetCompanyId, cancellationToken);
 
         if (company != null)

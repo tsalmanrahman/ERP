@@ -1640,7 +1640,7 @@ function applyUserProfileToUI(user) {
     if (user.activeCompanyId) {
       const activeComp = user.accessibleCompanies.find(c => c.id === user.activeCompanyId);
       if (activeComp && typeof selectCompany === 'function') {
-        selectCompany(activeComp.id, activeComp.companyName, activeComp.companyCode);
+        selectCompany(activeComp.id, activeComp.companyName, activeComp.companyCode, { silent: true });
       }
     }
   }
@@ -1691,6 +1691,11 @@ async function executeSwitchCompany(companyId, companyName, companyCode) {
       body: JSON.stringify({ targetCompanyId: companyId })
     });
 
+    if (res.status === 403) {
+      showToast(`Access denied: You are not authorized for ${companyName} (${companyCode}).`, 'error');
+      return;
+    }
+
     if (res.ok) {
       const data = await res.json();
       if (data && data.data && data.data.accessToken) {
@@ -1707,6 +1712,68 @@ async function executeSwitchCompany(companyId, companyName, companyCode) {
 
   if (typeof selectCompany === 'function') {
     selectCompany(companyId, companyName, companyCode);
+  }
+}
+
+function purgeCompanyScopedState() {
+  ERP_STATE.accounts = [];
+  ERP_STATE.customers = [];
+  ERP_STATE.vendors = [];
+  ERP_STATE.products = [];
+  ERP_STATE.availableProducts = [];
+  ERP_STATE.productClasses = [];
+  ERP_STATE.unitsOfMeasure = [];
+  ERP_STATE.plants = [];
+  ERP_STATE.depots = [];
+  ERP_STATE.warehouses = [];
+  ERP_STATE.masterLookups = [];
+  ERP_STATE.stockTransfersList = [];
+  ERP_STATE.stockAdjustmentsList = [];
+  ERP_STATE.grnList = [];
+  ERP_STATE.employees = [];
+  ERP_STATE.bankAccounts = [];
+  ERP_STATE.cashBooks = [];
+  ERP_STATE.fixedAssets = [];
+  ERP_STATE.boms = [];
+  ERP_STATE.salesOrders = [];
+  ERP_STATE.trialBalance = [];
+  ERP_STATE.arAging = [];
+  ERP_STATE.apAging = [];
+  ERP_STATE.cashBookLedger = [];
+  ERP_STATE.auditLogsList = [];
+  ERP_STATE.viewingRecord = null;
+
+  if (typeof syncEntryCompanyDisplays === 'function') {
+    syncEntryCompanyDisplays();
+  }
+
+  // Reload active view with the newly selected company's records
+  const studio = ERP_STATE.activeStudio || 'dashboard';
+  if (studio.startsWith('list-')) {
+    loadListData(studio.replace('list-', ''));
+  } else if (studio === 'view-record') {
+    const rec = ERP_STATE.viewingRecord;
+    const targetList = rec && ENTITY_VIEW_METADATA[rec.entityType]?.listStudio
+      ? ENTITY_VIEW_METADATA[rec.entityType].listStudio.replace('list-', '')
+      : 'products';
+    navigateToList(targetList);
+  } else if (studio.startsWith('entry-')) {
+    const entityType = studio.replace('entry-', '');
+    resetEntryForm(entityType);
+    if (entityType === 'product') loadProductFormMasterData();
+    if (entityType === 'warehouse') loadWarehouseListData();
+  } else if (studio === 'trial-balance') {
+    loadTrialBalanceData();
+  } else if (studio === 'ar-aging') {
+    loadArAgingData();
+  } else if (studio === 'ap-aging') {
+    loadApAgingData();
+  } else if (studio === 'cash-book') {
+    loadCashBookData();
+  } else if (studio === 'audit-trail') {
+    loadAuditTrailStudio();
+  } else if (studio === 'workspace' && ERP_STATE.activeModuleSlug) {
+    renderModuleWorkspace(ERP_STATE.activeModuleSlug);
   }
 }
 
@@ -1805,7 +1872,7 @@ function closeRecordCreateModal() {
 }
 
 // --------------------------------------------------------------------------
-// 5.1 UNSAVED CHANGES GUARD ENGINE
+// 5.1 UNSAVED CHANGES GUARD ENGINE & SNAPSHOT-BASED DIRTY DETECTION
 // --------------------------------------------------------------------------
 const DIRTY_BADGE_MAP = {
   'customer': 'cust-dirty-badge',
@@ -1827,6 +1894,81 @@ const DIRTY_BADGE_MAP = {
   'asset': 'ast-dirty-badge',
   'bom': 'bom-dirty-badge'
 };
+
+const ERP_FORM_SNAPSHOTS = {};
+
+function normalizeFormSnapshotValue(val) {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'boolean') return val ? 'true' : 'false';
+  if (typeof val === 'number') {
+    return isNaN(val) ? '' : String(Number(val));
+  }
+  return String(val).trim();
+}
+
+function captureFormSnapshot(entityType) {
+  const container = document.getElementById(`studio-entry-${entityType}`);
+  if (!container) return;
+  const snapshot = {};
+  const inputs = container.querySelectorAll('input, select, textarea');
+  inputs.forEach(el => {
+    if (!el.id || el.disabled || el.readOnly || el.type === 'hidden') return;
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      snapshot[el.id] = el.checked ? 'true' : 'false';
+    } else {
+      let val = el.value !== undefined ? el.value : '';
+      if (el.type === 'number' || el.classList.contains('font-mono-num')) {
+        const num = parseFloat(val);
+        val = !isNaN(num) ? String(num) : '';
+      }
+      snapshot[el.id] = normalizeFormSnapshotValue(val);
+    }
+  });
+  ERP_FORM_SNAPSHOTS[entityType] = snapshot;
+}
+
+function evaluateFormDirtyState(entityType) {
+  const original = ERP_FORM_SNAPSHOTS[entityType];
+  if (!original) {
+    markFormDirty(entityType);
+    return true;
+  }
+  const container = document.getElementById(`studio-entry-${entityType}`);
+  if (!container) return false;
+
+  let isChanged = false;
+  const inputs = container.querySelectorAll('input, select, textarea');
+  for (const el of inputs) {
+    if (!el.id || el.disabled || el.readOnly || el.type === 'hidden') continue;
+    let currentVal = '';
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      currentVal = el.checked ? 'true' : 'false';
+    } else {
+      let val = el.value !== undefined ? el.value : '';
+      if (el.type === 'number' || el.classList.contains('font-mono-num')) {
+        const num = parseFloat(val);
+        val = !isNaN(num) ? String(num) : '';
+      }
+      currentVal = normalizeFormSnapshotValue(val);
+    }
+    const origVal = original[el.id] !== undefined ? original[el.id] : '';
+    if (currentVal !== origVal) {
+      isChanged = true;
+      break;
+    }
+  }
+
+  if (isChanged) {
+    markFormDirty(entityType);
+  } else {
+    clearFormDirty(entityType);
+  }
+  return isChanged;
+}
+
+function handleFormFieldInput(entityType) {
+  evaluateFormDirtyState(entityType);
+}
 
 function markFormDirty(entityType) {
   ERP_STATE.isDirty = true;
@@ -4385,46 +4527,41 @@ async function loadArAgingData() {
   const dateInput = document.getElementById('ar-aging-date');
   const asOfDate = dateInput ? dateInput.value : '2026-03-31';
 
+  let apiResponded = false;
   let apiCustomers = [];
   try {
     const res = await apiFetch(`/api/ar/reports/aging?asOfDate=${asOfDate}`);
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.customers) {
+      if (json && json.data && Array.isArray(json.data.customers)) {
         apiCustomers = json.data.customers;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Live AR Aging API notice:', err);
   }
 
-  // Combine corporate institutional debtors for complete portfolio
-  const baseCorporate = [
-    { code: 'CUST-001', name: 'Apex Footwear Ltd', limit: 5000000, curr: 1200000, t30: 450000, t60: 200000, t90: 0, t120: 0, total: 1850000, rating: 'Prime Low Risk', color: 'emerald' },
-    { code: 'CUST-002', name: 'Beximco Industrial Park', limit: 10000000, curr: 2800000, t30: 1400000, t60: 0, t90: 0, t120: 0, total: 4200000, rating: 'Prime Low Risk', color: 'emerald' },
-    { code: 'CUST-003', name: 'Square Pharmaceuticals Ltd', limit: 7500000, curr: 850000, t30: 0, t60: 0, t90: 0, t120: 0, total: 850000, rating: 'Prime Low Risk', color: 'emerald' },
-    { code: 'CUST-004', name: 'Akij Shipping & Logistics', limit: 3000000, curr: 570000, t30: 1070000, t60: 750000, t90: 350000, t120: 150000, total: 2890000, rating: 'High Dunning Risk', color: 'rose' }
-  ];
-
-  // If API has customers, integrate them
-  apiCustomers.forEach(ac => {
-    const exists = baseCorporate.find(b => b.name.toLowerCase() === (ac.customerName || '').toLowerCase());
-    if (!exists) {
-      baseCorporate.push({
-        code: ac.customerCode || `CUST-00${baseCorporate.length + 1}`,
+  const baseCorporate = apiResponded
+    ? apiCustomers.map((ac, idx) => ({
+        code: ac.customerCode || `CUST-00${idx + 1}`,
         name: ac.customerName || 'Corporate Client',
-        limit: 2500000,
+        limit: ac.creditLimit || 2500000,
         curr: ac.currentDays || 0,
         t30: ac.thirtyToSixty || 0,
         t60: ac.sixtyToNinety || 0,
         t90: ac.ninetyToOneTwenty || 0,
         t120: ac.overOneTwenty || 0,
         total: ac.totalOutstanding || 0,
-        rating: (ac.overOneTwenty || 0) > 0 ? 'High Dunning Risk' : 'Standard Grade',
-        color: (ac.overOneTwenty || 0) > 0 ? 'rose' : 'blue'
-      });
-    }
-  });
+        rating: (ac.overOneTwenty || 0) > 0 ? 'High Dunning Risk' : 'Prime Low Risk',
+        color: (ac.overOneTwenty || 0) > 0 ? 'rose' : 'emerald'
+      }))
+    : [
+        { code: 'CUST-001', name: 'Apex Footwear Ltd', limit: 5000000, curr: 1200000, t30: 450000, t60: 200000, t90: 0, t120: 0, total: 1850000, rating: 'Prime Low Risk', color: 'emerald' },
+        { code: 'CUST-002', name: 'Beximco Industrial Park', limit: 10000000, curr: 2800000, t30: 1400000, t60: 0, t90: 0, t120: 0, total: 4200000, rating: 'Prime Low Risk', color: 'emerald' },
+        { code: 'CUST-003', name: 'Square Pharmaceuticals Ltd', limit: 7500000, curr: 850000, t30: 0, t60: 0, t90: 0, t120: 0, total: 850000, rating: 'Prime Low Risk', color: 'emerald' },
+        { code: 'CUST-004', name: 'Akij Shipping & Logistics', limit: 3000000, curr: 570000, t30: 1070000, t60: 750000, t90: 350000, t120: 150000, total: 2890000, rating: 'High Dunning Risk', color: 'rose' }
+      ];
 
   ERP_STATE.arAging = baseCorporate;
 
@@ -4532,31 +4669,24 @@ async function loadApAgingData() {
   const dateInput = document.getElementById('ap-aging-date');
   const asOfDate = dateInput ? dateInput.value : '2026-03-31';
 
+  let apiResponded = false;
   let apiVendors = [];
   try {
     const res = await apiFetch(`/api/ap/reports/aging?asOfDate=${asOfDate}`);
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.vendors) {
+      if (json && json.data && Array.isArray(json.data.vendors)) {
         apiVendors = json.data.vendors;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Live AP Aging API notice:', err);
   }
 
-  const baseVendors = [
-    { code: 'VEND-001', name: 'Tata Steel International', terms: 'Net 45 Days', curr: 2500000, t30: 1500000, t60: 500000, t90: 0, t120: 0, total: 4500000, priority: 'Standard Due', color: 'blue' },
-    { code: 'VEND-002', name: 'BASF Chemical Solutions', terms: 'Net 30 Days', curr: 1200000, t30: 900000, t60: 0, t90: 0, t120: 0, total: 2100000, priority: 'Standard Due', color: 'blue' },
-    { code: 'VEND-003', name: 'Hyundai Heavy Machinery', terms: 'Letter of Credit (LC)', curr: 4500000, t30: 1850000, t60: 1450000, t90: 0, t120: 0, total: 7800000, priority: 'Critical Priority', color: 'rose' },
-    { code: 'VEND-004', name: 'Meghna Industrial Gases', terms: 'Net 15 Days', curr: 300000, t30: 0, t60: 150000, t90: 0, t120: 0, total: 450000, priority: 'Scheduled', color: 'emerald' }
-  ];
-
-  apiVendors.forEach(av => {
-    const exists = baseVendors.find(b => b.name.toLowerCase() === (av.vendorName || '').toLowerCase());
-    if (!exists) {
-      baseVendors.push({
-        code: av.vendorCode || `VEND-00${baseVendors.length + 1}`,
+  const baseVendors = apiResponded
+    ? apiVendors.map((av, idx) => ({
+        code: av.vendorCode || `VEND-00${idx + 1}`,
         name: av.vendorName || 'Trade Supplier',
         terms: 'Net 30 Days',
         curr: av.currentDays || 0,
@@ -4567,9 +4697,13 @@ async function loadApAgingData() {
         total: av.totalOutstanding || 0,
         priority: (av.sixtyToNinety || 0) > 0 ? 'Critical Priority' : 'Standard Due',
         color: (av.sixtyToNinety || 0) > 0 ? 'rose' : 'blue'
-      });
-    }
-  });
+      }))
+    : [
+        { code: 'VEND-001', name: 'Tata Steel International', terms: 'Net 45 Days', curr: 2500000, t30: 1500000, t60: 500000, t90: 0, t120: 0, total: 4500000, priority: 'Standard Due', color: 'blue' },
+        { code: 'VEND-002', name: 'BASF Chemical Solutions', terms: 'Net 30 Days', curr: 1200000, t30: 900000, t60: 0, t90: 0, t120: 0, total: 2100000, priority: 'Standard Due', color: 'blue' },
+        { code: 'VEND-003', name: 'Hyundai Heavy Machinery', terms: 'Letter of Credit (LC)', curr: 4500000, t30: 1850000, t60: 1450000, t90: 0, t120: 0, total: 7800000, priority: 'Critical Priority', color: 'rose' },
+        { code: 'VEND-004', name: 'Meghna Industrial Gases', terms: 'Net 15 Days', curr: 300000, t30: 0, t60: 150000, t90: 0, t120: 0, total: 450000, priority: 'Scheduled', color: 'emerald' }
+      ];
 
   ERP_STATE.apAging = baseVendors;
 
@@ -6092,19 +6226,21 @@ async function loadAccountListData() {
   tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-emerald-400"></i><span>Loading accounts from general ledger...</span></td></tr>';
   initLucide();
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/gl/accounts');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.accounts = json.data;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Accounts API fetch notice:', err);
   }
 
-  if (!ERP_STATE.accounts || ERP_STATE.accounts.length === 0) {
+  if (!apiResponded && (!ERP_STATE.accounts || ERP_STATE.accounts.length === 0)) {
     ERP_STATE.accounts = [
       { accountCode: '1010-01', accountName: 'Cash in Hand (Corporate Petty Cash)', groupName: 'Cash & Cash Equivalents', category: 'Asset', accountType: 2, isReconcilable: true, isActive: true },
       { accountCode: '1020-01', accountName: 'Standard Chartered Bank CD A/C', groupName: 'Bank Accounts', category: 'Asset', accountType: 2, isReconcilable: true, isActive: true },
@@ -6263,7 +6399,7 @@ async function loadCustomerListData() {
     const res = await apiFetch('/api/ar/customers');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.customers = json.data;
       }
     }
@@ -6422,7 +6558,7 @@ async function loadVendorListData() {
     const res = await apiFetch('/api/ap/vendors');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.vendors = json.data;
       }
     }
@@ -6572,7 +6708,7 @@ async function loadProductListData() {
     const res = await apiFetch('/api/inv/products');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.products = json.data;
       }
     }
@@ -6886,6 +7022,8 @@ async function openNewProductForm() {
   const txt = document.getElementById('txt-save-product');
   if (txt) txt.textContent = 'Save';
   navigateToStudio('entry-product');
+  captureFormSnapshot('product');
+  clearFormDirty('product');
 }
 
 async function editProductRecord(code, name, cost, price, uom) {
@@ -6995,7 +7133,8 @@ async function editProductRecord(code, name, cost, price, uom) {
 
   const txt = document.getElementById('txt-save-product');
   if (txt) txt.textContent = 'Save';
-  markFormDirty('product');
+  captureFormSnapshot('product');
+  clearFormDirty('product');
 }
 
 
@@ -7011,19 +7150,21 @@ async function loadPlantListData() {
   tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-amber-400"></i><span>Loading manufacturing plants...</span></td></tr>';
   initLucide();
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/inv/products/depots?type=1');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.plants = json.data;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Plants API fetch notice:', err);
   }
 
-  if (!ERP_STATE.plants || ERP_STATE.plants.length === 0) {
+  if (!apiResponded && (!ERP_STATE.plants || ERP_STATE.plants.length === 0)) {
     ERP_STATE.plants = [
       { id: 1, depotCode: 'PLANT-TG-01', depotName: 'Tongi PEB Heavy Structural Fabrication Plant', depotTypeName: 'Manufacturing Plant', city: 'Gazipur', warehouseCount: 3, isActive: true },
       { id: 4, depotCode: 'PLANT-GZP-02', depotName: 'Gazipur Polymer & Cold Roll Forming Mill', depotTypeName: 'Manufacturing Plant', city: 'Gazipur', warehouseCount: 2, isActive: true }
@@ -7171,19 +7312,21 @@ async function loadDepotListData() {
   tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-sky-400"></i><span>Loading depot registry...</span></td></tr>';
   initLucide();
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/inv/products/depots');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.depots = json.data.filter(d => d.depotType !== 1);
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Depots API fetch notice:', err);
   }
 
-  if (!ERP_STATE.depots || ERP_STATE.depots.length === 0) {
+  if (!apiResponded && (!ERP_STATE.depots || ERP_STATE.depots.length === 0)) {
     ERP_STATE.depots = [
       { id: 1, depotCode: 'DEP-TG-01', depotName: 'Tongi PEB Structural Fabrication Plant', depotTypeName: 'Manufacturing Plant', city: 'Gazipur', warehouseCount: 2, isActive: true },
       { id: 2, depotCode: 'DEP-DHK-01', depotName: 'Tejgaon Central Logistics & Distribution Hub', depotTypeName: 'Central Distribution Hub', city: 'Dhaka', warehouseCount: 1, isActive: true },
@@ -7380,19 +7523,21 @@ async function loadWarehouseListData() {
     }
   } catch (_) {}
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/inv/products/warehouses');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.warehouses = json.data;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Warehouse API fetch notice:', err);
   }
 
-  if (!ERP_STATE.warehouses || ERP_STATE.warehouses.length === 0) {
+  if (!apiResponded && (!ERP_STATE.warehouses || ERP_STATE.warehouses.length === 0)) {
     ERP_STATE.warehouses = [
       { warehouseCode: 'WH-01', warehouseName: 'Raw Materials Steel Yard', warehouseTypeName: 'Raw Materials', depotName: 'Tongi PEB Structural Fabrication Plant', location: 'Tongi, Gazipur', isActive: true },
       { warehouseCode: 'WH-02', warehouseName: 'Central Finished Goods Yard', warehouseTypeName: 'Finished Goods', depotName: 'Tejgaon Central Logistics & Distribution Hub', location: 'Tejgaon, Dhaka', isActive: true },
@@ -8038,19 +8183,21 @@ async function loadUomListData() {
   tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-teal-400"></i><span>Loading units of measure...</span></td></tr>';
   initLucide();
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/inv/products/uoms');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.unitsOfMeasure = json.data;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('UOM API fetch notice:', err);
   }
 
-  if (!ERP_STATE.unitsOfMeasure || ERP_STATE.unitsOfMeasure.length === 0) {
+  if (!apiResponded && (!ERP_STATE.unitsOfMeasure || ERP_STATE.unitsOfMeasure.length === 0)) {
     ERP_STATE.unitsOfMeasure = [
       { id: 1, uomCode: 'MT', uomName: 'Metric Ton', category: 'Weight', isBase: true, precision: 3 },
       { id: 2, uomCode: 'KG', uomName: 'Kilogram', category: 'Weight', isBase: false, precision: 2 },
@@ -8269,19 +8416,21 @@ async function loadProductClassListData() {
   tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-amber-400"></i><span>Loading product classes...</span></td></tr>';
   initLucide();
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/inv/products/classes');
     if (res && res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.productClasses = json.data;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Product classes fetch notice:', err);
   }
 
-  if (!ERP_STATE.productClasses || ERP_STATE.productClasses.length === 0) {
+  if (!apiResponded && (!ERP_STATE.productClasses || ERP_STATE.productClasses.length === 0)) {
     ERP_STATE.productClasses = DEFAULT_PRODUCT_CLASSES_SEED.map(x => ({ ...x }));
   }
 
@@ -8336,7 +8485,7 @@ function renderProductClassListTable(list) {
     return `
       <tr class="hover:bg-white/[0.02] transition">
         <td class="py-3 px-4 font-mono font-bold text-amber-400">
-          <a href="javascript:void(0)" onclick="editProductClassRecord(${item.id}, '${code}', '${escape(name)}', ${item.categoryType || 1}, ${item.valuationMethod || 1})" class="clickable-code hover:underline" title="Edit ${code}">${code}</a>
+          <a href="javascript:void(0)" onclick="viewRecord('product-class', '${code}')" class="clickable-code hover:underline" title="View ${code}">${code}</a>
         </td>
         <td class="py-3 px-4 font-medium text-slate-100">${name}</td>
         <td class="py-3 px-4 text-slate-300">${catType}</td>
@@ -8346,6 +8495,15 @@ function renderProductClassListTable(list) {
         <td class="py-3 px-4">${statusBadge}</td>
         <td class="py-3 px-4 text-right">
           <div class="inline-flex items-center gap-1.5 justify-end">
+            <button
+              type="button"
+              onclick="viewRecord('product-class', '${code}')"
+              class="erp-row-action-btn btn-view"
+              title="View Class"
+              aria-label="View"
+            >
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            </button>
             <button
               type="button"
               onclick="editProductClassRecord(${item.id}, '${code}', '${escape(name)}', ${item.categoryType || 1}, ${item.valuationMethod || 1})"
@@ -8400,6 +8558,8 @@ function openNewProductClassForm() {
   const txt = document.getElementById('txt-save-product-class');
   if (txt) txt.textContent = 'Save';
   navigateToStudio('entry-product-class');
+  captureFormSnapshot('product-class');
+  clearFormDirty('product-class');
 }
 
 function editProductClassRecord(id, code, name, categoryType, valuationMethod) {
@@ -8422,6 +8582,7 @@ function editProductClassRecord(id, code, name, categoryType, valuationMethod) {
   if (glRevEl && item?.glRevenueAccountId) glRevEl.value = String(item.glRevenueAccountId);
   const txt = document.getElementById('txt-save-product-class');
   if (txt) txt.textContent = 'Save';
+  captureFormSnapshot('product-class');
   clearFormDirty('product-class');
 }
 
@@ -8993,7 +9154,7 @@ async function loadEmployeeListData() {
     const res = await apiFetch('/api/hr/employees');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.employees = json.data;
       }
     }
@@ -9143,19 +9304,21 @@ async function loadBankListData() {
   tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-emerald-400"></i><span>Loading corporate bank accounts...</span></td></tr>';
   initLucide();
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/bc/banking/bank-accounts');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.bankAccounts = json.data;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Bank accounts API fetch notice:', err);
   }
 
-  if (!ERP_STATE.bankAccounts || ERP_STATE.bankAccounts.length === 0) {
+  if (!apiResponded && (!ERP_STATE.bankAccounts || ERP_STATE.bankAccounts.length === 0)) {
     ERP_STATE.bankAccounts = [
       { accountNumber: '0021-01129384', bankName: 'Standard Chartered Bank PLC', branchName: 'Gulshan Corporate Branch', accountType: 'Current', currency: 'BDT', currentBalance: 14250000, isActive: true },
       { accountNumber: '1102-98471203', bankName: 'Eastern Bank PLC', branchName: 'Principal Branch, Dilkusha', accountType: 'Operating', currency: 'BDT', currentBalance: 3820000, isActive: true },
@@ -9301,19 +9464,21 @@ async function loadAssetListData() {
   tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-rose-400"></i><span>Loading fixed asset registry...</span></td></tr>';
   initLucide();
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/fa/assets');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.fixedAssets = json.data;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('Fixed assets API fetch notice:', err);
   }
 
-  if (!ERP_STATE.fixedAssets || ERP_STATE.fixedAssets.length === 0) {
+  if (!apiResponded && (!ERP_STATE.fixedAssets || ERP_STATE.fixedAssets.length === 0)) {
     ERP_STATE.fixedAssets = [
       { assetTag: 'FA-MCH-001', assetName: 'Heavy CNC Milling Center 5-Axis', groupName: 'Machinery & Equipment', acquisitionCost: 8500000, currentBookValue: 6800000, status: 'Active In-Service', isActive: true },
       { assetTag: 'FA-VEH-002', assetName: 'Prime Mover Heavy Trailer Truck (40 Ton)', groupName: 'Vehicles & Transport', acquisitionCost: 4200000, currentBookValue: 3150000, status: 'Active In-Service', isActive: true },
@@ -9454,19 +9619,21 @@ async function loadBomListData() {
   tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-1 text-violet-400"></i><span>Loading BOM recipes...</span></td></tr>';
   initLucide();
 
+  let apiResponded = false;
   try {
     const res = await apiFetch('/api/mfg/boms');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.boms = json.data;
+        apiResponded = true;
       }
     }
   } catch (err) {
     console.warn('BOMs API fetch notice:', err);
   }
 
-  if (!ERP_STATE.boms || ERP_STATE.boms.length === 0) {
+  if (!apiResponded && (!ERP_STATE.boms || ERP_STATE.boms.length === 0)) {
     ERP_STATE.boms = [
       { bomCode: 'BOM-RAW-001', productName: 'Industrial Leather Hide (Finished Grade)', version: 'v2.1', batchQuantity: 500, scrapRate: 2.5, status: 'Approved / Active', isActive: true },
       { bomCode: 'BOM-RAW-002', productName: 'High-Tensile Poly Polymer Resin (Compounded)', version: 'v1.4', batchQuantity: 1000, scrapRate: 1.2, status: 'Approved / Active', isActive: true },
@@ -9611,7 +9778,7 @@ async function loadSalesOrderListData() {
     const res = await apiFetch('/api/sales/orders');
     if (res.ok) {
       const json = await res.json();
-      if (json && json.data && json.data.length > 0) {
+      if (json && Array.isArray(json.data)) {
         ERP_STATE.salesOrders = json.data;
       }
     }
@@ -9906,6 +10073,37 @@ async function executeViewRecord(entityType, code) {
       if (ERP_STATE.salesOrders) {
         item = ERP_STATE.salesOrders.find(o => (o.orderNumber || `SO-2026-${o.id}`) === code || String(o.id) === code);
       }
+    } else if (entityType === 'depot') {
+      if (ERP_STATE.depots) {
+        item = ERP_STATE.depots.find(d => (d.depotCode || d.code) === code);
+      }
+      if (!item && ERP_STATE.plants) {
+        item = ERP_STATE.plants.find(d => (d.depotCode || d.code) === code);
+      }
+      if (!item) {
+        const res = await apiFetch('/api/inv/products/depots');
+        if (res && res.ok) {
+          const json = await res.json();
+          if (json && json.data) {
+            ERP_STATE.depots = json.data;
+            item = json.data.find(d => (d.depotCode || d.code) === code);
+          }
+        }
+      }
+    } else if (entityType === 'product-class') {
+      if (ERP_STATE.productClasses) {
+        item = ERP_STATE.productClasses.find(c => (c.classCode || c.code) === code);
+      }
+      if (!item) {
+        const res = await apiFetch('/api/inv/products/classes');
+        if (res && res.ok) {
+          const json = await res.json();
+          if (json && json.data) {
+            ERP_STATE.productClasses = json.data;
+            item = json.data.find(c => (c.classCode || c.code) === code);
+          }
+        }
+      }
     }
   } catch (err) {
     console.warn('Record View fetch fallback:', err);
@@ -10140,6 +10338,53 @@ function renderViewRecord(entityType, item) {
       { label: 'Line Items Count', value: `${(item.lines && item.lines.length) || item.linesCount || 1} Lines`, mono: true },
       { label: 'Order Status', value: status }
     ];
+  } else if (entityType === 'depot') {
+    code = item.depotCode || item.code || 'DEP-01';
+    title = 'Depot & Plant Specification';
+    sectionTitle = 'Depot Logistics & Capacity Management';
+    iconName = 'building-2';
+    status = item.isActive !== false ? 'Active' : 'Inactive';
+    fields = [
+      { label: 'Depot Code', value: code, mono: true, highlight: true },
+      { label: 'Depot / Plant Name', value: item.depotName || item.name || 'Central Distribution Hub' },
+      { label: 'Facility Type', value: item.depotTypeName || item.type || 'Manufacturing / Depot Facility' },
+      { label: 'Location / City', value: item.city || item.address || 'Dhaka' },
+      { label: 'Warehouses / Stores', value: `${item.warehouseCount ?? 0} Stores`, mono: true },
+      { label: 'Operational Status', value: status }
+    ];
+  } else if (entityType === 'product-class') {
+    const typeNames = {
+      1: 'Finished Goods (FG)',
+      2: 'Raw Materials (RM)',
+      3: 'Work in Progress (WIP)',
+      4: 'Consumables & Spares',
+      5: 'Services / Non-Stock',
+      6: 'Fixed Asset / Capital'
+    };
+    const glAccountLabels = {
+      1: '1040-01 — Inventory Asset Control',
+      2: '5010-01 — Cost of Goods Sold (COGS)',
+      3: '4010-01 — Commercial Sales Revenue',
+      4: '1040-04 — Spares & Consumables Asset',
+      5: '5010-02 — Direct Material Consumption',
+      6: '5020-01 — Factory Maintenance Expense',
+      7: '4010-02 — Export Sales Revenue',
+      8: '4020-01 — Erection Service Revenue'
+    };
+    code = item.classCode || item.code || 'CLS-01';
+    title = 'Product Class & GL Integration Specification';
+    sectionTitle = 'Financial Subledger Postings & Operational Classification';
+    iconName = 'layers';
+    status = item.isActive !== false ? 'Active' : 'Inactive';
+    fields = [
+      { label: 'Class Code', value: code, mono: true, highlight: true },
+      { label: 'Class Title / Description', value: item.className || item.name || 'Finished Goods' },
+      { label: 'Operational Category Type', value: typeNames[item.categoryType] || 'Finished Goods (FG)' },
+      { label: 'GL Inventory Asset Account', value: glAccountLabels[item.glInventoryAccountId] || '1040-01 — Inventory Asset Control', mono: true },
+      { label: 'GL COGS Expense Account', value: glAccountLabels[item.glCogsAccountId] || '5010-01 — Cost of Goods Sold (COGS)', mono: true },
+      { label: 'GL Sales Revenue Account', value: glAccountLabels[item.glRevenueAccountId] || '4010-01 — Commercial Sales Revenue', mono: true },
+      { label: 'Lifecycle Status', value: status }
+    ];
   }
 
   if (titleEl) titleEl.textContent = title;
@@ -10203,6 +10448,10 @@ function editRecordFromView() {
     editBomRecord(item.bomCode || item.code, escape(item.productName || item.productCode || item.name || ''), item.version || 'v1.0', item.batchQuantity || 10, item.scrapRate || 2.5);
   } else if (t === 'sales-order') {
     openSalesOrderInStudio(item.id);
+  } else if (t === 'depot') {
+    editDepotRecord(item.depotCode || item.code, escape(item.depotName || item.name || ''), escape(item.city || item.address || ''));
+  } else if (t === 'product-class') {
+    editProductClassRecord(item.id, item.classCode || item.code, escape(item.className || item.name || ''), item.categoryType || 1, item.valuationMethod || 1);
   }
 }
 
@@ -10379,6 +10628,15 @@ async function executePendingDelete() {
     } else if (del.entityType === 'product-class' && ERP_STATE.productClasses) {
       ERP_STATE.productClasses = ERP_STATE.productClasses.filter(c => c.classCode !== del.code && c.id !== del.id);
       renderProductClassListTable(ERP_STATE.productClasses);
+    } else if (del.entityType === 'depot') {
+      if (ERP_STATE.depots) {
+        ERP_STATE.depots = ERP_STATE.depots.filter(d => (d.depotCode || d.code) !== del.code && d.id !== del.id);
+        renderDepotListTable(ERP_STATE.depots);
+      }
+      if (ERP_STATE.plants) {
+        ERP_STATE.plants = ERP_STATE.plants.filter(d => (d.depotCode || d.code) !== del.code && d.id !== del.id);
+        renderPlantListTable(ERP_STATE.plants);
+      }
     } else if (del.entityType === 'lookup' && ERP_STATE.masterLookups) {
       ERP_STATE.masterLookups = ERP_STATE.masterLookups.filter(l => l.id !== del.id);
       filterMasterLookupListTable();
@@ -10750,6 +11008,9 @@ window.filterProductClassListTable = filterProductClassListTable;
 window.openNewProductClassForm = openNewProductClassForm;
 window.editProductClassRecord = editProductClassRecord;
 window.saveProductClassEntry = saveProductClassEntry;
+window.captureFormSnapshot = captureFormSnapshot;
+window.evaluateFormDirtyState = evaluateFormDirtyState;
+window.handleFormFieldInput = handleFormFieldInput;
 window.loadMasterLookupListData = loadMasterLookupListData;
 window.renderMasterLookupListTable = renderMasterLookupListTable;
 window.filterMasterLookupListTable = filterMasterLookupListTable;

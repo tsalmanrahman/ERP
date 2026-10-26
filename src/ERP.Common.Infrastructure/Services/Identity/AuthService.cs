@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Identity;
 using ERP.Common.Application.Models.Auth;
 using ERP.Common.Application.Security;
@@ -216,11 +216,28 @@ public class AuthService : IAuthService
 
     private async Task<List<CompanyAccessDto>> GetUserAccessibleCompanies(int userId, CancellationToken cancellationToken)
     {
+        var assignedCompanies = await _dbContext.UserCompanyAccess
+            .Where(uca => uca.UserId == userId && uca.Company != null && uca.Company.IsActive)
+            .OrderBy(uca => uca.Company!.Id)
+            .Select(uca => new CompanyAccessDto(
+                uca.Company!.Id,
+                uca.Company.CompanyCode,
+                uca.Company.CompanyName,
+                uca.Company.BaseCurrency,
+                true
+            ))
+            .ToListAsync(cancellationToken);
+
+        if (assignedCompanies.Count > 0)
+        {
+            return assignedCompanies;
+        }
+
         var isSuperAdmin = await _dbContext.UserRoles
             .Where(ur => ur.UserId == userId && ur.Role != null)
             .AnyAsync(ur => ur.Role!.RoleCode == "SUPERADMIN" || ur.Role!.RoleCode == "SuperAdmin", cancellationToken);
 
-        // If user is superadmin or has no explicit company access restrictions, grant access to active companies
+        // If user is superadmin and has no explicit company access rows, grant access to active companies
         if (isSuperAdmin)
         {
             return await _dbContext.Companies
@@ -236,32 +253,26 @@ public class AuthService : IAuthService
                 .ToListAsync(cancellationToken);
         }
 
-        var assignedCompanies = await _dbContext.UserCompanyAccess
-            .Where(uca => uca.UserId == userId && uca.Company != null && uca.Company.IsActive)
-            .OrderBy(uca => uca.Company!.Id)
-            .Select(uca => new CompanyAccessDto(
-                uca.Company!.Id,
-                uca.Company.CompanyCode,
-                uca.Company.CompanyName,
-                uca.Company.BaseCurrency,
-                true
-            ))
-            .ToListAsync(cancellationToken);
+        // Fallback: If no companies explicitly assigned, provide user's DefaultCompanyId if set
+        var defaultCompanyId = await _dbContext.Users
+            .Where(u => u.Id == userId)
+            .Select(u => u.DefaultCompanyId)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        // Fallback: If no companies explicitly assigned, provide default company
-        if (assignedCompanies.Count == 0)
+        var defaultComp = await _dbContext.Companies
+            .Where(c => c.IsActive && (!defaultCompanyId.HasValue || c.Id == defaultCompanyId.Value))
+            .OrderBy(c => c.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (defaultComp != null)
         {
-            var defaultComp = await _dbContext.Companies.Where(c => c.IsActive).OrderBy(c => c.Id).FirstOrDefaultAsync(cancellationToken);
-            if (defaultComp != null)
-            {
-                assignedCompanies.Add(new CompanyAccessDto(
-                    defaultComp.Id,
-                    defaultComp.CompanyCode,
-                    defaultComp.CompanyName,
-                    defaultComp.BaseCurrency,
-                    true
-                ));
-            }
+            assignedCompanies.Add(new CompanyAccessDto(
+                defaultComp.Id,
+                defaultComp.CompanyCode,
+                defaultComp.CompanyName,
+                defaultComp.BaseCurrency,
+                true
+            ));
         }
 
         return assignedCompanies;

@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.Data;
 using ERP.Common.Application.Abstractions.Finance;
@@ -25,7 +25,7 @@ public class FinancialReportingService : IFinancialReportingService
 
     public async Task<Result<TrialBalanceReportDto>> GetTrialBalanceAsync(DateOnly? asOfDate, CancellationToken cancellationToken = default)
     {
-        var companyId = _currentUserContext.CompanyId ?? 1;
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         var cutoff = asOfDate ?? DateOnly.FromDateTime(_dateTimeProvider.UtcNow);
         var cutoffDateTime = cutoff.ToDateTime(TimeOnly.MaxValue);
 
@@ -51,7 +51,7 @@ public class FinancialReportingService : IFinancialReportingService
             FROM gl.Accounts a
             INNER JOIN gl.AccountGroups ag ON a.AccountGroupId = ag.Id
             LEFT JOIN gl.JournalVoucherLines l ON a.Id = l.AccountId AND l.IsDeleted = 0
-            LEFT JOIN gl.JournalVouchers v ON l.VoucherId = v.Id AND v.IsPosted = 1 AND v.IsDeleted = 0 AND v.VoucherDate <= @CutoffDate
+            LEFT JOIN gl.JournalVouchers v ON l.VoucherId = v.Id AND v.CompanyId = @CompanyId AND v.IsPosted = 1 AND v.IsDeleted = 0 AND v.VoucherDate <= @CutoffDate
             WHERE a.CompanyId = @CompanyId AND a.IsDeleted = 0 AND a.IsActive = 1
             GROUP BY a.Id, a.AccountCode, a.AccountName, ag.GroupName, ag.AccountCategory
             ORDER BY a.AccountCode;";
@@ -123,7 +123,7 @@ public class FinancialReportingService : IFinancialReportingService
 
     public async Task<Result<AccountStatementReportDto>> GetAccountStatementAsync(int accountId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default)
     {
-        var companyId = _currentUserContext.CompanyId ?? 1;
+        var companyId = _currentUserContext.GetRequiredCompanyId();
         using var connection = _sqlConnectionFactory.CreateConnection();
 
         // 1. Get Account Info

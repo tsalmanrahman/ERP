@@ -1,8 +1,8 @@
-﻿using ERP.Common.Domain.Common;
+using ERP.Common.Domain.Common;
 
 namespace ERP.Common.Domain.Entities.SystemAdmin;
 
-public class AuditLog : Entity<long>
+public class AuditLog : Entity<long>, IMultiTenant
 {
     public int CompanyId { get; set; }
     public string EntityName { get; set; } = string.Empty;

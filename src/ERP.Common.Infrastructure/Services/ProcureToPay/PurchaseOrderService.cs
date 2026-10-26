@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ERP.Common.Application.Abstractions.Common;
 using ERP.Common.Application.Abstractions.ProcureToPay;
 using ERP.Common.Application.Models.ProcureToPay;
@@ -18,7 +18,7 @@ public class PurchaseOrderService : IPurchaseOrderService
         _currentUserContext = currentUserContext;
     }
 
-    private int GetCompanyId() => _currentUserContext.CompanyId ?? 1;
+    private int GetCompanyId() => _currentUserContext.GetRequiredCompanyId();
 
     public async Task<List<PurchaseOrderDto>> GetPurchaseOrdersAsync(int? vendorId = null, CancellationToken cancellationToken = default)
     {
@@ -114,6 +114,13 @@ public class PurchaseOrderService : IPurchaseOrderService
         if (!warehouseExists)
         {
             throw new InvalidOperationException($"Warehouse with ID {request.WarehouseId} was not found.");
+        }
+
+        var reqProductIds = request.Lines.Select(l => l.ProductId).Distinct().ToList();
+        var validProductCount = await _dbContext.Products.CountAsync(p => p.CompanyId == companyId && reqProductIds.Contains(p.Id), cancellationToken);
+        if (validProductCount != reqProductIds.Count)
+        {
+            throw new InvalidOperationException("One or more products in the purchase order do not belong to the active company.");
         }
 
         var poNumber = await GenerateNextPoNumberAsync(companyId, request.PoDate, cancellationToken);
